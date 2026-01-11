@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Memory corrigé</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f4f8;
+    margin: 40px;
+    text-align: center;
+  }
+  #game {
+    display: grid;
+    grid-template-columns: repeat(4, 90px);
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+    perspective: 1000px;
+  }
+  .card {
+    width: 90px;
+    height: 90px;
+    position: relative;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.5s;
+    user-select: none;
+  }
+  .card.flipped {
+    transform: rotateY(180deg);
+    cursor: default;
+  }
+  .face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 48px;
+    backface-visibility: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  .front {
+    background-color: #fff;
+    color: black;
+    transform: rotateY(180deg);
+  }
+  .back {
+    background-color: #333;
+    color: white;
+  }
+  .card.matched {
+    pointer-events: none;
+    box-shadow: 0 0 15px 3px #79f79f;
+  }
+  #info {
+    margin-top: 15px;
+    font-size: 18px;
+    color: #333;
+  }
+  #restartBtn {
+    margin-top: 25px;
+    background: #4caf50;
+    padding: 12px 25px;
+    font-size: 18px;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  #restartBtn:hover {
+    background: #45a049;
+  }
+</style>
+</head>
+<body>
+
+<h1>Memory corrigé</h1>
+<div id="game"></div>
+<div id="info">
+  Tentatives : <span id="attempts">0</span> | Temps : <span id="timer">00:00</span>
+</div>
+<button id="restartBtn">Rejouer</button>
+
+<script>
+  const symbols = ["🍎", "🍌", "🍇", "🍉", "🥝", "🍒", "🍍", "🍓"];
+  let cards = [];
+  let flippedIndices = [];
+  let matchedIndices = new Set();
+  let lockBoard = false;
+  let attempts = 0;
+  let timerInterval = null;
+  let startTime = null;
+
+  const gameContainer = document.getElementById('game');
+  const attemptsSpan = document.getElementById('attempts');
+  const timerSpan = document.getElementById('timer');
+  const restartBtn = document.getElementById('restartBtn');
+
+  function shuffle(array) {
+    let currentIndex = array.length, temp, randomIndex;
+    while (currentIndex !== 0) {
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+      temp = array[currentIndex];
+      array[currentIndex] = array[randomIndex];
+      array[randomIndex] = temp;
+    }
+    return array;
+  }
+
+  function formatTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2,'0');
+    const seconds = String(totalSeconds % 60).padStart(2,'0');
+    return `${minutes}:${seconds}`;
+  }
+
+  function startTimer() {
+    startTime = Date.now();
+    timerInterval = setInterval(() => {
+      timerSpan.textContent = formatTime(Date.now() - startTime);
+    }, 500);
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+  }
+
+  function updateAttempts() {
+    attemptsSpan.textContent = attempts;
+  }
+
+  function createCardElement(symbol, index) {
+    const card = document.createElement('div');
+    card.classList.add('card');
+    card.dataset.index = index;
+
+    const front = document.createElement('div');
+    front.classList.add('face', 'front');
+    front.textContent = symbol;
+
+    const back = document.createElement('div');
+    back.classList.add('face', 'back');
+    back.textContent = "❓";
+
+    card.appendChild(front);
+    card.appendChild(back);
+
+    card.addEventListener('click', () => onCardClick(index));
+
+    return card;
+  }
+
+  function createBoard() {
+    cards = shuffle([...symbols, ...symbols]);
+    flippedIndices = [];
+    matchedIndices.clear();
+    lockBoard = false;
+    attempts = 0;
+    updateAttempts();
+    timerSpan.textContent = "00:00";
+
+    if (timerInterval) stopTimer();
+    startTimer();
+
+    gameContainer.innerHTML = '';
+    for (let i = 0; i < cards.length; i++) {
+      const cardElem = createCardElement(cards[i], i);
+      gameContainer.appendChild(cardElem);
+    }
+  }
+
+  function flipCard(index) {
+    if (lockBoard) return;
+    if (flippedIndices.includes(index) || matchedIndices.has(index)) return;
+
+    const cardElem = gameContainer.querySelector(`.card[data-index="${index}"]`);
+    cardElem.classList.add('flipped');
+
+    flippedIndices.push(index);
+
+    if (flippedIndices.length === 2) {
+      lockBoard = true;
+      attempts++;
+      updateAttempts();
+      setTimeout(checkMatch, 1000);
+    }
+  }
+
+  function unflipCards() {
+    flippedIndices.forEach(i => {
+      const cardElem = gameContainer.querySelector(`.card[data-index="${i}"]`);
+      if (cardElem) cardElem.classList.remove('flipped');
+    });
+    flippedIndices = [];
+    lockBoard = false;
+  }
+
+  function checkMatch() {
+    const [first, second] = flippedIndices;
+    if (cards[first] === cards[second]) {
+      matchedIndices.add(first);
+      matchedIndices.add(second);
+      flippedIndices.forEach(i => {
+        const cardElem = gameContainer.querySelector(`.card[data-index="${i}"]`);
+        cardElem.classList.add('matched');
+      });
+      flippedIndices = [];
+      lockBoard = false;
+
+      if (matchedIndices.size === cards.length) {
+        stopTimer();
+        setTimeout(() => {
+          alert(`Bravo ! Vous avez gagné en ${attempts} tentatives et en ${timerSpan.textContent}.`);
+        }, 500);
+      }
+    } else {
+      setTimeout(unflipCards, 1000);
+    }
+  }
+
+  function onCardClick(index) {
+    flipCard(index);
+  }
+
+  restartBtn.addEventListener('click', createBoard);
+
+  createBoard();
+</script>
+
+</body>
+</html>

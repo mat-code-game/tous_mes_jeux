@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Mini Bomber - 2 Joueurs (5 vies)</title>
+  <style>
+    body { background:#222; display:flex; justify-content:center; margin-top:24px; color:#ddd; font-family:Arial; }
+    #wrap { text-align:center; }
+    canvas { border:2px solid #fff; background:#eee; display:block; margin-bottom:8px; }
+    small { color:#bbb; display:block; margin-top:6px; }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="bomber"></canvas>
+    <small>P1 (bleu) → flèches + Espace · P2 (rouge) → ZQSD + A (AZERTY). Sur QWERTY, change Z→W et Q→A.</small>
+  </div>
+
+  <script>
+    // Configuration
+    const size = 24, W = 10, H = 10;
+    const canvas = document.getElementById('bomber');
+    canvas.width = W * size;
+    canvas.height = H * size;
+    const ctx = canvas.getContext('2d');
+
+    // grille (murs aléatoires)
+    const grid = Array.from({length:H}, () =>
+      Array.from({length:W}, () => Math.random() < 0.18 ? 1 : 0)
+    );
+
+    // s'assurer que les cases de spawn sont libres
+    const spawnA = {x:1,y:1}, spawnB = {x:W-2, y:H-2};
+    grid[spawnA.y][spawnA.x] = 0;
+    grid[spawnB.y][spawnB.x] = 0;
+
+    // joueurs (avec 5 vies)
+    const players = [
+      {x:spawnA.x, y:spawnA.y, color:'blue', score:0, bomb:null, lives:5, keys:{up:'arrowup', down:'arrowdown', left:'arrowleft', right:'arrowright', bomb:' '}},
+      {x:spawnB.x, y:spawnB.y, color:'red',  score:0, bomb:null, lives:5, keys:{up:'z', down:'s', left:'q', right:'d', bomb:'a'}}
+    ];
+
+    let explosions = [];
+    let lastKey = '';
+
+    function draw() {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      // murs
+      for(let y=0;y<H;y++){
+        for(let x=0;x<W;x++){
+          if(grid[y][x]){
+            ctx.fillStyle = '#6b6b6b';
+            ctx.fillRect(x*size, y*size, size-2, size-2);
+          } else {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(x*size, y*size, size-2, size-2);
+          }
+        }
+      }
+
+      // explosions
+      for(let e of explosions){
+        ctx.fillStyle = 'orange';
+        ctx.fillRect(e.x*size+3, e.y*size+3, size-6, size-6);
+      }
+
+      // bombes
+      for(let p of players){
+        if(p.bomb){
+          ctx.fillStyle = 'black';
+          ctx.beginPath();
+          ctx.arc(p.bomb.x*size + size/2, p.bomb.y*size + size/2, size/3, 0, Math.PI*2);
+          ctx.fill();
+        }
+      }
+
+      // joueurs (seulement si encore vivants)
+      for(let p of players){
+        if(p.lives > 0){
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.x*size+4, p.y*size+4, size-8, size-8);
+        }
+      }
+
+      // HUD
+      ctx.fillStyle = '#000';
+      ctx.font = '14px Arial';
+      ctx.fillText(`P1: ${players[0].score} / ❤️${players[0].lives}`, 6, 16);
+      ctx.fillText(`P2: ${players[1].score} / ❤️${players[1].lives}`, canvas.width - 120, 16);
+      ctx.font = '12px Arial';
+      ctx.fillText(`Key: ${lastKey}`, 6, canvas.height - 6);
+    }
+
+    // explosion (portée 2)
+    function explode(owner) {
+      const b = owner.bomb;
+      if(!b) return;
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+      const affected = [{x:b.x, y:b.y}];
+
+      for(let [dx,dy] of dirs){
+        for(let i=1;i<=2;i++){
+          const nx = b.x + dx*i, ny = b.y + dy*i;
+          if(nx<0 || ny<0 || nx>=W || ny>=H) break;
+          if(grid[ny][nx]) { // détruit le mur et stop
+            grid[ny][nx] = 0;
+            owner.score += 10;
+            affected.push({x:nx, y:ny});
+            break;
+          }
+          affected.push({x:nx, y:ny});
+        }
+      }
+
+      explosions = affected.slice();
+      // check collisions joueurs
+      for(let other of players){
+        if(affected.some(e => e.x===other.x && e.y===other.y)){
+          if(other !== owner && other.lives > 0){
+            owner.score += 50;
+            other.lives--; // perd une vie
+            if(other.lives > 0){
+              // téléporte la victime au spawn
+              other.x = (other === players[0]) ? spawnA.x : spawnB.x;
+              other.y = (other === players[0]) ? spawnA.y : spawnB.y;
+            } else {
+              // joueur éliminé → hors plateau
+              other.x = -1;
+              other.y = -1;
+            }
+          }
+        }
+      }
+
+      owner.bomb = null;
+      setTimeout(()=> explosions = [], 380);
+    }
+
+    // normaliser touche
+    function normalizeKey(e){
+      if(e.code === 'Space') return ' ';
+      return e.key.length === 1 ? e.key.toLowerCase() : e.key.toLowerCase();
+    }
+
+    document.addEventListener('keydown', e => {
+      const k = normalizeKey(e);
+      lastKey = k;
+      if(k === 'arrowleft' || k === 'arrowright' || k === 'arrowup' || k === 'arrowdown' || k === ' ') {
+        e.preventDefault();
+      }
+
+      for(let p of players){
+        if(p.lives <= 0) continue; // ne bouge plus si mort
+
+        // mouvements (cases libres uniquement)
+        if(k === p.keys.left && p.x > 0 && !grid[p.y][p.x-1]) p.x--;
+        if(k === p.keys.right && p.x < W-1 && !grid[p.y][p.x+1]) p.x++;
+        if(k === p.keys.up && p.y > 0 && !grid[p.y-1][p.x]) p.y--;
+        if(k === p.keys.down && p.y < H-1 && !grid[p.y+1][p.x]) p.y++;
+
+        // poser bombe
+        if(k === p.keys.bomb && !p.bomb){
+          p.bomb = {x: p.x, y: p.y, t: 120}; // 120 frames ≈ 2s
+        }
+      }
+    });
+
+    // update loop
+    function update(){
+      for(let p of players){
+        if(p.bomb){
+          p.bomb.t--;
+          if(p.bomb.t <= 0) explode(p);
+        }
+      }
+      draw();
+      requestAnimationFrame(update);
+    }
+
+    // démarrage
+    draw();
+    requestAnimationFrame(update);
+  </script>
+</body>
+</html>

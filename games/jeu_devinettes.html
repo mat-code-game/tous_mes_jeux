@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jeu de Devinettes avec affichage réponse</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
+    background-size: cover;
+    color: #eee;
+    text-align: center;
+    padding: 2rem;
+    margin: 0;
+    height: 100vh;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 0;
+  }
+  h1 {
+    color: #4caf50;
+    position: relative;
+    z-index: 1;
+  }
+  .container {
+    max-width: 600px;
+    margin: auto;
+    background: rgba(51, 51, 51, 0.8);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 0 15px #4caf50;
+    position: relative;
+    z-index: 1;
+  }
+  .devinette {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    min-height: 100px;
+  }
+  input[type="text"] {
+    width: 60%;
+    padding: 10px;
+    font-size: 1.2rem;
+    border-radius: 5px;
+    border: none;
+    margin-right: 10px;
+  }
+  button {
+    background-color: #4caf50;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 8px;
+    margin: 0 5px 10px 5px;
+    cursor: pointer;
+    color: #222;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background-color: #45a049;
+  }
+  .message {
+    margin-top: 1rem;
+    font-style: italic;
+    font-size: 1.3rem;
+    color: #ffeb3b;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .icon {
+    font-size: 1.8rem;
+  }
+  .compteur {
+    margin-top: 1rem;
+    font-size: 1rem;
+    color: #ccc;
+  }
+</style>
+</head>
+<body>
+  <h1>Jeu de Devinettes du Monde</h1>
+  <div class="container">
+    <div class="devinette" id="devinette">Chargement...</div>
+    <input type="text" id="userAnswer" placeholder="Tape ta réponse ici" autocomplete="off" />
+    <div>
+      <button id="submitAnswer">Répondre</button>
+      <button id="showAnswer">Afficher la réponse</button>
+      <button id="next">Deviner une autre</button>
+    </div>
+    <div class="message" id="message"></div>
+    <div class="compteur" id="compteur"></div>
+  </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const devinettes = [
+      { question: "Je suis toujours devant toi mais jamais visible. Qui suis-je ?", answer: "le futur" },
+      { question: "Qu’est-ce qui grandit quand on le partage, mais rapetisse quand on le garde ?", answer: "le secret" },
+      { question: "Sans ailes, je vole. Sans yeux, je pleure. Qui suis-je ?", answer: "le nuage" },
+      { question: "Je commence la nuit, termine le matin, et suis souvent trouvé dans les rêves. Qui suis-je ?", answer: "la lettre n" },
+      { question: "Plus tu en prends, plus tu en laisses derrière toi. Que suis-je ?", answer: "tes pas" },
+      { question: "Je parle sans bouche et entends sans oreilles. Qui suis-je ?", answer: "l’écho" },
+      { question: "Je ne suis pas vivant mais je grandis; je n’ai pas de poumons mais j’ai besoin d’air. Qui suis-je ?", answer: "le feu" },
+      { question: "Je peux remplir une pièce sans prendre d’espace. Que suis-je ?", answer: "la lumière" },
+      { question: "Je suis pris avant de vous manger. Qui suis-je ?", answer: "une photo" },
+      { question: "Je suis une ville et un fruit tropical. Qui suis-je ?", answer: "ananas" },
+      { question: "Je suis noir lorsque je suis propre, blanc lorsque je suis sale. Qui suis-je ?", answer: "le tableau noir" },
+      { question: "Je monte mais ne descends jamais. Qui suis-je ?", answer: "l’âge" },
+      { question: "Qu’est-ce qui a des clés mais ne peut pas ouvrir de portes ?", answer: "un piano" },
+      { question: "Quel est l’endroit où hier suit demain ?", answer: "le dictionnaire" },
+      { question: "Je suis léger comme une plume mais même le plus fort ne peut me tenir plus de cinq minutes. Qui suis-je ?", answer: "le souffle" },
+      { question: "Je suis rond et j'ai des dents, mais je ne peux pas mordre. Qui suis-je ?", answer: "une clé" },
+      { question: "Je cours sans jamais me fatiguer. Qui suis-je ?", answer: "un fleuve" },
+      { question: "Je peux être cassé sans être tenu. Qui suis-je ?", answer: "une promesse" },
+      { question: "J’ai une tête, un pied mais pas de corps. Qui suis-je ?", answer: "un lit" },
+      { question: "Je suis partout mais on ne peut pas me voir, ni me toucher. Qui suis-je ?", answer: "le vent" }
+    ];
+
+    let currentIndex = 0;
+    const devinetteEl = document.getElementById('devinette');
+    const userAnswerInput = document.getElementById('userAnswer');
+    const messageEl = document.getElementById('message');
+    const compteurEl = document.getElementById('compteur');
+    const submitAnswerBtn = document.getElementById('submitAnswer');
+    const showAnswerBtn = document.getElementById('showAnswer');
+    const nextBtn = document.getElementById('next');
+
+    function setMessage(text, isCorrect) {
+      const icon = isCorrect ? '✅' : '❌';
+      messageEl.innerHTML = `<span class="icon">${icon}</span><span>${text}</span>`;
+    }
+
+    function afficherDevinette() {
+      messageEl.textContent = '';
+      userAnswerInput.value = '';
+      userAnswerInput.disabled = false;
+      submitAnswerBtn.disabled = false;
+      showAnswerBtn.disabled = false;
+      const d = devinettes[currentIndex];
+      devinetteEl.textContent = d.question;
+      compteurEl.textContent = `Devinette ${currentIndex + 1} sur ${devinettes.length}`;
+      userAnswerInput.focus();
+    }
+
+    submitAnswerBtn.addEventListener('click', () => {
+      const userAnswer = userAnswerInput.value.trim().toLowerCase();
+      if (!userAnswer) {
+        setMessage("Merci de taper une réponse.", false);
+        return;
+      }
+      const correctAnswer = devinettes[currentIndex].answer.toLowerCase();
+      if (userAnswer === correctAnswer) {
+        setMessage("Bravo ! C'est la bonne réponse 🎉", true);
+        userAnswerInput.disabled = true;
+        submitAnswerBtn.disabled = true;
+      } else {
+        setMessage("Ce n'est pas la bonne réponse, essaie encore.", false);
+        userAnswerInput.focus();
+      }
+    });
+
+    showAnswerBtn.addEventListener('click', () => {
+      const correctAnswer = devinettes[currentIndex].answer;
+      setMessage(`La réponse est : ${correctAnswer}`, true);
+      userAnswerInput.disabled = true;
+      submitAnswerBtn.disabled = true;
+      showAnswerBtn.disabled = true;
+    });
+
+    nextBtn.addEventListener('click', () => {
+      currentIndex++;
+      if (currentIndex >= devinettes.length) {
+        currentIndex = 0;
+        alert("Vous avez parcouru toutes les devinettes ! On recommence.");
+      }
+      afficherDevinette();
+    });
+
+    afficherDevinette();
+  });
+</script>
+</body>
+</html>

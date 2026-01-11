@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚔️ Combat Épique Ultimate</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .particles {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: float 3s infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+      50% { transform: translateY(-20px) rotate(180deg); opacity: 0.6; }
+    }
+
+    #game-screen {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 3.5em;
+      color: #fff;
+      text-shadow: 0 0 30px rgba(255,255,255,0.5), 0 5px 15px rgba(0,0,0,0.3);
+      margin-bottom: 30px;
+      animation: glow 2s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% { text-shadow: 0 0 30px rgba(255,255,255,0.5), 0 5px 15px rgba(0,0,0,0.3); }
+      50% { text-shadow: 0 0 50px rgba(255,255,255,0.8), 0 5px 20px rgba(0,0,0,0.5); }
+    }
+
+    #battlefield {
+      position: relative;
+      width: 100%;
+      max-width: 1200px;
+      height: 400px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.2);
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+
+    .fighter-container {
+      position: absolute;
+      bottom: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #player-container {
+      left: 100px;
+    }
+
+    #enemy-container {
+      right: 100px;
+    }
+
+    .character {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+      position: relative;
+      transition: all 0.3s ease;
+      animation: idle 2s ease-in-out infinite;
+    }
+
+    @keyframes idle {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-10px) scale(1.05); }
+    }
+
+    #player {
+      background: radial-gradient(circle, #ffd700, #ff8c00);
+      box-shadow: 0 0 50px rgba(255,215,0,0.6), inset 0 0 30px rgba(255,255,255,0.3);
+    }
+
+    #enemy {
+      background: radial-gradient(circle, #8b00ff, #4b0082);
+      box-shadow: 0 0 50px rgba(139,0,255,0.6), inset 0 0 30px rgba(255,255,255,0.3);
+    }
+
+    .health-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .name-tag {
+      color: #fff;
+      font-size: 1.3em;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+
+    .health-bar-bg {
+      width: 200px;
+      height: 25px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 15px;
+      overflow: hidden;
+      border: 2px solid rgba(255,255,255,0.3);
+      position: relative;
+    }
+
+    .health-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #00ff88, #00ffff);
+      border-radius: 15px;
+      transition: width 0.5s ease, background 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .health-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+      animation: shine 2s infinite;
+    }
+
+    @keyframes shine {
+      0% { left: -100%; }
+      100% { left: 200%; }
+    }
+
+    .health-text {
+      color: #fff;
+      font-size: 0.9em;
+      margin-top: 5px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      font-weight: bold;
+    }
+
+    .stats {
+      display: flex;
+      gap: 15px;
+      margin-top: 10px;
+      font-size: 0.9em;
+    }
+
+    .stat {
+      background: rgba(0,0,0,0.5);
+      padding: 5px 12px;
+      border-radius: 10px;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    #controls {
+      margin-top: 30px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 1.1em;
+      border-radius: 15px;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    button:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      background: linear-gradient(135deg, #555 0%, #777 100%);
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .btn-attack {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .btn-special {
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+
+    .btn-heal {
+      background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+    }
+
+    .btn-ultimate {
+      background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 5px 20px rgba(255,8,68,0.5); }
+      50% { box-shadow: 0 5px 40px rgba(255,8,68,0.8); }
+    }
+
+    #combat-log {
+      margin-top: 20px;
+      width: 100%;
+      max-width: 1200px;
+      height: 150px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 15px;
+      padding: 15px;
+      overflow-y: auto;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+
+    .log-entry {
+      color: #fff;
+      margin: 5px 0;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(-20px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .damage-num {
+      position: absolute;
+      font-size: 2em;
+      font-weight: bold;
+      color: #ff4444;
+      text-shadow: 0 0 10px #fff, 0 0 20px #ff0000;
+      pointer-events: none;
+      animation: damageFloat 1s ease forwards;
+    }
+
+    @keyframes damageFloat {
+      0% { transform: translateY(0) scale(0.5); opacity: 1; }
+      100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+    }
+
+    .heal-num {
+      position: absolute;
+      font-size: 2em;
+      font-weight: bold;
+      color: #44ff44;
+      text-shadow: 0 0 10px #fff, 0 0 20px #00ff00;
+      pointer-events: none;
+      animation: healFloat 1s ease forwards;
+    }
+
+    @keyframes healFloat {
+      0% { transform: translateY(0) scale(0.5); opacity: 1; }
+      100% { transform: translateY(-80px) scale(1.3); opacity: 0; }
+    }
+
+    .attack-effect {
+      animation: shake 0.4s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0) rotate(0deg); }
+      25% { transform: translateX(-20px) rotate(-10deg); }
+      75% { transform: translateX(20px) rotate(10deg); }
+    }
+
+    .special-effect {
+      animation: specialAnim 0.6s ease;
+    }
+
+    @keyframes specialAnim {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      25% { transform: scale(1.3) rotate(-15deg); }
+      50% { transform: scale(0.9) rotate(15deg); }
+      75% { transform: scale(1.2) rotate(-10deg); }
+    }
+
+    .level-up-banner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      padding: 40px 60px;
+      border-radius: 20px;
+      font-size: 3em;
+      color: #fff;
+      font-weight: bold;
+      z-index: 1000;
+      box-shadow: 0 0 100px rgba(255,255,255,0.8);
+      animation: levelUpAnim 2s ease forwards;
+    }
+
+    @keyframes levelUpAnim {
+      0% { transform: translate(-50%, -50%) scale(0) rotate(-180deg); }
+      50% { transform: translate(-50%, -50%) scale(1.2) rotate(10deg); }
+      100% { transform: translate(-50%, -50%) scale(0) rotate(180deg); }
+    }
+
+    #restart-btn {
+      display: none;
+      margin-top: 20px;
+      background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+      color: #333;
+    }
+
+    .victory-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .victory-text {
+      font-size: 5em;
+      color: #ffd700;
+      font-weight: bold;
+      text-shadow: 0 0 50px #ffd700;
+      animation: victoryPulse 1s ease infinite;
+    }
+
+    @keyframes victoryPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+  
+  <div id="game-screen">
+    <h1>⚔️ COMBAT ÉPIQUE ULTIMATE ⚔️</h1>
+    
+    <div id="battlefield">
+      <div id="player-container" class="fighter-container">
+        <div id="player" class="character">🧙‍♂️</div>
+        <div class="health-container">
+          <div class="name-tag">HÉROS</div>
+          <div class="health-bar-bg">
+            <div id="player-health-bar" class="health-bar"></div>
+          </div>
+          <div class="health-text" id="player-health-text">100 / 100</div>
+          <div class="stats">
+            <div class="stat">⚡ Mana: <span id="player-mana">100</span></div>
+            <div class="stat">⭐ Niv: <span id="player-level">1</span></div>
+            <div class="stat">📊 XP: <span id="player-xp">0</span>/100</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="enemy-container" class="fighter-container">
+        <div id="enemy" class="character">👾</div>
+        <div class="health-container">
+          <div class="name-tag">BOSS NIVEAU <span id="boss-level">1</span></div>
+          <div class="health-bar-bg">
+            <div id="enemy-health-bar" class="health-bar"></div>
+          </div>
+          <div class="health-text" id="enemy-health-text">150 / 150</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="controls">
+      <button id="attack-btn" class="btn-attack">⚔️ Attaque (5 mana)</button>
+      <button id="special-btn" class="btn-special">🔥 Frappe Puissante (20 mana)</button>
+      <button id="heal-btn" class="btn-heal">💚 Soin (25 mana)</button>
+      <button id="ultimate-btn" class="btn-ultimate">💥 ULTIMATE (50 mana)</button>
+    </div>
+
+    <div id="combat-log"></div>
+    <button id="restart-btn">🔄 Combat Suivant</button>
+  </div>
+
+  <script>
+    class Fighter {
+    constructor(name, health, baseDamage, isPlayer = false) {
+        this.name = name;
+        this.maxHealth = health;
+        this.health = health;
+        this.baseDamage = baseDamage;
+        this.isPlayer = isPlayer;
+        this.level = 1;
+        this.mana = 100;
+        this.maxMana = 100;
+    }
+
+    takeDamage(amount) {
+        const actualDamage = Math.min(amount, this.health);
+        this.health -= actualDamage;
+        return actualDamage;
+    }
+
+    heal(amount) {
+        const actualHeal = Math.min(amount, this.maxHealth - this.health);
+        this.health += actualHeal;
+        return actualHeal;
+    }
+
+    regenerateMana(amount = 2) {
+        this.mana = Math.min(this.maxMana, this.mana + amount);
+    }
+    }
+
+    let player = new Fighter('Héros', 100, 4, true);
+    let enemy = new Fighter('Boss', 150, 5);
+    let bossLevel = 1;
+    let inCombat = false;
+
+    const playerEl = document.getElementById('player');
+    const enemyEl = document.getElementById('enemy');
+    const attackBtn = document.getElementById('attack-btn');
+    const specialBtn = document.getElementById('special-btn');
+    const healBtn = document.getElementById('heal-btn');
+    const ultimateBtn = document.getElementById('ultimate-btn');
+    const combatLog = document.getElementById('combat-log');
+
+    function updateUI() {
+    document.getElementById('player-health-bar').style.width = (player.health / player.maxHealth * 100) + '%';
+    document.getElementById('enemy-health-bar').style.width = (enemy.health / enemy.maxHealth * 100) + '%';
+    document.getElementById('player-health-text').textContent = `${player.health} / ${player.maxHealth}`;
+    document.getElementById('enemy-health-text').textContent = `${enemy.health} / ${enemy.maxHealth}`;
+    document.getElementById('player-mana').textContent = player.mana;
+    document.getElementById('player-level').textContent = player.level;
+    document.getElementById('boss-level').textContent = bossLevel;
+    }
+
+    function log(message, color = '#fff') {
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.style.color = color;
+    entry.innerHTML = message;
+    combatLog.insertBefore(entry, combatLog.firstChild);
+    }
+
+    function showDamage(target, amount, color = '#ff4444') {
+    const num = document.createElement('div');
+    num.className = 'damage-num';
+    num.textContent = `-${amount}`;
+    num.style.color = color;
+    num.style.left = '50%';
+    num.style.top = '30%';
+    target.appendChild(num);
+    setTimeout(() => num.remove(), 1000);
+    }
+
+    function showHeal(target, amount) {
+    const num = document.createElement('div');
+    num.className = 'heal-num';
+    num.textContent = `+${amount}`;
+    num.style.left = '50%';
+    num.style.top = '30%';
+    target.appendChild(num);
+    setTimeout(() => num.remove(), 1000);
+    }
+
+    function disableControls() {
+    inCombat = true;
+    attackBtn.disabled = true;
+    specialBtn.disabled = true;
+    healBtn.disabled = true;
+    ultimateBtn.disabled = true;
+    }
+
+    function enableControls() {
+    inCombat = false;
+    attackBtn.disabled = false;
+    specialBtn.disabled = false;
+    healBtn.disabled = false;
+    ultimateBtn.disabled = false;
+    updateUI();
+    }
+
+    // --- Réplique du boss ---
+    function bossAttack() {
+    if (enemy.health <= 0 || player.health <= 0) return;
+
+    disableControls();
+
+    const random = Math.random();
+    
+    const damageMultiplicator = 1.3;
+    const bossBaseDamage = Math.floor((enemy.baseDamage+enemy.level)*damageMultiplicator);
+    const bossSpecialDamage = bossBaseDamage + 5*enemy.baseDamage;
+    const bossUltimateDamage = bossBaseDamage +10*enemy.baseDamage ;
+    
+    let dmg = 0;
+    if (random < 0.6) {
+        dmg = player.takeDamage(bossBaseDamage);
+        log(`👾 ${enemy.name} attaque et inflige ${dmg} dégâts !`, "#ff8888");
+    } else if (random < 0.9) {
+        dmg = player.takeDamage(bossSpecialDamage);
+        log(`💥 ${enemy.name} frappe fort et inflige ${dmg} dégâts !`, "#ff4444");
+    } else {
+        dmg = player.takeDamage(bossUltimateDamage);
+        log(`🔥 ${enemy.name} utilise une attaque puissante ! ${dmg} dégâts !`, "#ff0000");
+    }
+
+    showDamage(document.getElementById('player-container'), dmg);
+
+    if (player.health <= 0) {
+        setTimeout(defeat, 600);
+    } else {
+        player.regenerateMana(10);
+        setTimeout(enableControls, 800);
+    }
+
+    updateUI();
+    }
+
+    // --- Fin de tour du joueur ---
+    function endTurn() {
+    updateUI();
+    if (enemy.health <= 0) {
+        setTimeout(victory, 500);
+    } else if (player.health <= 0) {
+        setTimeout(defeat, 500);
+    } else {
+        setTimeout(bossAttack, 1000);
+    }
+    }
+
+    // --- Actions du joueur ---
+    const basicDamage = player.baseDamage+player.level;
+    const specialDamage = basicDamage*3;
+    const ultimateDamage = basicDamage*10;
+
+    attackBtn.onclick = () => {
+    if (player.mana < 5) return log("⚠️ Pas assez de mana!", "#ff9900");
+    disableControls();
+    player.mana -= 5;
+    const dmg = enemy.takeDamage(basicDamage);
+    showDamage(document.getElementById('enemy-container'), dmg);
+    log(`⚔️ ${player.name} attaque et inflige ${dmg} dégâts!`, "#00ffff");
+    setTimeout(endTurn, 800);
+    };
+
+    specialBtn.onclick = () => {
+    if (player.mana < 20) return log("⚠️ Pas assez de mana!", "#ff9900");
+    disableControls();
+    player.mana -= 20;
+    const dmg = enemy.takeDamage(specialDamage);
+    showDamage(document.getElementById('enemy-container'), dmg, "#ff6600");
+    log(`🔥 Frappe puissante! ${dmg} dégâts infligés!`, "#ff6600");
+    setTimeout(endTurn, 800);
+    };
+
+    healBtn.onclick = () => {
+    if (player.mana < 25) return log("⚠️ Pas assez de mana!", "#ff9900");
+    disableControls();
+    player.mana -= 25;
+    const heal = player.heal(50);
+    showHeal(document.getElementById('player-container'), heal);
+    log(`💚 ${player.name} se soigne de ${heal} PV!`, "#00ff88");
+    setTimeout(endTurn, 800);
+    };
+
+    ultimateBtn.onclick = () => {
+    if (player.mana < 50) return log("⚠️ Pas assez de mana!", "#ff9900");
+    disableControls();
+    player.mana -= 50;
+    const dmg = enemy.takeDamage(ultimateDamage);
+    showDamage(document.getElementById('enemy-container'), dmg, "#ff00ff");
+    log(`💥 ULTIMATE! ${dmg} dégâts infligés!`, "#ff00ff");
+    setTimeout(endTurn, 800);
+    };
+
+    // --- Victoire / Défaite ---
+    function victory() {
+    log("🏆 Boss vaincu !", "#ffd700");
+    bossLevel++;
+
+    // Le joueur monte de niveau
+    player.level++;
+    player.maxHealth += 20;
+    player.health = player.maxHealth;
+    player.maxMana += 40;
+    player.mana = Math.min(player.maxMana, player.mana + 100);
+
+    // Nouveau boss plus fort
+    const newHealth = 150 + bossLevel * 20;
+    const newDamage = 5 + bossLevel * 2;
+    enemy = new Fighter("Boss", newHealth, newDamage);
+
+    log(`⭐ Niveau ${player.level} atteint ! PV max: ${player.maxHealth}, Mana max: ${player.maxMana}`, "#00ff88");
+    log(`👾 Nouveau boss niveau ${bossLevel} ! PV: ${newHealth}, Dégâts: ${newDamage}`, "#ff4444");
+
+    updateUI();
+    enableControls();
+    }
+
+    function defeat() {
+    log("💀 Défaite... Recharge ton mana et réessaye.", "#ff4444");
+    attackBtn.disabled = specialBtn.disabled = healBtn.disabled = ultimateBtn.disabled = true;
+    }
+
+    updateUI();
+    enableControls();
+    </script>
+</body>
