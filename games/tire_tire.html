@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Jeu de tir 2D - Météorites</title>
+  <title>météorite</title>
   <style>
     body {
       margin: 0;
@@ -59,7 +59,7 @@
     const player1 = {
       x: 100,
       y: canvas.height / 2,
-      color: "lime",
+      color: "yellow",
       hp: 5,
       score: 0
     };
@@ -171,7 +171,7 @@
         player2.y = oldY;
       }
 
-      if (keys["m"] || keys["M"]) shoot(2, "left");
+      if (keys["0"] || keys["0"]) shoot(2, "left");
     }
 
     // IA joueur 2
