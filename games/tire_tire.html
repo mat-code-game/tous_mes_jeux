@@ -46,12 +46,12 @@
     const PLAYER_SIZE = 30;
     const BULLET_SIZE = 5;
     const METEOR_SPEED = 1.5;
-    const METEOR_SPAWN_RATE = 0.02;
+    const METEOR_SPAWN_RATE = 0.02; // chance de spawn par frame
 
     let mode = "pve";
     let keys = {};
     let bullets = [];
-    let meteors = [];
+    let meteors = []; // NOUVEAU : tableau des météorites
     let lastShotTimeP1 = 0;
     let lastShotTimeP2 = 0;
     const SHOT_DELAY = 250;
@@ -80,9 +80,10 @@
       player2.y = canvas.height / 2;
       player2.hp = 5;
       bullets = [];
-      meteors = [];
+      meteors = []; // reset météorites
     }
 
+    // ====== COLLISION RECTANGLE / RECTANGLE ======
     function rectsOverlap(a, b) {
       return !(
         a.x + a.w < b.x ||
@@ -92,22 +93,25 @@
       );
     }
 
+    // Spawn d'une nouvelle météorite
     function spawnMeteor() {
       if (Math.random() < METEOR_SPAWN_RATE) {
         meteors.push({
           x: Math.random() * (canvas.width - 60) + 30,
           y: -30,
-          w: 40 + Math.random() * 40,
+          w: 40 + Math.random() * 40, // taille aléatoire 40-80
           h: 40 + Math.random() * 40,
-          vx: (Math.random() - 0.5) * 1,
-          color: `hsl(${200 + Math.random() * 60}, 70%, 40%)`
+          vx: (Math.random() - 0.5) * 1, // léger mouvement horizontal
+          color: `hsl(${200 + Math.random() * 60}, 70%, 40%)` // gris-bleu
         });
       }
     }
 
+    // Gestion clavier
     window.addEventListener("keydown", (e) => keys[e.key] = true);
     window.addEventListener("keyup", (e) => keys[e.key] = false);
 
+    // Tir
     function shoot(fromPlayer, dir) {
       const now = performance.now();
       if (fromPlayer === 1 && now - lastShotTimeP1 < SHOT_DELAY) return;
@@ -127,7 +131,11 @@
       else lastShotTimeP2 = now;
     }
 
+    // Update joueur 1
     function updatePlayer1() {
+      const oldX = player1.x;
+      const oldY = player1.y;
+
       if (keys["z"] || keys["Z"]) player1.y -= SPEED;
       if (keys["s"] || keys["S"]) player1.y += SPEED;
       if (keys["q"] || keys["Q"]) player1.x -= SPEED;
@@ -136,10 +144,20 @@
       player1.x = Math.max(PLAYER_SIZE / 2, Math.min(canvas.width - PLAYER_SIZE / 2, player1.x));
       player1.y = Math.max(PLAYER_SIZE / 2, Math.min(canvas.height - PLAYER_SIZE / 2, player1.y));
 
+      // Collision avec météorites
+      if (playerHitsMeteor(player1)) {
+        player1.x = oldX;
+        player1.y = oldY;
+      }
+
       if (keys["e"] || keys["E"]) shoot(1, "right");
     }
 
+    // Update joueur 2 humain
     function updatePlayer2Human() {
+      const oldX = player2.x;
+      const oldY = player2.y;
+
       if (keys["ArrowUp"]) player2.y -= SPEED;
       if (keys["ArrowDown"]) player2.y += SPEED;
       if (keys["ArrowLeft"]) player2.x -= SPEED;
@@ -148,21 +166,36 @@
       player2.x = Math.max(PLAYER_SIZE / 2, Math.min(canvas.width - PLAYER_SIZE / 2, player2.x));
       player2.y = Math.max(PLAYER_SIZE / 2, Math.min(canvas.height - PLAYER_SIZE / 2, player2.y));
 
-      if (keys["0"]) shoot(2, "left");
+      if (playerHitsMeteor(player2)) {
+        player2.x = oldX;
+        player2.y = oldY;
+      }
+
+      if (keys["0"] || keys["0"]) shoot(2, "left");
     }
 
+    // IA joueur 2
     function updatePlayer2AI() {
-      if (player2.y < player1.y - 10) player2.y += SPEED * 0.6;
-      else if (player2.y > player1.y + 10) player2.y -= SPEED * 0.6;
+      const oldX = player2.x;
+      const oldY = player2.y;
 
-      player2.x += Math.sin(performance.now() / 500) * 0.5;
+      if (player2.y < player1.y - 5) player2.y += SPEED * 0.8;
+      else if (player2.y > player1.y + 5) player2.y -= SPEED * 0.8;
+
+      player2.x += Math.sin(performance.now() / 500) * 0.8;
 
       player2.x = Math.max(PLAYER_SIZE / 2, Math.min(canvas.width - PLAYER_SIZE / 2, player2.x));
       player2.y = Math.max(PLAYER_SIZE / 2, Math.min(canvas.height - PLAYER_SIZE / 2, player2.y));
 
+      if (playerHitsMeteor(player2)) {
+        player2.x = oldX;
+        player2.y = oldY;
+      }
+
       if (Math.abs(player2.y - player1.y) < 40) shoot(2, "left");
     }
 
+    // Collision joueur / météorite
     function playerHitsMeteor(player) {
       const playerBox = {
         x: player.x - PLAYER_SIZE / 2,
@@ -176,6 +209,7 @@
       return false;
     }
 
+    // Update balles
     function updateBullets() {
       for (let i = bullets.length - 1; i >= 0; i--) {
         const b = bullets[i];
@@ -186,25 +220,28 @@
           continue;
         }
 
+        // Collision balle / météorites -> détruire les deux
         for (let j = meteors.length - 1; j >= 0; j--) {
           const m = meteors[j];
           const bulletBox = { x: b.x - BULLET_SIZE/2, y: b.y - BULLET_SIZE/2, w: BULLET_SIZE, h: BULLET_SIZE };
           if (rectsOverlap(bulletBox, m)) {
             bullets.splice(i, 1);
             meteors.splice(j, 1);
-            player1.score++;
+            player1.score++; // bonus points pour météorite détruite
             info.textContent = "Météorite détruite !";
             break;
           }
         }
         if (!bullets[i]) continue;
 
+        // Collision joueur 1
         if (b.owner === 2 && Math.abs(b.x - player1.x) < PLAYER_SIZE / 2 && Math.abs(b.y - player1.y) < PLAYER_SIZE / 2) {
           player1.hp -= 1;
           bullets.splice(i, 1);
           continue;
         }
 
+        // Collision joueur 2
         if (b.owner === 1 && Math.abs(b.x - player2.x) < PLAYER_SIZE / 2 && Math.abs(b.y - player2.y) < PLAYER_SIZE / 2) {
           player2.hp -= 1;
           bullets.splice(i, 1);
@@ -213,19 +250,22 @@
       }
     }
 
+    // Update météorites
     function updateMeteors() {
-      spawnMeteor();
+      spawnMeteor(); // nouvelle météorite possible
 
       for (let i = meteors.length - 1; i >= 0; i--) {
         const m = meteors[i];
         m.y += METEOR_SPEED;
         m.x += m.vx;
 
+        // Sortie en bas
         if (m.y > canvas.height + 50) {
           meteors.splice(i, 1);
           continue;
         }
 
+        // Collision avec joueurs (dégâts)
         const p1Box = { x: player1.x - PLAYER_SIZE/2, y: player1.y - PLAYER_SIZE/2, w: PLAYER_SIZE, h: PLAYER_SIZE };
         if (rectsOverlap(p1Box, m)) {
           player1.hp -= 1;
@@ -242,6 +282,7 @@
       }
     }
 
+    // Dessin
     function drawPlayer(p) {
       ctx.fillStyle = p.color;
       ctx.fillRect(p.x - PLAYER_SIZE/2, p.y - PLAYER_SIZE/2, PLAYER_SIZE, PLAYER_SIZE);
@@ -284,6 +325,7 @@
       ctx.fillText(`Météorites: ${meteors.length}`, canvas.width / 2, canvas.height - 20);
     }
 
+    // Boucle principale
     function loop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -316,6 +358,7 @@
       requestAnimationFrame(loop);
     }
 
+    // Boutons
     document.getElementById("modePvAI").onclick = () => {
       mode = "pve";
       info.textContent = "Mode 1 Joueur vs IA.";
