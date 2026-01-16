@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ping pong smash</title>
+  <style>
+    :root {
+      --bg: #0f1226;
+      --fg: #e8ecf3;
+      --accent: #7ac6ff;
+      --muted: #303759;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 50% -10%, #1c2142, var(--bg));
+      color: var(--fg);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      display: grid;
+      place-items: center;
+      gap: 16px;
+    }
+    .wrap { width: min(96vw, 900px); }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    h1 { font-size: 20px; margin: 0; letter-spacing: .3px; font-weight: 700; }
+    .controls { opacity: .9; font-size: 14px; }
+    .controls kbd { background: #1b2140; padding: 2px 6px; border-radius: 6px; border: 1px solid #2c3667; }
+    .panel {
+      display: flex; gap: 10px; align-items: center; justify-content: space-between; margin: 8px 0;
+    }
+    .btn { cursor: pointer; border: 1px solid #2a355f; background: #151a35; color: var(--fg); border-radius: 10px; padding: 8px 12px; font-weight: 600; }
+    .btn:active { transform: translateY(1px); }
+    .score { font-size: 18px; font-weight: 700; letter-spacing: .8px; }
+    canvas { width: 100%; height: auto; display: block; background: #0b0f24; border: 1px solid #1c2549; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+    footer { opacity: .65; font-size: 12px; margin-top: 4px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>🏓 ping pong smash</h1>
+      <div class="controls">
+        <span>Joueur: <kbd>Z</kbd>/<kbd>S</kbd> (ou <kbd>↑</kbd>/<kbd>↓</kbd>) · Pause: <kbd>Espace</kbd> · Restart: <kbd>R</kbd></span>
+      </div>
+    </header>
+
+    <div class="panel">
+      <div class="score" id="score">0 — 0</div>
+      <div>
+        <button class="btn" id="pauseBtn">Pause</button>
+        <button class="btn" id="restartBtn">Restart</button>
+      </div>
+    </div>
+
+    <canvas id="game" width="900" height="520" aria-label="Pong Game"></canvas>
+
+    <footer>
+      ping pong smash
+    </footer>
+  </div>
+
+  <script>
+    // === Utility: DPR-aware canvas scaling for crisp rendering ===
+    function setupHiDPICanvas(canvas) {
+      const ctx = canvas.getContext('2d');
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const cssWidth = canvas.clientWidth || canvas.width;
+      const cssHeight = canvas.clientHeight || canvas.height;
+      canvas.width = Math.floor(cssWidth * dpr);
+      canvas.height = Math.floor(cssHeight * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return ctx;
+    }
+
+    // === Game constants ===
+    const W = 900;       // logical canvas width (CSS pixels)
+    const H = 520;       // logical canvas height (CSS pixels)
+    const PADDLE_W = 12;
+    const PADDLE_H = 90;
+    const BALL_SIZE = 12;
+    const PADDLE_SPEED = 7;    // player paddle max speed
+    const AI_MAX_SPEED = 2;    // AI paddle max speed per frame
+    const BALL_SPEED_INIT = 6; // initial ball speed
+    const BALL_SPEED_MAX = 12; // clamp to avoid tunneling
+    const WIN_SCORE = 11;
+
+    // === Game state ===
+    const canvas = document.getElementById('game');
+    const scoreEl = document.getElementById('score');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const ctx = setupHiDPICanvas(canvas);
+
+    // Keep logical size in sync with CSS so collisions use CSS pixels
+    function syncCanvasSize() {
+      const cssW = canvas.getBoundingClientRect().width;
+      const scale = cssW / W;
+      canvas.style.height = (H * scale) + 'px';
+      setupHiDPICanvas(canvas);
+    }
+    window.addEventListener('resize', syncCanvasSize);
+    syncCanvasSize();
+
+    const state = {
+      running: true,         // paused when false
+      gameOver: false,
+      leftScore: 0,
+      rightScore: 0,
+      // Entities
+      left: { x: 24, y: H/2 - PADDLE_H/2, w: PADDLE_W, h: PADDLE_H, vy: 0 },
+      right: { x: W - 24 - PADDLE_W, y: H/2 - PADDLE_H/2, w: PADDLE_W, h: PADDLE_H, vy: 0 },
+      ball: { x: W/2, y: H/2, vx: BALL_SPEED_INIT, vy: 0, size: BALL_SIZE },
+      keys: { up: false, down: false, z: false, s: false }
+    };
+
+    // === Input handling ===
+    window.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case 'ArrowUp': state.keys.up = true; break;
+        case 'ArrowDown': state.keys.down = true; break;
+        case 'z': case 'Z': state.keys.z = true; break;
+        case 's': case 'S': state.keys.s = true; break;
+        case ' ': // Space to toggle pause
+          if (!state.gameOver) togglePause();
+          break;
+        case 'r': case 'R': restart(); break;
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      switch (e.key) {
+        case 'ArrowUp': state.keys.up = false; break;
+        case 'ArrowDown': state.keys.down = false; break;
+        case 'z': case 'Z': state.keys.z = false; break;
+        case 's': case 'S': state.keys.s = false; break;
+      }
+    });
+
+    pauseBtn.addEventListener('click', () => { if (!state.gameOver) togglePause(); });
+    restartBtn.addEventListener('click', restart);
+
+    function togglePause() {
+      state.running = !state.running;
+      pauseBtn.textContent = state.running ? 'Pause' : 'Resume';
+    }
+
+    function restart() {
+      state.leftScore = 0; state.rightScore = 0; state.gameOver = false; state.running = true;
+      pauseBtn.textContent = 'Pause';
+      centerBall(Math.random() < 0.5 ? 1 : -1);
+      state.left.y = H/2 - PADDLE_H/2;
+      state.right.y = H/2 - PADDLE_H/2;
+      updateScore();
+    }
+
+    function updateScore() {
+      scoreEl.textContent = `${state.leftScore} — ${state.rightScore}`;
+    }
+
+    function centerBall(direction = 1) {
+      // Reset ball in the center with random vertical velocity
+      state.ball.x = W/2; state.ball.y = H/2;
+      const angle = (Math.random() * 0.6 - 0.3); // -0.3..0.3 rad (~-17°..17°)
+      const speed = BALL_SPEED_INIT * (1 + Math.random() * 0.2);
+      state.ball.vx = Math.sign(direction) * Math.max(4, Math.min(BALL_SPEED_INIT, speed));
+      state.ball.vy = Math.tan(angle) * Math.abs(state.ball.vx);
+    }
+
+    // === Physics & AI ===
+    function step() {
+      if (!state.running || state.gameOver) return;
+
+      // Player input (left paddle)
+      const moveUp = state.keys.up || state.keys.z;
+      const moveDn = state.keys.down || state.keys.s;
+      state.left.vy = (moveUp ? -PADDLE_SPEED : 0) + (moveDn ? PADDLE_SPEED : 0);
+      state.left.y += state.left.vy;
+
+      // Clamp paddles into the field
+      state.left.y = Math.max(0, Math.min(H - PADDLE_H, state.left.y));
+      state.right.y = Math.max(0, Math.min(H - PADDLE_H, state.right.y));
+
+      // Simple AI: track ball with capped speed and a tiny prediction
+      const targetY = state.ball.y - PADDLE_H/2 + state.ball.vy * 4; // lead the target a bit
+      if (targetY < state.right.y) state.right.y -= Math.min(AI_MAX_SPEED, state.right.y - targetY);
+      else if (targetY > state.right.y) state.right.y += Math.min(AI_MAX_SPEED, targetY - state.right.y);
+
+      // Move ball
+      state.ball.x += state.ball.vx;
+      state.ball.y += state.ball.vy;
+
+      // Wall collisions
+      if (state.ball.y <= 0 && state.ball.vy < 0) { state.ball.y = 0; state.ball.vy *= -1; }
+      if (state.ball.y + BALL_SIZE >= H && state.ball.vy > 0) { state.ball.y = H - BALL_SIZE; state.ball.vy *= -1; }
+
+      // Paddle collisions (AABB)
+      // Left paddle
+      if (rectIntersect(state.ball.x, state.ball.y, BALL_SIZE, BALL_SIZE, state.left.x, state.left.y, PADDLE_W, PADDLE_H) && state.ball.vx < 0) {
+        bounceOffPaddle(state.left);
+      }
+      // Right paddle
+      if (rectIntersect(state.ball.x, state.ball.y, BALL_SIZE, BALL_SIZE, state.right.x, state.right.y, PADDLE_W, PADDLE_H) && state.ball.vx > 0) {
+        bounceOffPaddle(state.right);
+      }
+
+      // Scoring
+      if (state.ball.x + BALL_SIZE < 0) { // right player scores
+        state.rightScore += 1; onScore(-1);
+      }
+      if (state.ball.x > W) { // left player scores
+        state.leftScore += 1; onScore(1);
+      }
+    }
+
+    function onScore(nextServeDir) {
+      updateScore();
+      if (state.leftScore >= WIN_SCORE || state.rightScore >= WIN_SCORE) {
+        state.gameOver = true;
+        state.running = false;
+        pauseBtn.textContent = 'Resume';
+      } else {
+        centerBall(nextServeDir);
+      }
+    }
+
+    function rectIntersect(ax, ay, aw, ah, bx, by, bw, bh) {
+      return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+    }
+
+    function bounceOffPaddle(paddle) {
+      // Compute contact point (-1 top .. +1 bottom) to add vertical deflection
+      const paddleCenter = paddle.y + PADDLE_H / 2;
+      const ballCenter = state.ball.y + BALL_SIZE / 2;
+      const rel = (ballCenter - paddleCenter) / (PADDLE_H / 2);
+      const speed = Math.min(BALL_SPEED_MAX, Math.hypot(state.ball.vx, state.ball.vy) * 1.05);
+      const angle = rel * 0.6; // max ~34° off horizontal
+      const dir = paddle === state.left ? 1 : -1;
+      state.ball.vx = Math.cos(angle) * speed * dir;
+      state.ball.vy = Math.sin(angle) * speed;
+
+      // Nudge the ball outside the paddle to avoid sticking
+      if (dir === 1) state.ball.x = state.left.x + PADDLE_W + 0.5;
+      else state.ball.x = state.right.x - BALL_SIZE - 0.5;
+    }
+
+    // === Rendering ===
+    function draw() {
+      // Clear
+      ctx.fillStyle = '#0b0f24';
+      ctx.fillRect(0, 0, W, H);
+
+      // Middle dashed line
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.setLineDash([10, 14]);
+      ctx.beginPath();
+      ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Paddles
+      ctx.fillStyle = '#e8ecf3';
+      roundRect(ctx, state.left.x, state.left.y, PADDLE_W, PADDLE_H, 6);
+      roundRect(ctx, state.right.x, state.right.y, PADDLE_W, PADDLE_H, 6);
+
+      // Ball
+      ctx.fillStyle = '#7ac6ff';
+      ctx.fillRect(state.ball.x, state.ball.y, BALL_SIZE, BALL_SIZE);
+
+      // Overlay for pause / game over
+      if (!state.running || state.gameOver) {
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.fillRect(0,0,W,H);
+        ctx.fillStyle = '#e8ecf3';
+        ctx.font = 'bold 28px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(state.gameOver ? winnerText() : 'Pause', W/2, H/2 - 10);
+        ctx.font = '16px system-ui, sans-serif';
+        ctx.fillText('Espace: Reprendre · R: Restart', W/2, H/2 + 20);
+      }
+
+      // Score (also in DOM, but keep HUD on canvas for full-screen use)
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = 'bold 20px system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`${state.leftScore}`, 20, 28);
+      ctx.textAlign = 'right';
+      ctx.fillText(`${state.rightScore}`, W - 20, 28);
+    }
+
+    function winnerText() {
+      if (state.leftScore > state.rightScore) return 'Victoire !';
+      if (state.leftScore < state.rightScore) return 'Défaite...';
+      return 'Terminé';
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rr);
+      ctx.arcTo(x + w, y + h, x, y + h, rr);
+      ctx.arcTo(x, y + h, x, y, rr);
+      ctx.arcTo(x, y, x + w, y, rr);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // === Main loop ===
+    function loop() {
+      step();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    // Init
+    updateScore();
+    centerBall(Math.random() < 0.5 ? 1 : -1);
+    loop();
+  </script>
+</body>
+</html>
