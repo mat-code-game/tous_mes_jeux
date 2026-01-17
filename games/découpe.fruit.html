@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fruit Juice Slicer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 450px;
+            width: 90%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #764ba2;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        #stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat {
+            text-align: center;
+            font-size: 14px;
+            color: #667eea;
+            font-weight: bold;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 18px;
+            color: #764ba2;
+            margin-top: 2px;
+        }
+
+        #levelInfo {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #levelTitle {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        #objectiveBar {
+            background: rgba(255,255,255,0.3);
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        #objectiveProgress {
+            background: white;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+            border-radius: 10px;
+        }
+
+        #blenderContainer {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(180deg, transparent 0%, rgba(200,200,200,0.2) 100%);
+            border: 4px solid #333;
+            border-radius: 20px 20px 40px 40px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            cursor: crosshair;
+        }
+
+        .fruit {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            font-size: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .fruit-half {
+            position: absolute;
+            width: 30px;
+            height: 60px;
+            font-size: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        #juiceLevel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 0;
+            background: linear-gradient(180deg, rgba(255,150,50,0.6), rgba(255,100,100,0.8));
+            transition: height 0.3s, background 0.3s;
+            border-radius: 0 0 36px 36px;
+            pointer-events: none;
+        }
+
+        #controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #addFruitBtn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        #blendBtn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        #serveBtn {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        #message {
+            text-align: center;
+            min-height: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #764ba2;
+            margin-top: 10px;
+        }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .slash {
+            position: absolute;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, white, transparent);
+            pointer-events: none;
+            box-shadow: 0 0 10px rgba(255,255,255,0.8);
+        }
+
+        @keyframes blend {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .blending {
+            animation: blend 0.1s infinite;
+        }
+
+        #instructions {
+            text-align: center;
+            font-size: 14px;
+            color: #999;
+            margin-top: 10px;
+        }
+
+        #levelComplete {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #levelCompleteBox {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        #levelCompleteBox h2 {
+            color: #764ba2;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        #levelCompleteBox p {
+            font-size: 18px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        #nextLevelBtn {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        #nextLevelBtn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <h1>🔪 Fruit Juice Slicer appuie sur les fruits pour les découper et servir les jus met en pleine écran pour joué</h1>
+        <div id="stats">
+            <div class="stat">
+                Score
+                <span class="stat-value" id="score">0</span>
+            </div>
+            <div class="stat">
+                Combo
+                <span class="stat-value" id="combo">0</span>x
+            </div>
+            <div class="stat">
+                Niveau
+                <span class="stat-value" id="levelNum">1</span>
+            </div>
+        </div>
+        <div id="levelInfo">
+            <div id="levelTitle">Niveau 1: Débutant</div>
+            <div id="objective">Objectif: Servir 3 jus</div>
+            <div id="objectiveBar">
+                <div id="objectiveProgress"></div>
+            </div>
+        </div>
+        <div id="blenderContainer">
+            <div id="juiceLevel"></div>
+        </div>
+        <div id="controls">
+            <button id="addFruitBtn">+ Fruit</button>
+            <button id="blendBtn">Mixer</button>
+            <button id="serveBtn">Servir</button>
+        </div>
+        <div id="message"></div>
+        <div id="instructions">Glissez pour découper les fruits ! ✨</div>
+    </div>
+
+    <div id="levelComplete">
+        <div id="levelCompleteBox">
+            <h2>🎉 Niveau Terminé !</h2>
+            <p id="levelScoreText"></p>
+            <p id="levelBonusText"></p>
+            <button id="nextLevelBtn">Niveau Suivant</button>
+        </div>
+    </div>
+
+    <script>
+        const fruits = ['🍎', '🍊', '🍋', '🍌', '🍇', '🍓', '🍑', '🍉', '🥝', '🍍'];
+        const colors = {
+            '🍎': '#ff4444',
+            '🍊': '#ff8800',
+            '🍋': '#ffee00',
+            '🍌': '#ffee88',
+            '🍇': '#8844ff',
+            '🍓': '#ff3366',
+            '🍑': '#ffaa88',
+            '🍉': '#ff6688',
+            '🥝': '#88ff44',
+            '🍍': '#ffcc00'
+        };
+
+        const levels = [
+            { name: "Débutant", objective: "Servir 3 jus", target: 3, type: "serves", maxFruits: 10 },
+            { name: "Apprenti", objective: "Servir 5 jus", target: 5, type: "serves", maxFruits: 12 },
+            { name: "Expert", objective: "Faire un combo x5", target: 5, type: "combo", maxFruits: 15 },
+            { name: "Maître", objective: "Servir 8 jus", target: 8, type: "serves", maxFruits: 15 },
+            { name: "Pro du Combo", objective: "Faire un combo x8", target: 8, type: "combo", maxFruits: 20 },
+            { name: "Champion", objective: "Atteindre 2000 points", target: 2000, type: "score", maxFruits: 20 },
+            { name: "Légende", objective: "Servir 15 jus", target: 15, type: "serves", maxFruits: 25 },
+            { name: "Ultime", objective: "Faire un combo x12", target: 12, type: "combo", maxFruits: 30 }
+        ];
+
+        let score = 0;
+        let combo = 0;
+        let comboTimer = null;
+        let fruitsInBlender = [];
+        let isBlending = false;
+        let juiceLevel = 0;
+        let slicing = false;
+        let lastSlicePos = null;
+        let currentLevel = 0;
+        let levelProgress = 0;
+        let maxCombo = 0;
+        let juicesServed = 0;
+
+        const blender = document.getElementById('blenderContainer');
+        const juiceLevelDiv = document.getElementById('juiceLevel');
+        const scoreDiv = document.getElementById('score');
+        const comboDiv = document.getElementById('combo');
+        const messageDiv = document.getElementById('message');
+        const levelNumDiv = document.getElementById('levelNum');
+        const levelTitleDiv = document.getElementById('levelTitle');
+        const objectiveDiv = document.getElementById('objective');
+        const objectiveProgressDiv = document.getElementById('objectiveProgress');
+        const levelCompleteDiv = document.getElementById('levelComplete');
+        const nextLevelBtn = document.getElementById('nextLevelBtn');
+
+        document.getElementById('addFruitBtn').addEventListener('click', addFruit);
+        document.getElementById('blendBtn').addEventListener('click', blend);
+        document.getElementById('serveBtn').addEventListener('click', serve);
+        nextLevelBtn.addEventListener('click', nextLevel);
+
+        // Découpage souris
+        blender.addEventListener('mousedown', startSlice);
+        blender.addEventListener('mousemove', slice);
+        blender.addEventListener('mouseup', endSlice);
+        blender.addEventListener('mouseleave', endSlice);
+
+        // Découpage tactile
+        blender.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = blender.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            startSlice({offsetX: x, offsetY: y});
+        });
+
+        blender.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = blender.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            slice({offsetX: x, offsetY: y});
+        });
+
+        blender.addEventListener('touchend', endSlice);
+
+        function updateLevelDisplay() {
+            const level = levels[currentLevel];
+            levelNumDiv.textContent = currentLevel + 1;
+            levelTitleDiv.textContent = `Niveau ${currentLevel + 1}: ${level.name}`;
+            objectiveDiv.textContent = `Objectif: ${level.objective}`;
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const level = levels[currentLevel];
+            let progress = 0;
+
+            if (level.type === "serves") {
+                progress = (juicesServed / level.target) * 100;
+            } else if (level.type === "combo") {
+                progress = (maxCombo / level.target) * 100;
+            } else if (level.type === "score") {
+                progress = (score / level.target) * 100;
+            }
+
+            objectiveProgressDiv.style.width = Math.min(progress, 100) + '%';
+
+            if (progress >= 100) {
+                completeLevel();
+            }
+        }
+
+        function completeLevel() {
+            if (levelProgress >= 100) return;
+
+            levelProgress = 100;
+
+            const bonus = (currentLevel + 1) * 100;
+            score += bonus;
+            scoreDiv.textContent = score;
+
+            document.getElementById('levelScoreText').textContent = `Score: ${score}`;
+            document.getElementById('levelBonusText').textContent = `Bonus de niveau: +${bonus} points`;
+
+            levelCompleteDiv.style.display = 'flex';
+        }
+
+        function nextLevel() {
+            levelCompleteDiv.style.display = 'none';
+
+            if (currentLevel < levels.length - 1) {
+                currentLevel++;
+                levelProgress = 0;
+                juicesServed = 0;
+                maxCombo = 0;
+                resetBlender();
+                updateLevelDisplay();
+                showMessage(`Niveau ${currentLevel + 1} ! 🚀`);
+            } else {
+                showMessage('Vous avez terminé tous les niveaux ! 🏆');
+            }
+        }
+
+        function resetBlender() {
+            fruitsInBlender = [];
+            document.querySelectorAll('.fruit, .fruit-half, .particle, .slash').forEach(el => el.remove());
+            juiceLevel = 0;
+            juiceLevelDiv.style.height = '0px';
+            juiceLevelDiv.style.background = 'linear-gradient(180deg, rgba(255,150,50,0.6), rgba(255,100,100,0.8))';
+        }
+
+        function startSlice(e) {
+            slicing = true;
+            lastSlicePos = {x: e.offsetX, y: e.offsetY};
+        }
+
+        function slice(e) {
+            if (!slicing || isBlending) return;
+
+            const currentPos = {x: e.offsetX, y: e.offsetY};
+
+            if (lastSlicePos) {
+                drawSlash(lastSlicePos, currentPos);
+                checkFruitSlice(lastSlicePos, currentPos);
+            }
+
+            lastSlicePos = currentPos;
+        }
+
+        function endSlice() {
+            slicing = false;
+            lastSlicePos = null;
+        }
+
+        function drawSlash(start, end) {
+            const slash = document.createElement('div');
+            slash.className = 'slash';
+
+            const dx = end.x - start.x;
+            const dy = end.y - start.y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx);
+
+            slash.style.width = length + 'px';
+            slash.style.left = start.x + 'px';
+            slash.style.top = start.y + 'px';
+            slash.style.transform = `rotate(${angle}rad)`;
+            slash.style.transformOrigin = '0 50%';
+
+            blender.appendChild(slash);
+
+            setTimeout(() => slash.remove(), 200);
+        }
+
+        function checkFruitSlice(start, end) {
+            fruitsInBlender.forEach((fruitObj, index) => {
+                if (fruitObj.sliced || !fruitObj.element.parentNode) return;
+
+                const rect = fruitObj.element.getBoundingClientRect();
+                const bRect = blender.getBoundingClientRect();
+
+                const centerX = rect.left - bRect.left + rect.width / 2;
+                const centerY = rect.top - bRect.top + rect.height / 2;
+
+                if (lineIntersectsCircle(start, end, {x: centerX, y: centerY}, 30)) {
+                    sliceFruit(fruitObj, index);
+                }
+            });
+        }
+
+        function lineIntersectsCircle(lineStart, lineEnd, circle, radius) {
+            const dx = lineEnd.x - lineStart.x;
+            const dy = lineEnd.y - lineStart.y;
+            const fx = lineStart.x - circle.x;
+            const fy = lineStart.y - circle.y;
+
+            const a = dx * dx + dy * dy;
+            const b = 2 * (fx * dx + fy * dy);
+            const c = (fx * fx + fy * fy) - radius * radius;
+
+            const discriminant = b * b - 4 * a * c;
+            if (discriminant < 0) return false;
+
+            const t1 = (-b - Math.sqrt(discriminant)) / (2 * a);
+            const t2 = (-b + Math.sqrt(discriminant)) / (2 * a);
+
+            return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
+        }
+
+        function sliceFruit(fruitObj, index) {
+            fruitObj.sliced = true;
+            const element = fruitObj.element;
+            if (!element.parentNode) return;
+
+            const rect = element.getBoundingClientRect();
+            const bRect = blender.getBoundingClientRect();
+
+            const leftHalf = document.createElement('div');
+            const rightHalf = document.createElement('div');
+            leftHalf.className = 'fruit-half';
+            rightHalf.className = 'fruit-half';
+            leftHalf.textContent = fruitObj.type;
+            rightHalf.textContent = fruitObj.type;
+
+            leftHalf.dataset.type = fruitObj.type;
+            rightHalf.dataset.type = fruitObj.type;
+
+            let x = rect.left - bRect.left;
+            let y = rect.top - bRect.top;
+
+            leftHalf.style.left = x + 'px';
+            leftHalf.style.top = y + 'px';
+            leftHalf.style.clipPath = 'inset(0 50% 0 0)';
+
+            rightHalf.style.left = (x + 30) + 'px';
+            rightHalf.style.top = y + 'px';
+            rightHalf.style.clipPath = 'inset(0 0 0 50%)';
+
+            blender.appendChild(leftHalf);
+            blender.appendChild(rightHalf);
+
+            element.remove();
+
+            const centerX = x + 30;
+            const centerY = y + 30;
+            createJuiceParticles(centerX, centerY, fruitObj.type, 15);
+
+            animateHalf(leftHalf, -3, centerX - 15, y);
+            animateHalf(rightHalf, 3, centerX + 15, y);
+
+            juiceLevel += 20;
+            if (juiceLevel > blender.offsetHeight) juiceLevel = blender.offsetHeight;
+            juiceLevelDiv.style.height = juiceLevel + 'px';
+
+            combo++;
+            comboDiv.textContent = combo;
+
+            if (combo > maxCombo) {
+                maxCombo = combo;
+                updateProgress();
+            }
+
+            score += 10 * combo;
+            scoreDiv.textContent = score;
+
+            clearTimeout(comboTimer);
+            comboTimer = setTimeout(() => {
+                combo = 0;
+                comboDiv.textContent = combo;
+            }, 1500);
+
+            if (combo > 1) {
+                showMessage(`Combo x${combo}! 🔥`);
+            }
+
+            updateJuiceColor();
+            updateProgress();
+        }
+
+        function animateHalf(half, vx, startX, startY) {
+            let x = startX;
+            let y = startY;
+            let vy = -8;
+            const gravity = 0.5;
+
+            function move() {
+                const maxY = blender.offsetHeight - 60 - juiceLevel;
+
+                vy += gravity;
+                x += vx;
+                y += vy;
+
+                if (y >= maxY) {
+                    y = maxY;
+                    vy *= -0.4;
+                    vx *= 0.8;
+
+                    if (Math.abs(vy) < 0.5) {
+                        setTimeout(() => half.remove(), 800);
+                        return;
+                    }
+                }
+
+                if (x < -40 || x > blender.offsetWidth + 10) {
+                    half.remove();
+                    return;
+                }
+
+                half.style.left = x + 'px';
+                half.style.top = y + 'px';
+
+                requestAnimationFrame(move);
+            }
+
+            move();
+        }
+
+        function addFruit() {
+            const level = levels[currentLevel];
+            const currentCount = fruitsInBlender.filter(f => f.element && f.element.parentNode && !f.sliced).length;
+            if (currentCount >= level.maxFruits) {
+                showMessage('Mixeur plein ! 😅');
+                return;
+            }
+
+            const fruit = fruits[Math.floor(Math.random() * fruits.length)];
+            const fruitEl = document.createElement('div');
+            fruitEl.className = 'fruit';
+            fruitEl.textContent = fruit;
+            fruitEl.dataset.type = fruit;
+
+            const x = 20 + Math.random() * (blender.offsetWidth - 80);
+            fruitEl.style.left = x + 'px';
+            fruitEl.style.top = '-60px';
+
+            blender.appendChild(fruitEl);
+            const fruitObj = {element: fruitEl, type: fruit, y: -60, vy: 0, sliced: false};
+            fruitsInBlender.push(fruitObj);
+
+            animateFruitDrop(fruitObj);
+        }
+
+        function animateFruitDrop(fruitObj) {
+            const gravity = 0.5;
+
+            function drop() {
+                if (!fruitObj.element.parentNode || fruitObj.sliced) return;
+
+                const maxY = blender.offsetHeight - 60 - juiceLevel;
+
+                fruitObj.vy += gravity;
+                fruitObj.y += fruitObj.vy;
+
+                if (fruitObj.y >= maxY) {
+                    fruitObj.y = maxY;
+                    fruitObj.vy *= -0.6;
+
+                    if (Math.abs(fruitObj.vy) < 1) {
+                        fruitObj.vy = 0;
+                        return;
+                    }
+                }
+
+                fruitObj.element.style.top = fruitObj.y + 'px';
+                requestAnimationFrame(drop);
+            }
+
+            drop();
+        }
+
+        function blend() {
+            const unslicedFruits = fruitsInBlender.filter(f => !f.sliced && f.element && f.element.parentNode);
+
+            if (unslicedFruits.length === 0 && juiceLevel < 30) {
+                showMessage('Ajoutez des fruits ! 🍎');
+                return;
+            }
+
+            isBlending = true;
+            blender.classList.add('blending');
+
+            unslicedFruits.forEach(f => {
+                const rect = f.element.getBoundingClientRect();
+                const bRect = blender.getBoundingClientRect();
+                const cx = rect.left - bRect.left + rect.width / 2;
+                const cy = rect.top - bRect.top + rect.height / 2;
+                createJuiceParticles(cx, cy, f.type, 12);
+                f.element.remove();
+            });
+
+            const juiceAmount = unslicedFruits.length * 25;
+            juiceLevel += juiceAmount;
+            if (juiceLevel > blender.offsetHeight) juiceLevel = blender.offsetHeight;
+
+            juiceLevelDiv.style.height = juiceLevel + 'px';
+
+            score += unslicedFruits.length * 15;
+            scoreDiv.textContent = score;
+
+            fruitsInBlender = fruitsInBlender.filter(f => f.sliced && f.element && f.element.parentNode);
+
+            setTimeout(() => {
+                isBlending = false;
+                blender.classList.remove('blending');
+                updateJuiceColor();
+                if (unslicedFruits.length > 0) {
+                    showMessage('Mixé ! 😋');
+                }
+            }, 800);
+
+            updateProgress();
+        }
+
+        function serve() {
+            if (juiceLevel < 50) {
+                showMessage('Pas assez de jus ! 🥤');
+                return;
+            }
+
+            const bonus = Math.floor(juiceLevel / 8);
+            score += bonus;
+            scoreDiv.textContent = score;
+
+            juiceLevel = 0;
+            juiceLevelDiv.style.height = '0px';
+
+            fruitsInBlender = [];
+            document.querySelectorAll('.fruit, .fruit-half, .particle, .slash').forEach(el => el.remove());
+
+            juicesServed++;
+            updateProgress();
+
+            showMessage(`Servi ! +${bonus} points 🎉`);
+        }
+
+        function createJuiceParticles(x, y, fruitType, count) {
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.background = colors[fruitType] || '#ff8844';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+
+                blender.appendChild(particle);
+
+                const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+                const speed = 2 + Math.random() * 4;
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+
+                animateParticle(particle, vx, vy);
+            }
+        }
+
+        function animateParticle(particle, vx, vy) {
+            let x = parseFloat(particle.style.left);
+            let y = parseFloat(particle.style.top);
+            let opacity = 1;
+
+            function move() {
+                x += vx;
+                y += vy;
+                opacity -= 0.03;
+
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.opacity = opacity;
+
+                if (opacity > 0) {
+                    requestAnimationFrame(move);
+                } else {
+                    particle.remove();
+                }
+            }
+
+            move();
+        }
+
+        function updateJuiceColor() {
+            const allFruitTypes = [];
+
+            document.querySelectorAll('.fruit, .fruit-half').forEach(el => {
+                const type = el.dataset.type || el.textContent.trim();
+                if (fruits.includes(type)) {
+                    allFruitTypes.push(type);
+                }
+            });
+
+            if (allFruitTypes.length > 0) {
+                const avgColor = getAverageColor(allFruitTypes);
+                juiceLevelDiv.style.background = `linear-gradient(180deg, ${avgColor}88, ${avgColor})`;
+            } else {
+                juiceLevelDiv.style.background = 'linear-gradient(180deg, rgba(255,150,50,0.6), rgba(255,100,100,0.8))';
+            }
+        }
+
+        function getAverageColor(fruitTypes) {
+            if (fruitTypes.length === 0) return '#ff8844';
+
+            let r = 0, g = 0, b = 0;
+            fruitTypes.forEach(type => {
+                const color = colors[type] || '#ff8844';
+                r += parseInt(color.slice(1, 3), 16);
+                g += parseInt(color.slice(3, 5), 16);
+                b += parseInt(color.slice(5, 7), 16);
+            });
+
+            r = Math.floor(r / fruitTypes.length);
+            g = Math.floor(g / fruitTypes.length);
+            b = Math.floor(b / fruitTypes.length);
+
+            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        }
+
+        function showMessage(msg) {
+            messageDiv.textContent = msg;
+            setTimeout(() => {
+                if (messageDiv.textContent === msg) {
+                    messageDiv.textContent = '';
+                }
+            }, 2000);
+        }
+
+        updateLevelDisplay();
+        showMessage('Découpez les fruits ! 🔪');
+    </script>
+</body>
+</html>
