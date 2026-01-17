@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Minecraft JS - Terrain + Arbres (Chunks)</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+<script>
+window.addEventListener("DOMContentLoaded", app);
+
+function app() {
+    let scene, camera, renderer, raycaster, world, player;
+    let keys = {};
+
+    // --- petite fonction de "noise" pour le terrain irrégulier ---
+    function noise(x, z) {
+        return (Math.sin(x * 0.15) * Math.cos(z * 0.15) +
+                Math.sin(x * 0.05 + z * 0.07)) * 1.5 + 2; // hauteur ~ 0–4
+    }
+
+    // ---------- CLASSE WORLD (avec chunks) ----------
+    class World {
+        constructor() {
+            this.chunkSize      = 16;     // taille d’un chunk (16×16)
+            this.gravity        = 0.01;
+            this.blocks         = {};     // tous les blocs solides
+            this.chunks         = {};     // chunks déjà générés
+            this.viewDistance   = 2;      // chunks à charger autour du joueur
+            this.unloadDistance = 4;      // au-delà, on décharge
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            let dir = new THREE.DirectionalLight(0xffffff, 0.8);
+            dir.position.set(50, 80, 30);
+            dir.castShadow = true;
+            scene.add(dir);
+
+            // 0: herbe, 1: terre, 2: bois, 3: feuilles
+            this.blockColors = [0x228B22, 0x8B4513, 0x654321, 0x32CD32];
+            this.blockMeshes = this.blockColors.map(c => {
+                const geo = new THREE.BoxGeometry(1, 1, 1);
+                const mat = new THREE.MeshLambertMaterial({ color: c });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                return mesh;
+            });
+
+            // on génère quelques chunks autour du centre
+            this.generateChunksAround(0, 0);
+        }
+
+        key(x, y, z) {
+            return `${x},${y},${z}`;
+        }
+
+        chunkKey(cx, cz) {
+            return `${cx},${cz}`;
+        }
+
+        addBlock(x, y, z, type) {
+            const base = this.blockMeshes[type].clone();
+            base.position.set(x, y, z);
+            scene.add(base);
+            this.blocks[this.key(x, y, z)] = true;
+        }
+
+        isSolid(x, y, z) {
+            return this.blocks[this.key(x, y, z)] === true;
+        }
+
+        // génère un chunk (cx, cz)
+        generateChunk(cx, cz) {
+            const cKey = this.chunkKey(cx, cz);
+            if (this.chunks[cKey]) return; // déjà généré
+
+            this.chunks[cKey] = true;
+
+            const size   = this.chunkSize;
+            const startX = cx * size;
+            const startZ = cz * size;
+
+            for (let z = 0; z < size; z++) {
+                for (let x = 0; x < size; x++) {
+                    const wx = startX + x;
+                    const wz = startZ + z;
+
+                    const h = Math.max(0, Math.floor(noise(wx, wz)));
+
+                    // sol : terre + herbe
+                    for (let y = 0; y <= h; y++) {
+                        const t = (y === h) ? 0 : 1;
+                        this.addBlock(wx, y, wz, t);
+                    }
+
+                    // arbres aléatoires
+                    if (Math.random() < 0.12 && h >= 1) {
+                        this.generateTree(wx, h + 1, wz);
+                    }
+                }
+            }
+        }
+
+        // génère tous les chunks autour d’un chunk central
+        generateChunksAround(centerCx, centerCz) {
+            for (let dz = -this.viewDistance; dz <= this.viewDistance; dz++) {
+                for (let dx = -this.viewDistance; dx <= this.viewDistance; dx++) {
+                    this.generateChunk(centerCx + dx, centerCz + dz);
+                }
+            }
+        }
+
+        generateTree(x, y, z) {
+            const trunkHeight = 3 + Math.floor(Math.random() * 2);
+
+            for (let i = 0; i < trunkHeight; i++) {
+                this.addBlock(x, y + i, z, 2);
+            }
+
+            const top = y + trunkHeight;
+            for (let lx = -1; lx <= 1; lx++) {
+                for (let lz = -1; lz <= 1; lz++) {
+                    for (let ly = 0; ly < 2; ly++) {
+                        if (Math.random() < 0.9) {
+                            this.addBlock(x + lx, top + ly, z + lz, 3);
+                        }
+                    }
+                }
+            }
+        }
+
+        worldToChunk(x, z) {
+            const size = this.chunkSize;
+            const cx = Math.floor(x / size);
+            const cz = Math.floor(z / size);
+            return { cx, cz };
+        }
+
+        unloadFarChunks(centerCx, centerCz) {
+            const toDelete = [];
+            for (const key in this.chunks) {
+                const [cx, cz] = key.split(",").map(Number);
+                const dx   = cx - centerCx;
+                const dz   = cz - centerCz;
+                const dist = Math.max(Math.abs(dx), Math.abs(dz));
+                if (dist > this.unloadDistance) {
+                    toDelete.push(key);
+                }
+            }
+
+            for (const key of toDelete) {
+                delete this.chunks[key];
+                // version simple : on ne supprime pas encore les meshes
+            }
+        }
+
+        updateAroundPlayer(px, pz) {
+            const { cx, cz } = this.worldToChunk(px, pz);
+            this.generateChunksAround(cx, cz);
+            this.unloadFarChunks(cx, cz);
+        }
+    }
+
+    // ---------- CLASSE PLAYER ----------
+    class Player {
+        constructor() {
+            this.x = 0;
+            this.y = 8;
+            this.z = 0;
+            this.yaw = 0;
+            this.pitch = 0;
+            this.speed = 0.12;
+            this.jumpSpeed = 0.22;
+            this.yVelocity = 0;
+            this.onGround = false;
+            this.radius = 0.4;
+            this.height = 1.7;
+        }
+
+        collidesAt(nx, ny, nz) {
+            const r = this.radius;
+            const minX = Math.floor(nx - r);
+            const maxX = Math.floor(nx + r);
+            const minY = Math.floor(ny);
+            const maxY = Math.floor(ny + this.height);
+            const minZ = Math.floor(nz - r);
+            const maxZ = Math.floor(nz + r);
+
+            for (let x = minX; x <= maxX; x++) {
+                for (let y = minY; y <= maxY; y++) {
+                    for (let z = minZ; z <= maxZ; z++) {
+                        if (world.isSolid(x, y, z)) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        update() {
+            const yaw = this.yaw;
+            const sinY = Math.sin(yaw);
+            const cosY = Math.cos(yaw);
+
+            let nx = this.x;
+            let ny = this.y;
+            let nz = this.z;
+
+            if (keys["KeyW"]) {
+                nx -= this.speed * sinY;
+                nz -= this.speed * cosY;
+            }
+            if (keys["KeyS"]) {
+                nx += this.speed * sinY;
+                nz += this.speed * cosY;
+            }
+            if (keys["KeyA"]) {
+                nx -= this.speed * cosY;
+                nz += this.speed * sinY;
+            }
+            if (keys["KeyD"]) {
+                nx += this.speed * cosY;
+                nz -= this.speed * sinY;
+            }
+
+            if (!this.collidesAt(nx, this.y, this.z)) {
+                this.x = nx;
+            }
+            if (!this.collidesAt(this.x, this.y, nz)) {
+                this.z = nz;
+            }
+
+            if (keys["Space"] && this.onGround) {
+                this.yVelocity = this.jumpSpeed;
+                this.onGround = false;
+            }
+
+            this.yVelocity -= world.gravity;
+            let newY = this.y + this.yVelocity;
+
+            if (this.yVelocity > 0) {
+                if (!this.collidesAt(this.x, newY, this.z)) {
+                    this.y = newY;
+                } else {
+                    this.yVelocity = 0;
+                }
+            } else {
+                if (!this.collidesAt(this.x, newY, this.z)) {
+                    this.y = newY;
+                    this.onGround = false;
+                } else {
+                    this.onGround = true;
+                    this.yVelocity = 0;
+                    while (this.collidesAt(this.x, this.y, this.z)) {
+                        this.y += 0.01;
+                    }
+                }
+            }
+
+            camera.position.set(this.x, this.y + 1.7, this.z);
+            camera.rotation.set(this.pitch, this.yaw, 0);
+        }
+    }
+
+    // ---------- INIT ----------
+    function init() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+
+        camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        raycaster = new THREE.Raycaster();
+
+        world = new World();
+        player = new Player();
+
+        renderer.domElement.addEventListener("click", () => {
+            renderer.domElement.requestPointerLock();
+        });
+
+        window.addEventListener("mousemove", (e) => {
+            if (document.pointerLockElement === renderer.domElement) {
+                player.yaw   -= e.movementX * 0.002;
+                player.pitch -= e.movementY * 0.002;
+                const maxPitch = Math.PI / 2;
+                if (player.pitch >  maxPitch) player.pitch =  maxPitch;
+                if (player.pitch < -maxPitch) player.pitch = -maxPitch;
+            }
+        });
+
+        window.addEventListener("resize", () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        window.addEventListener("keydown", (e) => { keys[e.code] = true; });
+        window.addEventListener("keyup",   (e) => { keys[e.code] = false; });
+    }
+
+    // ---------- LOOP ----------
+    function animate() {
+        requestAnimationFrame(animate);
+        if (player && world) {
+            player.update();
+            world.updateAroundPlayer(player.x, player.z);
+        }
+        renderer.render(scene, camera);
+    }
+
+    init();
+    animate();
+}
+</script>
+</body>
+</html>
