@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Neo Runner</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at top, #111, #000);
+      color: #fff;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding-top: 20px;
+    }
+    h1 {
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      text-shadow: 0 0 10px #0ff;
+    }
+    #info {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 10px;
+    }
+    canvas {
+      background: linear-gradient(135deg, #050712, #060b1f);
+      border-radius: 12px;
+      box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <h1>Neo Runner</h1>
+  <div id="info">Espace pour sauter (double saut) – Évite les obstacles et prends les pièces</div>
+  <canvas id="game" width="800" height="350"></canvas>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const W = canvas.width;
+    const H = canvas.height;
+
+    const groundY = H - 60;
+
+    const player = {
+      x: 80,
+      y: groundY,
+      w: 40,
+      h: 40,
+      vy: 0,
+      jumpPower: 13,
+      gravity: 0.7,
+      onGround: true,
+      jumpsLeft: 2
+    };
+
+    let obstacles = [];
+    let coins = [];
+    let gameSpeed = 5;
+    let spawnTimer = 0;
+    let coinTimer = 40;
+    let score = 0;
+    let bestScore = 0;
+    let gameOver = false;
+    let started = false;
+
+    let backgroundOffset = 0;
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (!started) {
+          started = true;
+          gameOver = false;
+          resetGame();
+        } else if (!gameOver && player.jumpsLeft > 0) {
+          player.vy = -player.jumpPower;
+          player.onGround = false;
+          player.jumpsLeft--;
+        } else if (gameOver) {
+          resetGame();
+        }
+      }
+    });
+
+    function resetGame() {
+      obstacles = [];
+      coins = [];
+      gameSpeed = 5;
+      spawnTimer = 0;
+      coinTimer = 40;
+      score = 0;
+      player.y = groundY;
+      player.vy = 0;
+      player.onGround = true;
+      player.jumpsLeft = 2;
+      gameOver = false;
+    }
+
+    function spawnObstacle() {
+      const heightOptions = [30, 40, 50];
+      const h = heightOptions[Math.floor(Math.random() * heightOptions.length)];
+      const w = 20 + Math.random() * 20;
+
+      obstacles.push({
+        x: W + 20,
+        y: groundY + (50 - h),
+        w: w,
+        h: h
+      });
+    }
+
+    function spawnCoin() {
+      const minY = groundY - 120;
+      const maxY = groundY - 40;
+      const y = minY + Math.random() * (maxY - minY);
+
+      coins.push({
+        x: W + 20,
+        y: y,
+        r: 10,
+        taken: false
+      });
+    }
+
+    function rectCircleCollide(px, py, pw, ph, cx, cy, cr) {
+      const testX = Math.max(px, Math.min(cx, px + pw));
+      const testY = Math.max(py, Math.min(cy, py + ph));
+      const distX = cx - testX;
+      const distY = cy - testY;
+      return (distX * distX + distY * distY) <= cr * cr;
+    }
+
+    function update() {
+      if (!started || gameOver) return;
+
+      player.vy += player.gravity;
+      player.y += player.vy;
+
+      if (player.y >= groundY) {
+        player.y = groundY;
+        player.vy = 0;
+        if (!player.onGround) {
+          player.onGround = true;
+          player.jumpsLeft = 2;
+        }
+      }
+
+      spawnTimer -= 1;
+      if (spawnTimer <= 0) {
+        spawnObstacle();
+        spawnTimer = 80 + Math.random() * 40;
+      }
+
+      coinTimer -= 1;
+      if (coinTimer <= 0) {
+        spawnCoin();
+        coinTimer = 90 + Math.random() * 60;
+      }
+
+      obstacles.forEach(ob => {
+        ob.x -= gameSpeed;
+      });
+      coins.forEach(c => {
+        c.x -= gameSpeed;
+      });
+
+      obstacles = obstacles.filter(ob => ob.x + ob.w > -50);
+      coins = coins.filter(c => c.x + c.r > -50 && !c.taken);
+
+      obstacles.forEach(ob => {
+        if (
+          player.x < ob.x + ob.w &&
+          player.x + player.w > ob.x &&
+          player.y < ob.y + ob.h &&
+          player.y + player.h > ob.y
+        ) {
+          gameOver = true;
+          if (score > bestScore) bestScore = score;
+        }
+      });
+
+      coins.forEach(c => {
+        if (rectCircleCollide(player.x, player.y, player.w, player.h, c.x, c.y, c.r)) {
+          if (!c.taken) {
+            c.taken = true;
+            score += 50;
+          }
+        }
+      });
+
+      if (!gameOver) {
+        score += 1;
+        if (score % 250 === 0) {
+          gameSpeed += 0.3;
+        }
+      }
+
+      backgroundOffset -= gameSpeed * 0.3;
+      if (backgroundOffset < -W) backgroundOffset += W;
+    }
+
+    function drawGlowRect(x, y, w, h, color) {
+      ctx.save();
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = color;
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, w, h);
+      ctx.restore();
+    }
+
+    function drawBackground() {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, "rgba(0, 255, 255, 0.12)");
+      grad.addColorStop(1, "rgba(255, 0, 255, 0.08)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.save();
+      ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+      const stripeWidth = 120;
+      for (let x = backgroundOffset; x < W + stripeWidth; x += stripeWidth) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + stripeWidth / 2, 0);
+        ctx.lineTo(x + stripeWidth, H);
+        ctx.lineTo(x + stripeWidth / 2, H);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawStars() {
+      for (let i = 0; i < 35; i++) {
+        const x = Math.random() * W;
+        const y = Math.random() * H;
+        const a = Math.random() * 0.1;
+        ctx.fillStyle = `rgba(0, 255, 255, ${a})`;
+        ctx.fillRect(x, y, 2, 2);
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      drawBackground();
+      drawStars();
+
+      ctx.strokeStyle = "rgba(255,255,255,0.3)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, groundY + player.h / 2);
+      ctx.lineTo(W, groundY + player.h / 2);
+      ctx.stroke();
+
+      drawGlowRect(player.x, player.y, player.w, player.h, "#0ff");
+
+      obstacles.forEach(ob => {
+        drawGlowRect(ob.x, ob.y, ob.w, ob.h, "#f0f");
+      });
+
+      coins.forEach(c => {
+        ctx.save();
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#ff0";
+        const g = ctx.createRadialGradient(
+          c.x, c.y, 2,
+          c.x, c.y, c.r
+        );
+        g.addColorStop(0, "#fff");
+        g.addColorStop(1, "#ff0");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "18px system-ui";
+      ctx.textAlign = "left";
+      ctx.fillText("Score: " + score, 20, 30);
+      ctx.fillText("Record: " + bestScore, 20, 55);
+      ctx.fillText("Pièces: +" + 50 + " pts", 20, 80);
+
+      if (!started) {
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "#fff";
+        ctx.font = "24px system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText("Appuie sur ESPACE pour commencer", W / 2, H / 2);
+      } else if (gameOver) {
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "#fff";
+        ctx.font = "26px system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", W / 2, H / 2 - 20);
+        ctx.font = "18px system-ui";
+        ctx.fillText("Score: " + score + "  |  Record: " + bestScore, W / 2, H / 2 + 10);
+        ctx.fillText("Espace pour rejouer", W / 2, H / 2 + 40);
+      }
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script>
+</body>
+</html>
