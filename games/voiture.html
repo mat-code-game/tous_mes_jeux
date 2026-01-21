@@ -38,12 +38,15 @@
     <span>Best : <strong id="best">0</strong></span>
     <span id="state" style="color:orange;"></span>
   </div>
+  <button id="fullscreenBtn">Plein écran</button>
+
 
   <!-- SONS -->
   <audio id="sndCrash" src="sf_avion_crash.mp3" preload="auto"></audio>
   <audio id="sndBonus" src="bonus.mp3" preload="auto"></audio>
 
   <script>
+    
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const scoreEl = document.getElementById("score");
@@ -114,6 +117,67 @@
         player.speed  = 6.5;
       }
     }
+
+     // Fonction pour passer en plein écran
+  function openFullscreen(element) {
+    if (element.requestFullscreen) {
+      element.requestFullscreen();
+    } else if (element.webkitRequestFullscreen) { // Safari
+      element.webkitRequestFullscreen();
+    } else if (element.msRequestFullscreen) { // IE/Edge
+      element.msRequestFullscreen();
+    }
+  }
+
+  // Fonction pour quitter le plein écran
+  function closeFullscreen() {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) { // Safari
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) { // IE/Edge
+      document.msExitFullscreen();
+    }
+  }
+
+  // Quand la page est chargée
+  window.addEventListener('DOMContentLoaded', () => {
+    const fsBtn = document.getElementById('fullscreenBtn');
+
+    // Choisis l'élément à mettre en plein écran
+    // Si ton jeu est dans un canvas :
+    // const element = document.querySelector('canvas');
+    // Si tu as un conteneur <div id="game"> :
+    // const element = document.getElementById('game');
+    // Ici on met toute la page :
+    const element = document.documentElement;
+
+    fsBtn.addEventListener('click', () => {
+      const isFullscreen =
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.msFullscreenElement;
+
+      if (!isFullscreen) {
+        openFullscreen(element);
+        fsBtn.textContent = 'Quitter plein écran';
+      } else {
+        closeFullscreen();
+        fsBtn.textContent = 'Plein écran';
+      }
+    });
+
+    // Met à jour le texte si l'utilisateur sort du plein écran avec Échap
+    document.addEventListener('fullscreenchange', () => {
+      if (
+        !document.fullscreenElement &&
+        !document.webkitFullscreenElement &&
+        !document.msFullscreenElement
+      ) {
+        fsBtn.textContent = 'Plein écran';
+      }
+    });
+  });
 
     function resetGame() {
       player.x = canvas.width / 2 - player.w / 2;
