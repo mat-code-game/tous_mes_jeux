@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Monstre d'humeur ULTRA néon+audio</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background:
+        radial-gradient(circle at top, #060816, #010109),
+        radial-gradient(circle at bottom, #120020, #000);
+      font-family: system-ui, sans-serif;
+      color: #fff;
+      overflow: hidden;
+      user-select: none;
+      cursor: none;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -20%;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(0,200,255,0.35), transparent 55%),
+        radial-gradient(circle at 90% 80%, rgba(255,80,160,0.4), transparent 55%);
+      mix-blend-mode: screen;
+      opacity: 0.8;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Fond particules néon (statique mais très “étoilé”) */
+    .stars {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      background: transparent;
+      box-shadow:
+        10px 20px rgba(255,255,255,0.8),
+        200px 60px rgba(0,255,255,0.8),
+        400px 120px rgba(255,120,200,0.8),
+        700px 30px rgba(255,255,150,0.9),
+        100px 300px rgba(150,255,200,0.9),
+        500px 260px rgba(120,120,255,0.9),
+        800px 340px rgba(255,180,120,0.9);
+      filter: blur(0.5px);
+    }
+
+    #game {
+      position: relative;
+      width: 900px;
+      height: 540px;
+      border-radius: 26px;
+      overflow: hidden;
+      box-shadow:
+        0 0 60px rgba(0,0,0,0.9),
+        0 0 80px rgba(0,255,255,0.2);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(0,255,255,0.16), transparent 55%),
+        radial-gradient(circle at 80% 100%, rgba(255,230,100,0.22), transparent 55%),
+        radial-gradient(circle at 50% 40%, #111527, #050509 60%);
+      transform-origin: center;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+
+    #game.shake {
+      animation: shakeScreen 0.3s ease;
+    }
+
+    @keyframes shakeScreen {
+      0%   { transform: translate(0, 0) rotate(0deg); }
+      20%  { transform: translate(-4px, 2px) rotate(-0.2deg); }
+      40%  { transform: translate(3px, -3px) rotate(0.3deg); }
+      60%  { transform: translate(-3px, 1px) rotate(-0.2deg); }
+      80%  { transform: translate(2px, 3px) rotate(0.2deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.03) 1px,
+        transparent 1px
+      );
+      background-size: 100% 3px;
+      mix-blend-mode: screen;
+      pointer-events: none;
+      opacity: 0.5;
+      z-index: 20;
+    }
+
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at center,
+          transparent 60%,
+          rgba(0,0,0,0.75) 100%);
+      pointer-events: none;
+      z-index: 19;
+    }
+
+    #centerGlow {
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background:
+        radial-gradient(circle, rgba(255,255,255,0.14), transparent 60%);
+      pointer-events: none;
+      filter: blur(8px);
+      mix-blend-mode: screen;
+      z-index: 0;
+    }
+
+    .grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 50px 50px;
+      opacity: 0.15;
+      mix-blend-mode: screen;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #hud {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      font-size: 14px;
+      text-shadow: 0 0 10px rgba(0,0,0,0.9);
+      z-index: 5;
+    }
+
+    .badge {
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: radial-gradient(circle at top left,
+        rgba(255,255,255,0.18),
+        rgba(0,0,0,0.7));
+      border: 1px solid rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      backdrop-filter: blur(10px);
+      box-shadow:
+        0 0 8px rgba(0,0,0,0.7),
+        0 0 12px rgba(0,255,255,0.15);
+    }
+
+    .badge-label {
+      opacity: 0.8;
+    }
+
+    #message {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      text-align: center;
+      padding: 6px 18px;
+      background: radial-gradient(circle at top left,
+        rgba(255,255,255,0.18),
+        rgba(0,0,0,0.7));
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.2);
+      max-width: 90%;
+      z-index: 5;
+      backdrop-filter: blur(10px);
+      box-shadow:
+        0 0 12px rgba(0,0,0,0.8),
+        0 0 18px rgba(0,255,255,0.18);
+    }
+
+    #monster {
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 25%, #fff7f7, #ff5f7f);
+      box-shadow:
+        0 0 22px rgba(255,80,120,1),
+        0 0 50px rgba(255,50,120,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: transform 0.08s ease, box-shadow 0.12s ease, background 0.12s ease;
+      z-index: 2;
+    }
+
+    #monster.peaceful {
+      background: radial-gradient(circle at 30% 25%, #faffff, #5fe6ff);
+      box-shadow:
+        0 0 24px rgba(110,220,255,1),
+        0 0 60px rgba(80,200,255,0.9);
+    }
+
+    #monster.angry {
+      background: radial-gradient(circle at 30% 25%, #fff0f0, #ff3030);
+      box-shadow:
+        0 0 30px rgba(255,40,40,1),
+        0 0 65px rgba(255,40,40,0.9);
+      animation: shake 0.1s infinite alternate;
+    }
+
+    #monster.frenzy {
+      background: radial-gradient(circle at 30% 25%, #fffbe0, #ffd740);
+      box-shadow:
+        0 0 32px rgba(255,220,80,1),
+        0 0 70px rgba(255,230,120,1);
+    }
+
+    @keyframes shake {
+      from { transform: translate(-50%, -50%) translateX(-5px); }
+      to   { transform: translate(-50%, -50%) translateX(5px); }
+    }
+
+    .eye {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 20%, #fff, #f0f0f0);
+      top: 48px;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+    .eye.left { left: 42px; }
+    .eye.right { right: 42px; }
+
+    .pupil {
+      position: absolute;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 20%, #444, #000);
+      top: 8px;
+      left: 8px;
+      transition: transform 0.05s;
+    }
+
+    .highlight {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.9);
+      top: 3px;
+      left: 4px;
+    }
+
+    .mouth {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 42px;
+      border-radius: 0 0 80px 80px;
+      border: 4px solid #000;
+      border-top: none;
+      background: radial-gradient(circle at 50% 0%, #600, #200);
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      padding-bottom: 4px;
+      transition: all 0.15s ease;
+    }
+
+    .mouth.peaceful {
+      height: 32px;
+      background: radial-gradient(circle at 50% 0%, #600, #300);
+    }
+
+    .mouth.happy {
+      height: 28px;
+      background: radial-gradient(circle at 50% 0%, #500, #200);
+      border-color: #000;
+    }
+
+    .mouth.angry {
+      height: 20px;
+      border-radius: 80px 80px 0 0;
+      border-top: 4px solid #000;
+      border-bottom: none;
+      background: radial-gradient(circle at 50% 120%, #900, #400);
+      transform: translateX(-50%) translateY(3px);
+    }
+
+    .mouth.frenzy {
+      height: 34px;
+      border-radius: 80px;
+      background: radial-gradient(circle at 50% 0%, #ffd040, #ff9f00);
+      border-color: #000;
+    }
+
+    .tongue {
+      width: 30px;
+      height: 16px;
+      border-radius: 16px 16px 0 0;
+      background: radial-gradient(circle at 50% 0%, #ff8bab, #ff507f);
+      box-shadow: 0 0 6px rgba(255,80,120,0.8);
+    }
+
+    .spark {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fff, rgba(255,255,255,0));
+      pointer-events: none;
+      mix-blend-mode: screen;
+      animation: pop 0.4s ease-out forwards;
+      z-index: 3;
+      box-shadow:
+        0 0 10px rgba(255,255,255,0.9),
+        0 0 20px rgba(0,255,255,0.8);
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.4); opacity: 1; }
+      to   { transform: scale(2.2) translateY(-10px); opacity: 0; }
+    }
+
+    #cursor {
+      position: fixed;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.9);
+      background: radial-gradient(circle, rgba(255,255,255,0.4), transparent);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      mix-blend-mode: screen;
+      transition: background 0.1s, border-color 0.1s, box-shadow 0.1s;
+      z-index: 999;
+      box-shadow:
+        0 0 10px rgba(255,255,255,0.8),
+        0 0 22px rgba(0,255,255,0.8);
+    }
+
+    #cursor.danger {
+      border-color: rgba(255,80,80,1);
+      background: radial-gradient(circle, rgba(255,80,80,0.7), transparent);
+      box-shadow:
+        0 0 10px rgba(255,80,80,1),
+        0 0 26px rgba(255,40,40,1);
+    }
+
+    #cursor.frenzy {
+      border-color: rgba(255,240,140,1);
+      background: radial-gradient(circle, rgba(255,230,120,0.9), transparent);
+      box-shadow:
+        0 0 12px rgba(255,240,160,1),
+        0 0 26px rgba(255,210,80,1);
+    }
+
+    .trail-dot {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      opacity: 0.9;
+      z-index: 998;
+      animation: trailFade 0.35s linear forwards;
+      box-shadow: 0 0 10px rgba(255,255,255,0.9);
+    }
+
+    @keyframes trailFade {
+      from { transform: scale(0.6); opacity: 0.95; }
+      to   { transform: scale(1.8); opacity: 0; }
+    }
+
+    .warning {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.9);
+      box-shadow:
+        0 0 16px rgba(255,40,40,1),
+        0 0 30px rgba(255,40,40,0.8);
+      pointer-events: none;
+      animation: warningPulse 0.6s ease-out forwards;
+      mix-blend-mode: screen;
+      z-index: 1;
+      background: radial-gradient(circle, rgba(255,200,200,0.4), transparent);
+    }
+
+    @keyframes warningPulse {
+      from { transform: scale(0.4); opacity: 1; }
+      to   { transform: scale(1.9); opacity: 0; }
+    }
+
+    .orb {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fffce0, #ffcf40);
+      box-shadow:
+        0 0 14px rgba(255,240,120,1),
+        0 0 26px rgba(255,210,60,1);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .orb::after {
+      content: "";
+      position: absolute;
+      inset: 3px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.8);
+      opacity: 0.85;
+    }
+
+    #startOverlay,
+    #gameOverOverlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle at top,
+          rgba(0,0,0,0.85),
+          rgba(0,0,0,0.95));
+      backdrop-filter: blur(16px);
+      text-align: center;
+      padding: 20px;
+      gap: 10px;
+      z-index: 10;
+      border-radius: 26px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.9);
+    }
+
+    #startOverlay h1,
+    #gameOverOverlay h1 {
+      font-size: 30px;
+      text-shadow:
+        0 0 14px rgba(0,255,255,1),
+        0 0 26px rgba(0,255,200,0.8);
+      letter-spacing: 1px;
+    }
+
+    button {
+      margin-top: 6px;
+      padding: 10px 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.55);
+      background:
+        radial-gradient(circle at top left,
+          rgba(255,255,255,0.25),
+          rgba(0,0,0,0.9));
+      color: #e8f8ff;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow:
+        0 0 14px rgba(0,0,0,0.7),
+        0 0 22px rgba(0,255,255,0.3);
+      transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
+      backdrop-filter: blur(12px);
+    }
+
+    button:hover {
+      transform: translateY(-1px) scale(1.04);
+      box-shadow:
+        0 0 20px rgba(0,0,0,0.9),
+        0 0 30px rgba(0,255,255,0.6);
+      background:
+        radial-gradient(circle at top left,
+          rgba(255,255,255,0.4),
+          rgba(0,0,0,0.9));
+    }
+
+    button:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow:
+        0 0 12px rgba(0,0,0,0.8),
+        0 0 18px rgba(0,255,255,0.4);
+    }
+
+    #hint {
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    #sidePanel {
+      position: absolute;
+      right: 6px;
+      top: 40px;
+      width: 200px;
+      background: radial-gradient(circle at top left,
+        rgba(255,255,255,0.12),
+        rgba(0,0,0,0.9));
+      border-radius: 18px;
+      padding: 8px 10px;
+      font-size: 12px;
+      border: 1px solid rgba(255,255,255,0.22);
+      z-index: 6;
+      backdrop-filter: blur(14px);
+      box-shadow:
+        0 0 14px rgba(0,0,0,0.8),
+        0 0 22px rgba(0,255,255,0.25);
+    }
+
+    #sidePanel h2 {
+      font-size: 13px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.9;
+      text-shadow: 0 0 8px rgba(0,0,0,0.9);
+    }
+
+    .mission, .achievement {
+      display: flex;
+      align-items: flex-start;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+
+    .mission span.label,
+    .achievement span.label {
+      flex: 1;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      margin-top: 2px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.9);
+    }
+
+    .dot.pending {
+      background: rgba(255,255,255,0.25);
+      box-shadow: 0 0 6px rgba(255,255,255,0.2);
+    }
+    .dot.active  {
+      background: #ffcf40;
+      box-shadow:
+        0 0 8px rgba(255,220,120,1),
+        0 0 14px rgba(255,240,150,1);
+    }
+    .dot.done    {
+      background: #4fff7a;
+      box-shadow:
+        0 0 8px rgba(120,255,150,1),
+        0 0 14px rgba(150,255,190,1);
+    }
+
+    #timerBadge {
+      position: absolute;
+      left: 10px;
+      top: 40px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: radial-gradient(circle at top left,
+        rgba(255,255,255,0.18),
+        rgba(0,0,0,0.85));
+      border: 1px solid rgba(255,255,255,0.24);
+      font-size: 13px;
+      text-shadow: 0 0 8px rgba(0,0,0,1);
+      z-index: 6;
+      backdrop-filter: blur(12px);
+      box-shadow:
+        0 0 12px rgba(0,0,0,0.8),
+        0 0 20px rgba(0,255,255,0.3);
+    }
+
+    #toast {
+      position: absolute;
+      left: 50%;
+      top: 50px;
+      transform: translateX(-50%);
+      padding: 7px 16px;
+      border-radius: 999px;
+      background: radial-gradient(circle at top left,
+        rgba(255,255,255,0.2),
+        rgba(0,0,0,0.9));
+      border: 1px solid rgba(255,255,255,0.4);
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 15;
+      text-shadow: 0 0 8px rgba(0,0,0,1);
+      box-shadow:
+        0 0 12px rgba(0,0,0,0.9),
+        0 0 22px rgba(0,255,255,0.3);
+    }
+
+    #toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(5px);
+    }
+  </style>
+</head>
+<body>
+  <div class="stars"></div>
+
+  <!-- Musique de fond (remplace src par ton propre .mp3 local) -->
+  <audio id="bgm" src="musique-neon.mp3" loop></audio>
+
+  <div id="cursor"></div>
+
+  <div id="game">
+    <div class="grid"></div>
+    <div id="centerGlow"></div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div id="hud">
+      <div class="badge">
+        <span class="badge-label">Caresses</span> <span id="pets">0</span>
+      </div>
+      <div class="badge">
+        <span class="badge-label">Combo</span> <span id="combo">0</span>x
+      </div>
+      <div class="badge">
+        <span class="badge-label">Humeur</span> <span id="moodLabel">Pacifique</span>
+      </div>
+      <div class="badge">
+        <span class="badge-label">Diff.</span> <span id="difficulty">1</span>
+      </div>
+      <div class="badge">
+        <span class="badge-label">Meilleur</span> <span id="bestScore">0</span>
+      </div>
+    </div>
+
+    <div id="timerBadge">Temps : <span id="time">0.0</span>s</div>
+
+    <div id="sidePanel">
+      <h2>Missions</h2>
+      <div class="mission">
+        <div class="dot active" id="m1dot"></div>
+        <span class="label" id="m1label">Atteindre 20 caresses.</span>
+      </div>
+      <div class="mission">
+        <div class="dot pending" id="m2dot"></div>
+        <span class="label" id="m2label">Faire un combo 8x.</span>
+      </div>
+      <div class="mission">
+        <div class="dot pending" id="m3dot"></div>
+        <span class="label" id="m3label">Survivre 60s.</span>
+      </div>
+
+      <h2>Succès</h2>
+      <div class="achievement">
+        <div class="dot pending" id="a1dot"></div>
+        <span class="label">“Trop mignon” : 50 caresses.</span>
+      </div>
+      <div class="achievement">
+        <div class="dot pending" id="a2dot"></div>
+        <span class="label">“Speedrun” : 30s sans se faire toucher.</span>
+      </div>
+      <div class="achievement">
+        <div class="dot pending" id="a3dot"></div>
+        <span class="label">“Maître du chaos” : déclencher une frénésie.</span>
+      </div>
+    </div>
+
+    <div id="message">
+      Mission 1 : fais 20 caresses sans te faire croquer.
+    </div>
+
+    <div id="monster" class="peaceful">
+      <div class="eye left">
+        <div class="pupil">
+          <div class="highlight"></div>
+        </div>
+      </div>
+      <div class="eye right">
+        <div class="pupil">
+          <div class="highlight"></div>
+        </div>
+      </div>
+      <div class="mouth peaceful">
+        <div class="tongue"></div>
+      </div>
+    </div>
+
+    <div id="startOverlay">
+      <h1>Monstre d'humeur ULTRA néon</h1>
+      <p>Caresse‑le pour remplir les missions et débloquer les succès.</p>
+      <p id="hint">
+        Objectif final : survivre 60 secondes avec un gros combo, dans cette arène néon sonore.
+      </p>
+      <button id="startBtn">Commencer</button>
+    </div>
+
+    <div id="gameOverOverlay" style="display:none;">
+      <h1>CROC !</h1>
+      <p>Score : <span id="finalScore">0</span> — Combo max : <span id="finalCombo">0</span>x</p>
+      <p>Temps : <span id="finalTime">0.0</span>s</p>
+      <button id="restartBtn">Rejouer</button>
+    </div>
+
+    <div id="toast"></div>
+  </div>
+
+  <script>
+    const game = document.getElementById("game");
+    const monster = document.getElementById("monster");
+    const mouth = monster.querySelector(".mouth");
+    const pupils = monster.querySelectorAll(".pupil");
+    const petsSpan = document.getElementById("pets");
+    const moodLabel = document.getElementById("moodLabel");
+    const difficultySpan = document.getElementById("difficulty");
+    const bestScoreSpan = document.getElementById("bestScore");
+    const message = document.getElementById("message");
+    const cursor = document.getElementById("cursor");
+    const startOverlay = document.getElementById("startOverlay");
+    const gameOverOverlay = document.getElementById("gameOverOverlay");
+    const startBtn = document.getElementById("startBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const finalScore = document.getElementById("finalScore");
+    const finalCombo = document.getElementById("finalCombo");
+    const finalTime = document.getElementById("finalTime");
+    const comboSpan = document.getElementById("combo");
+    const timeSpan = document.getElementById("time");
+    const toast = document.getElementById("toast");
+    const bgm = document.getElementById("bgm");
+
+    const m1dot = document.getElementById("m1dot");
+    const m2dot = document.getElementById("m2dot");
+    const m3dot = document.getElementById("m3dot");
+    const m1label = document.getElementById("m1label");
+    const m2label = document.getElementById("m2label");
+    const m3label = document.getElementById("m3label");
+    const a1dot = document.getElementById("a1dot");
+    const a2dot = document.getElementById("a2dot");
+    const a3dot = document.getElementById("a3dot");
+
+    let petCount = 0;
+    let bestScore = 0;
+    let difficulty = 1;
+    let state = "idle";
+    let attackTimer = 0;
+    let attackCooldown = 0;
+    let lastTime = 0;
+    let elapsed = 0;
+    let startTime = 0;
+    let targetX = 0;
+    let targetY = 0;
+    let attackDirX = 0;
+    let attackDirY = 0;
+    let running = false;
+
+    let lastMouseX = window.innerWidth / 2;
+    let lastMouseY = window.innerHeight / 2;
+
+    let combo = 0;
+    let maxCombo = 0;
+    let lastPetTime = 0;
+    const comboDelay = 1200;
+
+    let frenzy = false;
+    let frenzyTimer = 0;
+    const frenzyDuration = 6;
+
+    const clones = [];
+    const orbs = [];
+
+    const missions = {
+      m1_done: false,
+      m2_done: false,
+      m3_done: false
+    };
+
+    const achievements = {
+      a1_done: false,
+      a2_done: false,
+      a3_done: false
+    };
+
+    const gameRect = () => game.getBoundingClientRect();
+
+    function setDotState(el, state) {
+      el.classList.remove("pending", "active", "done");
+      el.classList.add(state);
+    }
+
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add("visible");
+      setTimeout(() => {
+        toast.classList.remove("visible");
+      }, 1400);
+    }
+
+    function shakeGame() {
+      game.classList.remove("shake");
+      void game.offsetWidth;
+      game.classList.add("shake");
+    }
+
+    function setMonsterPosition(x, y) {
+      monster.style.left = x + "px";
+      monster.style.top = y + "px";
+      monster.style.transform = "translate(-50%, -50%)";
+    }
+
+    function randomPosition(margin = 90) {
+      const rect = gameRect();
+      const x = Math.random() * (rect.width - margin * 2) + margin;
+      const y = Math.random() * (rect.height - margin * 2) + margin;
+      return { x, y };
+    }
+
+    function resetGame() {
+      petCount = 0;
+      difficulty = 1;
+      state = "idle";
+      combo = 0;
+      maxCombo = 0;
+      frenzy = false;
+      frenzyTimer = 0;
+      elapsed = 0;
+      startTime = 0;
+
+      petsSpan.textContent = petCount;
+      difficultySpan.textContent = difficulty;
+      moodLabel.textContent = "Pacifique";
+      comboSpan.textContent = combo;
+      timeSpan.textContent = "0.0";
+
+      monster.className = "peaceful";
+      mouth.className = "mouth peaceful";
+      cursor.className = "";
+      cursor.id = "cursor";
+      message.textContent = "Mission 1 : fais 20 caresses sans te faire croquer.";
+
+      clones.forEach(c => c.el.remove());
+      clones.length = 0;
+      orbs.forEach(o => o.el.remove());
+      orbs.length = 0;
+
+      missions.m1_done = false;
+      missions.m2_done = false;
+      missions.m3_done = false;
+
+      achievements.a1_done = false;
+      achievements.a2_done = false;
+      achievements.a3_done = false;
+
+      setDotState(m1dot, "active");
+      setDotState(m2dot, "pending");
+      setDotState(m3dot, "pending");
+      setDotState(a1dot, "pending");
+      setDotState(a2dot, "pending");
+      setDotState(a3dot, "pending");
+
+      m1label.textContent = "Atteindre 20 caresses.";
+      m2label.textContent = "Faire un combo 8x.";
+      m3label.textContent = "Survivre 60s.";
+
+      const pos = randomPosition();
+      setMonsterPosition(pos.x, pos.y);
+    }
+
+    function startGame() {
+      resetGame();
+      running = true;
+      startOverlay.style.display = "none";
+      gameOverOverlay.style.display = "none";
+      lastTime = performance.now();
+      startTime = lastTime;
+
+      if (bgm) {
+        bgm.currentTime = 0;
+        bgm.volume = 0.4;
+        bgm.play().catch(() => {});
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    function endGame() {
+      running = false;
+      state = "idle";
+      finalScore.textContent = petCount;
+      finalCombo.textContent = maxCombo;
+      finalTime.textContent = elapsed.toFixed(1);
+      if (petCount > bestScore) {
+        bestScore = petCount;
+        bestScoreSpan.textContent = bestScore;
+      }
+      shakeGame();
+      if (bgm) bgm.pause();
+      gameOverOverlay.style.display = "flex";
+    }
+
+    function lookAtCursor(mouseX, mouseY) {
+      const monsterRect = monster.getBoundingClientRect();
+      const cx = monsterRect.left + monsterRect.width / 2;
+      const cy = monsterRect.top + monsterRect.height / 2;
+      const dx = mouseX - cx;
+      const dy = mouseY - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const maxOffset = 6;
+      pupils.forEach(pupil => {
+        const offsetX = (dx / dist) * maxOffset;
+        const offsetY = (dy / dist) * maxOffset;
+        pupil.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+      });
+    }
+
+    function spawnSpark(x, y, color = "default") {
+      const s = document.createElement("div");
+      s.className = "spark";
+      s.style.left = x + "px";
+      s.style.top = y + "px";
+      if (color === "gold") {
+        s.style.boxShadow =
+          "0 0 14px rgba(255,255,180,1), 0 0 26px rgba(255,240,150,1)";
+      }
+      game.appendChild(s);
+      setTimeout(() => s.remove(), 420);
+    }
+
+    function spawnTrail(x, y) {
+      const d = document.createElement("div");
+      d.className = "trail-dot";
+      d.style.left = x + "px";
+      d.style.top = y + "px";
+      const speedFactor = Math.min(1, difficulty / 8);
+      const hueBase = frenzy ? 50 : 190;
+      const hue = hueBase + Math.random() * 40;
+      const sat = 70 + Math.random() * 20;
+      const light = 55 + speedFactor * 30;
+      d.style.background =
+        `radial-gradient(circle, hsla(${hue},${sat}%,${light}%,1), transparent)`;
+      document.body.appendChild(d);
+      setTimeout(() => d.remove(), 360);
+    }
+
+    function checkMissionsAndAchievements() {
+      if (!missions.m1_done && petCount >= 20) {
+        missions.m1_done = true;
+        setDotState(m1dot, "done");
+        setDotState(m2dot, "active");
+        m1label.textContent = "Mission 1 : OK (20 caresses).";
+        message.textContent = "Mission 1 réussie ! Mission 2 : atteindre un combo 8x.";
+        showToast("Mission 1 complétée !");
+      }
+      if (missions.m1_done && !missions.m2_done && combo >= 8) {
+        missions.m2_done = true;
+        setDotState(m2dot, "done");
+        setDotState(m3dot, "active");
+        m2label.textContent = "Mission 2 : OK (combo 8x).";
+        message.textContent = "Mission 2 réussie ! Mission 3 : survivre 60 secondes.";
+        showToast("Mission 2 complétée !");
+      }
+      if (!missions.m3_done && elapsed >= 60) {
+        missions.m3_done = true;
+        setDotState(m3dot, "done");
+        m3label.textContent = "Mission 3 : OK (60s).";
+        message.textContent = "Tu as survécu 60s ! Tu as vaincu son humeur néon.";
+        showToast("Mission finale complétée !");
+      }
+
+      if (!achievements.a1_done && petCount >= 50) {
+        achievements.a1_done = true;
+        setDotState(a1dot, "done");
+        showToast("Succès débloqué : “Trop mignon” !");
+      }
+      if (!achievements.a2_done && elapsed >= 30) {
+        achievements.a2_done = true;
+        setDotState(a2dot, "done");
+        showToast("Succès débloqué : “Speedrun” !");
+      }
+      if (!achievements.a3_done && frenzy) {
+        achievements.a3_done = true;
+        setDotState(a3dot, "done");
+        showToast("Succès débloqué : “Maître du chaos” !");
+      }
+    }
+
+    function applyAdaptiveDifficulty() {
+      if (combo >= 10 && difficulty < 10) {
+        difficulty = Math.min(difficulty + 0.2, 10);
+      } else if (combo === 0 && difficulty > 1.2) {
+        difficulty = Math.max(difficulty - 0.05, 1);
+      }
+      difficultySpan.textContent = difficulty.toFixed(1);
+    }
+
+    function onPet() {
+      if (!running) return;
+      petCount++;
+      petsSpan.textContent = petCount;
+
+      const now = performance.now();
+      if (now - lastPetTime < comboDelay) {
+        combo++;
+      } else {
+        combo = 1;
+      }
+      lastPetTime = now;
+      comboSpan.textContent = combo;
+      if (combo > maxCombo) maxCombo = combo;
+
+      mouth.className = "mouth happy";
+      if (missions.m1_done && !missions.m2_done) {
+        message.textContent = "Mission 2 : monte le combo jusqu'à 8x. Actuel : " + combo + "x.";
+      } else if (missions.m2_done && !missions.m3_done) {
+        message.textContent = "Mission 3 : tiens bon jusqu'à 60 secondes.";
+      } else {
+        message.textContent = combo >= 5
+          ? "Combo " + combo + "x ! Il brille presque trop."
+          : "Il adore ça… pour l'instant.";
+      }
+
+      setTimeout(() => {
+        if (state !== "angry" && !frenzy) {
+          mouth.className = "mouth peaceful";
+        }
+      }, 220);
+
+      const rect = gameRect();
+      spawnSpark(
+        Math.random() * rect.width,
+        Math.random() * rect.height
+      );
+
+      applyAdaptiveDifficulty();
+
+      if (!frenzy && combo >= 8 && Math.random() < 0.35) {
+        triggerFrenzy();
+      } else {
+        const baseChance = 0.05 + difficulty * 0.02 + combo * 0.002;
+        const chance = Math.min(0.4, baseChance);
+        if (Math.random() < chance && state !== "angry") {
+          prepareAttack();
+        }
+      }
+
+      checkMissionsAndAchievements();
+    }
+
+    function prepareAttack() {
+      const roll = Math.random();
+      if (roll < 0.55) {
+        startChargeAttack();
+      } else if (roll < 0.8) {
+        startTeleportAttack();
+      } else {
+        startCloneRainAttack();
+      }
+    }
+
+    function startChargeAttack() {
+      state = "charging";
+      monster.classList.remove("peaceful", "frenzy");
+      monster.classList.add("angry");
+      mouth.className = "mouth angry";
+      moodLabel.textContent = "En colère !";
+      message.textContent = "Charge néon ! Éloigne ta souris vite.";
+      cursor.classList.add("danger");
+      attackTimer = 0;
+      attackCooldown = 0.38 - Math.min(0.24, difficulty * 0.03);
+    }
+
+    function startTeleportAttack() {
+      state = "teleport-warning";
+      monster.classList.remove("peaceful", "frenzy");
+      monster.classList.add("angry");
+      mouth.className = "mouth angry";
+      moodLabel.textContent = "Disparu...";
+      message.textContent = "Téléportation sur ta souris : bouge vite !";
+      cursor.classList.add("danger");
+
+      const rect = gameRect();
+      const warning = document.createElement("div");
+      warning.className = "warning";
+      warning.style.left = (lastMouseX - rect.left - 22) + "px";
+      warning.style.top = (lastMouseY - rect.top - 22) + "px";
+      game.appendChild(warning);
+      setTimeout(() => warning.remove(), 650);
+
+      attackTimer = 0;
+      attackCooldown = 0.55 - Math.min(0.25, difficulty * 0.03);
+    }
+
+    function doTeleportAttack() {
+      const rect = gameRect();
+      const x = lastMouseX - rect.left;
+      const y = lastMouseY - rect.top;
+      setMonsterPosition(x, y);
+      state = "angry-teleport";
+      attackTimer = 0;
+    }
+
+    function startCloneRainAttack() {
+      state = "clone-rain";
+      monster.classList.remove("peaceful");
+      monster.classList.add("angry");
+      mouth.className = "mouth angry";
+      moodLabel.textContent = "Pluie de néon !";
+      message.textContent = "Reste mobile : des orbes lumineuses tombent du ciel.";
+      cursor.classList.add("danger");
+
+      const rect = gameRect();
+      const count = 3 + Math.min(5, difficulty);
+      for (let i = 0; i < count; i++) {
+        const clone = document.createElement("div");
+        clone.className = "orb";
+        clone.style.left = (Math.random() * (rect.width - 40) + 20) + "px";
+        clone.style.top = "-30px";
+        game.appendChild(clone);
+        clones.push({
+          el: clone,
+          x: parseFloat(clone.style.left),
+          y: -30,
+          vy: 120 + Math.random() * 80 + difficulty * 20
+        });
+      }
+      attackTimer = 0;
+    }
+
+    function triggerFrenzy() {
+      frenzy = true;
+      frenzyTimer = 0;
+      monster.classList.remove("angry");
+      monster.classList.add("frenzy");
+      mouth.className = "mouth frenzy";
+      moodLabel.textContent = "Frénésie !";
+      cursor.classList.remove("danger");
+      cursor.classList.add("frenzy");
+      message.textContent = "Frénésie néon : pluie de points gratuits, mais prépare-toi à la suite.";
+
+      const rect = gameRect();
+      for (let i = 0; i < 18; i++) {
+        spawnSpark(
+          rect.width / 2 + (Math.random() - 0.5) * 220,
+          rect.height / 2 + (Math.random() - 0.5) * 220,
+          "gold"
+        );
+      }
+
+      checkMissionsAndAchievements();
+    }
+
+    function endFrenzy() {
+      frenzy = false;
+      monster.classList.remove("frenzy");
+      mouth.className = "mouth peaceful";
+      cursor.classList.remove("frenzy");
+      moodLabel.textContent = "Calmé… pour l'instant";
+      if (missions.m2_done && !missions.m3_done) {
+        message.textContent = "Mission 3 : survivre 60 secondes.";
+      } else {
+        message.textContent = "La frénésie est finie. Les attaques vont piquer encore plus.";
+      }
+    }
+
+    function startAttack(mouseX, mouseY) {
+      state = "angry";
+      const rect = monster.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = mouseX - cx;
+      const dy = mouseY - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      attackDirX = dx / dist;
+      attackDirY = dy / dist;
+      attackTimer = 0;
+    }
+
+    function updateClones(dt) {
+      const rect = gameRect();
+      for (let i = clones.length - 1; i >= 0; i--) {
+        const c = clones[i];
+        c.y += c.vy * dt;
+        c.el.style.top = c.y + "px";
+        if (c.y > rect.height + 30) {
+          c.el.remove();
+          clones.splice(i, 1);
+          continue;
+        }
+        const dx = lastMouseX - (rect.left + c.x + 11);
+        const dy = lastMouseY - (rect.top + c.y + 11);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 18) {
+          endGame();
+          return;
+        }
+      }
+    }
+
+    function updateOrbs(dt) {
+      const rect = gameRect();
+      for (let i = orbs.length - 1; i >= 0; i--) {
+        const o = orbs[i];
+        const tx = lastMouseX - rect.left;
+        const ty = lastMouseY - rect.top;
+        const dx = tx - o.x;
+        const dy = ty - o.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const speed = o.speed;
+        o.x += (dx / dist) * speed * dt;
+        o.y += (dy / dist) * speed * dt;
+        o.el.style.left = (o.x - 11) + "px";
+        o.el.style.top = (o.y - 11) + "px";
+
+        if (
+          o.x < -30 || o.x > rect.width + 30 ||
+          o.y < -30 || o.y > rect.height + 30
+        ) {
+          o.el.remove();
+          orbs.splice(i, 1);
+          continue;
+        }
+
+        const d2 = Math.sqrt(
+          Math.pow(lastMouseX - (rect.left + o.x), 2) +
+          Math.pow(lastMouseY - (rect.top + o.y), 2)
+        );
+        if (d2 < 18) {
+          endGame();
+          return;
+        }
+      }
+    }
+
+    function maybeSpawnOrb(dt) {
+      if (!frenzy && Math.random() < dt * (0.4 + difficulty * 0.12)) {
+        const rect = gameRect();
+        const orb = document.createElement("div");
+        orb.className = "orb";
+        const side = Math.floor(Math.random() * 4);
+        let x, y;
+        if (side === 0) { x = -20; y = Math.random() * rect.height; }
+        else if (side === 1) { x = rect.width + 20; y = Math.random() * rect.height; }
+        else if (side === 2) { x = Math.random() * rect.width; y = -20; }
+        else { x = Math.random() * rect.width; y = rect.height + 20; }
+        orb.style.left = x + "px";
+        orb.style.top = y + "px";
+        game.appendChild(orb);
+        orbs.push({
+          el: orb,
+          x,
+          y,
+          speed: 110 + difficulty * 35
+        });
+      }
+    }
+
+    function updateMonster(dt, mouseX, mouseY) {
+      const rect = gameRect();
+      const monsterRect = monster.getBoundingClientRect();
+      let cx = monsterRect.left - rect.left + monsterRect.width / 2;
+      let cy = monsterRect.top - rect.top + monsterRect.height / 2;
+
+      if (state === "idle" || frenzy) {
+        if (!targetX || Math.hypot(cx - targetX, cy - targetY) < 5) {
+          const pos = randomPosition();
+          targetX = pos.x;
+          targetY = pos.y;
+        }
+        const baseSpeed = frenzy ? 140 : 80;
+        const speed = baseSpeed + difficulty * 15;
+        const dx = targetX - cx;
+        const dy = targetY - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const step = speed * dt;
+        if (step >= dist) {
+          cx = targetX;
+          cy = targetY;
+        } else {
+          cx += (dx / dist) * step;
+          cy += (dy / dist) * step;
+        }
+        setMonsterPosition(cx, cy);
+      } else if (state === "charging") {
+        attackTimer += dt;
+        const wiggle = Math.sin(attackTimer * 40) * 5;
+        monster.style.transform = `translate(-50%, -50%) translateX(${wiggle}px)`;
+        if (attackTimer >= attackCooldown) {
+          startAttack(mouseX, mouseY);
+        }
+      } else if (state === "angry") {
+        attackTimer += dt;
+        const speed = 320 + difficulty * 60;
+        cx += attackDirX * speed * dt;
+        cy += attackDirY * speed * dt;
+        const margin = 50;
+        if (
+          cx < -margin || cx > rect.width + margin ||
+          cy < -margin || cy > rect.height + margin
+        ) {
+          state = "idle";
+          monster.classList.remove("angry");
+          monster.classList.add("peaceful");
+          mouth.className = "mouth peaceful";
+          cursor.classList.remove("danger");
+          moodLabel.textContent = "Calmé (pour l'instant)";
+          message.textContent = "Belle esquive éclatante.";
+          const pos = randomPosition();
+          setMonsterPosition(pos.x, pos.y);
+          return;
+        }
+        setMonsterPosition(cx, cy);
+      } else if (state === "teleport-warning") {
+        attackTimer += dt;
+        if (attackTimer >= attackCooldown) {
+          doTeleportAttack();
+        }
+      } else if (state === "angry-teleport") {
+        attackTimer += dt;
+        const duration = 0.25;
+        if (attackTimer >= duration) {
+          state = "idle";
+          monster.classList.remove("angry");
+          monster.classList.add("peaceful");
+          mouth.className = "mouth peaceful";
+          cursor.classList.remove("danger");
+          moodLabel.textContent = "Calmé (pour l'instant)";
+          message.textContent = "Tu as survécu à la téléportation néon.";
+        }
+      } else if (state === "clone-rain") {
+        attackTimer += dt;
+        if (attackTimer >= 2.5) {
+          state = "idle";
+          monster.classList.remove("angry");
+          monster.classList.add("peaceful");
+          mouth.className = "mouth peaceful";
+          cursor.classList.remove("danger");
+          moodLabel.textContent = "Calmé (pour l'instant)";
+          message.textContent = "La pluie d'orbes est finie.";
+        }
+      }
+
+      const hit = (
+        lastMouseX >= monsterRect.left &&
+        lastMouseX <= monsterRect.right &&
+        lastMouseY >= monsterRect.top &&
+        lastMouseY <= monsterRect.bottom
+      );
+      if (hit) {
+        if (state === "angry" || state === "angry-teleport") {
+          endGame();
+        } else if (state === "idle" || frenzy) {
+          onPet();
+        }
+      }
+    }
+
+    function checkComboTimeout() {
+      if (!running || combo === 0) return;
+      const now = performance.now();
+      if (now - lastPetTime > comboDelay) {
+        combo = 0;
+        comboSpan.textContent = combo;
+      }
+    }
+
+    function loop(timestamp) {
+      if (!running) return;
+      const dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      elapsed = (timestamp - startTime) / 1000;
+      timeSpan.textContent = elapsed.toFixed(1);
+
+      updateMonster(dt, lastMouseX, lastMouseY);
+      updateClones(dt);
+      updateOrbs(dt);
+      maybeSpawnOrb(dt);
+      checkComboTimeout();
+
+      if (frenzy) {
+        frenzyTimer += dt;
+        if (frenzyTimer >= frenzyDuration) {
+          endFrenzy();
+        } else if (Math.random() < dt * 12) {
+          const rect = gameRect();
+          spawnSpark(
+            Math.random() * rect.width,
+            Math.random() * rect.height,
+            "gold"
+          );
+        }
+      }
+
+      checkMissionsAndAchievements();
+
+      requestAnimationFrame(loop);
+    }
+
+    document.addEventListener("mousemove", (e) => {
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+      cursor.style.left = e.clientX + "px";
+      cursor.style.top = e.clientY + "px";
+      spawnTrail(e.clientX, e.clientY);
+      lookAtCursor(e.clientX, e.clientY);
+    });
+
+    document.addEventListener("mouseenter", () => {
+      cursor.style.display = "block";
+    });
+
+    document.addEventListener("mouseleave", () => {
+      cursor.style.display = "none";
+    });
+
+    startBtn.addEventListener("click", startGame);
+    restartBtn.addEventListener("click", startGame);
+
+    if (window.localStorage) {
+      const saved = localStorage.getItem("weirdMonsterBestScore_v5");
+      if (saved) {
+        bestScore = parseInt(saved, 10) || 0;
+        bestScoreSpan.textContent = bestScore;
+      }
+    }
+
+    new MutationObserver(() => {
+      if (window.localStorage) {
+        localStorage.setItem("weirdMonsterBestScore_v5", bestScore.toString());
+      }
+    }).observe(bestScoreSpan, { childList: true });
+
+    resetGame();
+  </script>
+</body>
+</html>

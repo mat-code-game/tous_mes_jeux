@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Minecraft FPS - Vision Première Personne</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        canvas { display: block; }
+        
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 16px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 10;
+        }
+        
+        #controls {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            font-size: 14px;
+            border-radius: 8px;
+            z-index: 10;
+        }
+        
+        #controls b {
+            color: #f39c12;
+        }
+        
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            z-index: 5;
+            pointer-events: none;
+        }
+        
+        .crosshair-line {
+            position: absolute;
+            background: white;
+            box-shadow: 0 0 2px black;
+        }
+        
+        .crosshair-h {
+            left: 50%;
+            top: 50%;
+            width: 20px;
+            height: 2px;
+            transform: translate(-50%, -50%);
+        }
+        
+        .crosshair-v {
+            left: 50%;
+            top: 50%;
+            width: 2px;
+            height: 20px;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div id="ui">
+        <div><b>Position:</b> <span id="posX">0</span>, <span id="posY">0</span>, <span id="posZ">0</span></div>
+        <div><b>Direction:</b> <span id="direction">Nord</span></div>
+        <div><b>Munitions:</b> <span id="ammo">6 / 6</span></div>
+        <div style="margin-top: 8px;">
+            <div style="width: 150px; height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden;">
+                <div id="staminaBar" style="height: 100%; background: linear-gradient(90deg, #3498db, #2980b9); width: 100%; transition: width 0.2s;"></div>
+            </div>
+            <div style="font-size: 12px; color: #3498db;">Stamina</div>
+        </div>
+        <div><b>FPS:</b> <span id="fps">60</span></div>
+    </div>
+    
+    <div id="controls">
+        <b>🎮 Contrôles</b><br><br>
+        <b>Q / D</b> : Déplacer gauche/droite<br>
+        <b>Z / S</b> : Avancer/reculer<br>
+        <b>Espace</b> : Sauter<br>
+        <b>Clic gauche</b> : Tirer<br>
+        <b>Shift</b> : Dash (coût stamina)<br>
+        <b>Souris</b> : Regarder autour<br><br>
+        <div id="lockStatus" style="color: #f39c12; font-weight: bold;">
+            🔒 Cliquez pour verrouiller la souris
+        </div>
+    </div>
+    
+    <div id="crosshair">
+        <div class="crosshair-line crosshair-h"></div>
+        <div class="crosshair-line crosshair-v"></div>
+    </div>
+
+<script>
+window.addEventListener("DOMContentLoaded", app);
+
+function app() {
+    let scene, camera, renderer, world, player;
+    let keys = {};
+    let lastTime = performance.now();
+    let frameCount = 0;
+    let fpsTime = 0;
+    let bullets = [];
+    
+    // Constantes pour le système de tir
+    const bulletSpeed = 0.8;
+    const maxAmmo = 6;
+    const reloadTime = 90; // frames (1.5 secondes à 60fps)
+    const dashCost = 25; // coût en stamina
+    const dashSpeed = 0.5;
+    const dashDuration = 15; // frames
+
+    // Fonction de noise pour terrain irrégulier
+    function noise(x, z) {
+        return (Math.sin(x * 0.15) * Math.cos(z * 0.15) +
+                Math.sin(x * 0.05 + z * 0.07)) * 1.5 + 2;
+    }
+
+    // ---------- CLASSE WORLD ----------
+    class World {
+        constructor() {
+            this.chunkSize = 16;
+            this.gravity = 0.01;
+            this.blocks = {};
+            this.chunks = {};
+            this.viewDistance = 3;
+            this.unloadDistance = 5;
+
+            // Lumières
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            let dir = new THREE.DirectionalLight(0xffffff, 0.8);
+            dir.position.set(50, 80, 30);
+            dir.castShadow = true;
+            dir.shadow.mapSize.width = 2048;
+            dir.shadow.mapSize.height = 2048;
+            scene.add(dir);
+
+            // Types de blocs: 0:herbe, 1:terre, 2:bois, 3:feuilles
+            this.blockColors = [0x228B22, 0x8B4513, 0x654321, 0x32CD32];
+            this.blockMeshes = this.blockColors.map(c => {
+                const geo = new THREE.BoxGeometry(1, 1, 1);
+                const mat = new THREE.MeshLambertMaterial({ color: c });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                return mesh;
+            });
+
+            this.generateChunksAround(0, 0);
+        }
+
+        key(x, y, z) {
+            return `${x},${y},${z}`;
+        }
+
+        chunkKey(cx, cz) {
+            return `${cx},${cz}`;
+        }
+
+        addBlock(x, y, z, type) {
+            const base = this.blockMeshes[type].clone();
+            base.position.set(x, y, z);
+            scene.add(base);
+            this.blocks[this.key(x, y, z)] = true;
+        }
+
+        isSolid(x, y, z) {
+            return this.blocks[this.key(x, y, z)] === true;
+        }
+
+        generateChunk(cx, cz) {
+            const cKey = this.chunkKey(cx, cz);
+            if (this.chunks[cKey]) return;
+
+            this.chunks[cKey] = true;
+            const size = this.chunkSize;
+            const startX = cx * size;
+            const startZ = cz * size;
+
+            for (let z = 0; z < size; z++) {
+                for (let x = 0; x < size; x++) {
+                    const wx = startX + x;
+                    const wz = startZ + z;
+                    const h = Math.max(0, Math.floor(noise(wx, wz)));
+
+                    for (let y = 0; y <= h; y++) {
+                        const t = (y === h) ? 0 : 1;
+                        this.addBlock(wx, y, wz, t);
+                    }
+
+                    if (Math.random() < 0.12 && h >= 1) {
+                        this.generateTree(wx, h + 1, wz);
+                    }
+                }
+            }
+        }
+
+        generateChunksAround(centerCx, centerCz) {
+            for (let dz = -this.viewDistance; dz <= this.viewDistance; dz++) {
+                for (let dx = -this.viewDistance; dx <= this.viewDistance; dx++) {
+                    this.generateChunk(centerCx + dx, centerCz + dz);
+                }
+            }
+        }
+
+        generateTree(x, y, z) {
+            const trunkHeight = 3 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < trunkHeight; i++) {
+                this.addBlock(x, y + i, z, 2);
+            }
+
+            const top = y + trunkHeight;
+            for (let lx = -1; lx <= 1; lx++) {
+                for (let lz = -1; lz <= 1; lz++) {
+                    for (let ly = 0; ly < 2; ly++) {
+                        if (Math.random() < 0.9) {
+                            this.addBlock(x + lx, top + ly, z + lz, 3);
+                        }
+                    }
+                }
+            }
+        }
+
+        worldToChunk(x, z) {
+            const size = this.chunkSize;
+            const cx = Math.floor(x / size);
+            const cz = Math.floor(z / size);
+            return { cx, cz };
+        }
+
+        unloadFarChunks(centerCx, centerCz) {
+            const toDelete = [];
+            for (const key in this.chunks) {
+                const [cx, cz] = key.split(",").map(Number);
+                const dx = cx - centerCx;
+                const dz = cz - centerCz;
+                const dist = Math.max(Math.abs(dx), Math.abs(dz));
+                if (dist > this.unloadDistance) {
+                    toDelete.push(key);
+                }
+            }
+            for (const key of toDelete) {
+                delete this.chunks[key];
+            }
+        }
+
+        updateAroundPlayer(px, pz) {
+            const { cx, cz } = this.worldToChunk(px, pz);
+            this.generateChunksAround(cx, cz);
+            this.unloadFarChunks(cx, cz);
+        }
+    }
+
+    // ---------- CLASSE PLAYER ----------
+    class Player {
+        constructor() {
+            this.x = 0;
+            this.y = 8;
+            this.z = 0;
+            this.yaw = 0;
+            this.pitch = 0;
+            
+            // Vitesses de déplacement
+            this.baseSpeed = 0.12;
+            this.speed = this.baseSpeed;
+            this.strafeSpeed = 0.10; // Vitesse latérale (gauche/droite)
+            
+            this.jumpSpeed = 0.22;
+            this.yVelocity = 0;
+            this.onGround = false;
+            this.radius = 0.4;
+            this.height = 1.7;
+            
+            // Système de tir
+            this.ammo = maxAmmo;
+            this.reloading = 0;
+            this.canShoot = true;
+            this.shootCooldown = 0;
+            
+            // Système de stamina et dash
+            this.stamina = 100;
+            this.maxStamina = 100;
+            this.isDashing = false;
+            this.dashTime = 0;
+            this.dashDirection = { x: 0, z: 0 };
+        }
+
+        collidesAt(nx, ny, nz) {
+            const r = this.radius;
+            const minX = Math.floor(nx - r);
+            const maxX = Math.floor(nx + r);
+            const minY = Math.floor(ny);
+            const maxY = Math.floor(ny + this.height);
+            const minZ = Math.floor(nz - r);
+            const maxZ = Math.floor(nz + r);
+
+            for (let x = minX; x <= maxX; x++) {
+                for (let y = minY; y <= maxY; y++) {
+                    for (let z = minZ; z <= maxZ; z++) {
+                        if (world.isSolid(x, y, z)) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        shoot() {
+            console.log("Shoot called - Ammo:", this.ammo, "Reloading:", this.reloading, "Cooldown:", this.shootCooldown);
+            
+            if (this.ammo <= 0 || this.reloading > 0 || this.shootCooldown > 0) {
+                console.log("Cannot shoot!");
+                return;
+            }
+            
+            console.log("Shooting!");
+            this.ammo--;
+            this.shootCooldown = 10; // cooldown entre les tirs
+            
+            // Si plus de munitions, recharger
+            if (this.ammo <= 0) {
+                this.reloading = reloadTime;
+            }
+            
+            // Créer le projectile
+            const bulletGeo = new THREE.SphereGeometry(0.15, 8, 8);
+            const bulletMat = new THREE.MeshBasicMaterial({ color: 0xFFFF00 });
+            const bulletMesh = new THREE.Mesh(bulletGeo, bulletMat);
+            
+            // Position de départ (devant le joueur)
+            const startX = this.x - Math.sin(this.yaw) * 0.5;
+            const startY = this.y + 1.5; // hauteur des yeux
+            const startZ = this.z - Math.cos(this.yaw) * 0.5;
+            
+            bulletMesh.position.set(startX, startY, startZ);
+            scene.add(bulletMesh);
+            
+            // Direction basée sur la caméra
+            const direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+            
+            bullets.push({
+                mesh: bulletMesh,
+                x: startX,
+                y: startY,
+                z: startZ,
+                vx: direction.x * bulletSpeed,
+                vy: direction.y * bulletSpeed,
+                vz: direction.z * bulletSpeed,
+                lifetime: 300 // frames avant disparition
+            });
+            
+            console.log("Bullet created at", startX, startY, startZ, "with direction", direction);
+        }
+
+        dash() {
+            if (this.stamina < dashCost || this.isDashing) return;
+            
+            this.stamina -= dashCost;
+            this.isDashing = true;
+            this.dashTime = dashDuration;
+            
+            // Direction du dash basée sur la caméra
+            const sinY = Math.sin(this.yaw);
+            const cosY = Math.cos(this.yaw);
+            
+            let dx = 0, dz = 0;
+            
+            // Calculer la direction en fonction des touches pressées
+            if (keys["KeyZ"] || keys["KeyW"]) {
+                dx -= sinY;
+                dz -= cosY;
+            }
+            if (keys["KeyS"]) {
+                dx += sinY;
+                dz += cosY;
+            }
+            if (keys["KeyQ"] || keys["KeyA"]) {
+                dx -= cosY;
+                dz += sinY;
+            }
+            if (keys["KeyD"]) {
+                dx += cosY;
+                dz -= sinY;
+            }
+            
+            // Si aucune touche, dash vers l'avant
+            if (dx === 0 && dz === 0) {
+                dx = -sinY;
+                dz = -cosY;
+            }
+            
+            // Normaliser
+            const len = Math.sqrt(dx * dx + dz * dz);
+            if (len > 0) {
+                this.dashDirection.x = dx / len;
+                this.dashDirection.z = dz / len;
+            }
+        }
+
+        update() {
+            const yaw = this.yaw;
+            const sinY = Math.sin(yaw);
+            const cosY = Math.cos(yaw);
+
+            let nx = this.x;
+            let ny = this.y;
+            let nz = this.z;
+
+            // Gestion du dash
+            if (this.isDashing) {
+                nx += this.dashDirection.x * dashSpeed;
+                nz += this.dashDirection.z * dashSpeed;
+                this.dashTime--;
+                if (this.dashTime <= 0) {
+                    this.isDashing = false;
+                }
+            } else {
+                // Déplacements normaux avant/arrière (Z/S)
+                if (keys["KeyZ"] || keys["KeyW"]) {
+                    nx -= this.speed * sinY;
+                    nz -= this.speed * cosY;
+                }
+                if (keys["KeyS"]) {
+                    nx += this.speed * sinY;
+                    nz += this.speed * cosY;
+                }
+
+                // Déplacements gauche/droite (Q/D)
+                if (keys["KeyQ"] || keys["KeyA"]) {
+                    nx -= this.strafeSpeed * cosY;
+                    nz += this.strafeSpeed * sinY;
+                }
+                if (keys["KeyD"]) {
+                    nx += this.strafeSpeed * cosY;
+                    nz -= this.strafeSpeed * sinY;
+                }
+            }
+
+            // Test de collision pour X
+            if (!this.collidesAt(nx, this.y, this.z)) {
+                this.x = nx;
+            }
+            // Test de collision pour Z
+            if (!this.collidesAt(this.x, this.y, nz)) {
+                this.z = nz;
+            }
+
+            // Saut
+            if (keys["Space"] && this.onGround) {
+                this.yVelocity = this.jumpSpeed;
+                this.onGround = false;
+            }
+
+            // Gravité et mouvement vertical
+            this.yVelocity -= world.gravity;
+            let newY = this.y + this.yVelocity;
+
+            if (this.yVelocity > 0) {
+                if (!this.collidesAt(this.x, newY, this.z)) {
+                    this.y = newY;
+                } else {
+                    this.yVelocity = 0;
+                }
+            } else {
+                if (!this.collidesAt(this.x, newY, this.z)) {
+                    this.y = newY;
+                    this.onGround = false;
+                } else {
+                    this.onGround = true;
+                    this.yVelocity = 0;
+                    while (this.collidesAt(this.x, this.y, this.z)) {
+                        this.y += 0.01;
+                    }
+                }
+            }
+
+            // Gestion de la stamina
+            if (!this.isDashing && this.stamina < this.maxStamina) {
+                this.stamina += 0.5;
+                if (this.stamina > this.maxStamina) this.stamina = this.maxStamina;
+            }
+
+            // Gestion du rechargement
+            if (this.reloading > 0) {
+                this.reloading--;
+                if (this.reloading <= 0) {
+                    this.ammo = maxAmmo;
+                }
+            }
+
+            // Cooldown de tir
+            if (this.shootCooldown > 0) {
+                this.shootCooldown--;
+            }
+
+            // Mise à jour de la caméra (vue FPS)
+            camera.position.set(this.x, this.y + 1.6, this.z);
+            camera.rotation.set(this.pitch, this.yaw, 0, 'YXZ');
+            
+            // Mise à jour de l'UI
+            this.updateUI();
+        }
+        
+        updateUI() {
+            document.getElementById('posX').textContent = this.x.toFixed(1);
+            document.getElementById('posY').textContent = this.y.toFixed(1);
+            document.getElementById('posZ').textContent = this.z.toFixed(1);
+            
+            // Déterminer la direction cardinale
+            let angle = ((this.yaw * 180 / Math.PI) + 360) % 360;
+            let dir = 'Nord';
+            if (angle > 45 && angle <= 135) dir = 'Ouest';
+            else if (angle > 135 && angle <= 225) dir = 'Sud';
+            else if (angle > 225 && angle <= 315) dir = 'Est';
+            document.getElementById('direction').textContent = dir;
+            
+            // Munitions
+            const ammoText = this.reloading > 0 ? 'Rechargement...' : `${this.ammo} / ${maxAmmo}`;
+            document.getElementById('ammo').textContent = ammoText;
+            
+            // Stamina
+            const staminaPercent = (this.stamina / this.maxStamina * 100);
+            document.getElementById('staminaBar').style.width = staminaPercent + '%';
+        }
+    }
+
+    // ---------- INIT ----------
+    function init() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+        scene.fog = new THREE.Fog(0x87CEEB, 0, 100);
+
+        camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            200
+        );
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        world = new World();
+        player = new Player();
+
+        // Verrouillage du pointeur pour contrôle de la souris
+        let isPointerLocked = false;
+        
+        renderer.domElement.addEventListener("click", () => {
+            if (!isPointerLocked) {
+                renderer.domElement.requestPointerLock();
+            } else {
+                // Si déjà verrouillé, on tire
+                player.shoot();
+            }
+        });
+
+        // Détecter quand le pointeur est verrouillé/déverrouillé
+        document.addEventListener('pointerlockchange', () => {
+            isPointerLocked = document.pointerLockElement === renderer.domElement;
+            const lockStatus = document.getElementById('lockStatus');
+            if (isPointerLocked) {
+                lockStatus.textContent = '✅ Souris verrouillée - Cliquez pour tirer!';
+                lockStatus.style.color = '#2ecc71';
+            } else {
+                lockStatus.textContent = '🔒 Cliquez pour verrouiller la souris';
+                lockStatus.style.color = '#f39c12';
+            }
+        });
+
+        // Tir avec clic gauche quand le pointeur est verrouillé
+        renderer.domElement.addEventListener("mousedown", (e) => {
+            if (isPointerLocked && e.button === 0) {
+                player.shoot();
+            }
+        });
+
+        // Mouvement de la souris
+        window.addEventListener("mousemove", (e) => {
+            if (document.pointerLockElement === renderer.domElement) {
+                player.yaw -= e.movementX * 0.002;
+                player.pitch -= e.movementY * 0.002;
+                const maxPitch = Math.PI / 2 - 0.01;
+                player.pitch = Math.max(-maxPitch, Math.min(maxPitch, player.pitch));
+            }
+        });
+
+        // Redimensionnement
+        window.addEventListener("resize", () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Gestion du clavier
+        window.addEventListener("keydown", (e) => { 
+            keys[e.code] = true;
+            // Dash avec Shift
+            if (e.code === "ShiftLeft" || e.code === "ShiftRight") {
+                player.dash();
+            }
+        });
+        window.addEventListener("keyup", (e) => { 
+            keys[e.code] = false;
+        });
+    }
+
+    // ---------- LOOP ----------
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        const currentTime = performance.now();
+        const deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+        
+        // Calcul FPS
+        frameCount++;
+        fpsTime += deltaTime;
+        if (fpsTime >= 1000) {
+            document.getElementById('fps').textContent = frameCount;
+            frameCount = 0;
+            fpsTime = 0;
+        }
+        
+        if (player && world) {
+            player.update();
+            world.updateAroundPlayer(player.x, player.z);
+            
+            // Mise à jour des projectiles
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                
+                bullet.x += bullet.vx;
+                bullet.y += bullet.vy;
+                bullet.z += bullet.vz;
+                bullet.lifetime--;
+                
+                bullet.mesh.position.set(bullet.x, bullet.y, bullet.z);
+                
+                // Vérifier collision avec le terrain
+                const bx = Math.floor(bullet.x);
+                const by = Math.floor(bullet.y);
+                const bz = Math.floor(bullet.z);
+                
+                if (world.isSolid(bx, by, bz) || bullet.lifetime <= 0) {
+                    // Retirer le projectile
+                    scene.remove(bullet.mesh);
+                    bullets.splice(i, 1);
+                    continue;
+                }
+                
+                // Vérifier si le projectile est trop loin
+                const dist = Math.sqrt(
+                    Math.pow(bullet.x - player.x, 2) +
+                    Math.pow(bullet.y - player.y, 2) +
+                    Math.pow(bullet.z - player.z, 2)
+                );
+                
+                if (dist > 100) {
+                    scene.remove(bullet.mesh);
+                    bullets.splice(i, 1);
+                }
+            }
+        }
+        
+        renderer.render(scene, camera);
+    }
+
+    init();
+    animate();
+}
+</script>
+</body>
+</html>

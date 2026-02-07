@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Jeu de Combat 3D - 2 Joueurs</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      overflow: hidden;
+      background: #000;
+      font-family: 'Arial', sans-serif;
+    }
+    #gameCanvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+    #ui {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: white;
+      font-size: 18px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      z-index: 10;
+    }
+    .player-info {
+      background: rgba(0,0,0,0.6);
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border-left: 4px solid;
+      backdrop-filter: blur(5px);
+    }
+    .p1-info { border-left-color: #e74c3c; }
+    .p2-info { border-left-color: #2ecc71; }
+    .health-bar {
+      width: 200px;
+      height: 20px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 8px 0;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+    .health-fill {
+      height: 100%;
+      transition: width 0.3s ease;
+      border-radius: 8px;
+    }
+    .p1-health { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+    .p2-health { background: linear-gradient(90deg, #2ecc71, #27ae60); }
+    .stamina-bar {
+      width: 150px;
+      height: 8px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+    .stamina-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3498db, #2980b9);
+      transition: width 0.2s ease;
+      border-radius: 4px;
+    }
+    #commands {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      padding: 16px 20px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      font-size: 14px;
+      line-height: 1.6;
+      border-radius: 10px;
+      max-width: 380px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      z-index: 10;
+    }
+    #commands b {
+      color: #f39c12;
+      font-size: 15px;
+    }
+    #commands .section {
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    #commands .section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    #message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.9);
+      color: white;
+      font-size: 48px;
+      text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+      display: none;
+      text-align: center;
+      padding: 40px 60px;
+      border-radius: 20px;
+      border: 3px solid #f39c12;
+      backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+    #message button {
+      margin-top: 25px;
+      padding: 15px 40px;
+      font-size: 24px;
+      cursor: pointer;
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 6px 20px rgba(243,156,18,0.4);
+      transition: all 0.3s ease;
+    }
+    #message button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(243,156,18,0.6);
+    }
+    .effect-text {
+      font-size: 12px;
+      color: #3498db;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="ui">
+    <div class="player-info p1-info">
+      <div><b style="color: #e74c3c;">🎮 Joueur 1</b></div>
+      <div class="health-bar">
+        <div class="health-fill p1-health" id="p1HealthBar" style="width: 100%"></div>
+      </div>
+      <div id="p1Health">Vie: 100 / 100</div>
+      <div id="p1Ammo">Munitions: 6 / 6</div>
+      <div class="stamina-bar">
+        <div class="stamina-fill" id="p1StaminaBar" style="width: 100%"></div>
+      </div>
+      <div id="p1Effects" class="effect-text"></div>
+    </div>
+
+    <div class="player-info p2-info">
+      <div><b style="color: #2ecc71;">🎮 Joueur 2</b></div>
+      <div class="health-bar">
+        <div class="health-fill p2-health" id="p2HealthBar" style="width: 100%"></div>
+      </div>
+      <div id="p2Health">Vie: 100 / 100</div>
+      <div id="p2Ammo">Munitions: 6 / 6</div>
+      <div class="stamina-bar">
+        <div class="stamina-fill" id="p2StaminaBar" style="width: 100%"></div>
+      </div>
+      <div id="p2Effects" class="effect-text"></div>
+    </div>
+  </div>
+
+  <div id="commands">
+    <div class="section">
+      <b>🎯 Commandes</b>
+    </div>
+    <div class="section">
+      <b>Joueur 1 (Rouge):</b><br>
+      ← → : Déplacer<br>
+      ↑ : Double saut<br>
+      Espace : Tirer<br>
+      Shift droit : Dash / roulade
+    </div>
+    <div class="section">
+      <b>Joueur 2 (Vert):</b><br>
+      Q / D : Déplacer<br>
+      Z : Double saut<br>
+      F : Tirer<br>
+      Shift gauche : Dash / roulade
+    </div>
+    <div class="section">
+      <b>💎 Bonus:</b><br>
+      🏥 Rouge : Soin (+30 PV)<br>
+      ⚡ Jaune : Vitesse x1.6 (5 s)<br>
+      🔷 Bleu : Bouclier (8 s)<br>
+      Les bonus réapparaissent après quelques secondes
+    </div>
+    <div>
+      <b>R</b> : Rejouer après victoire
+    </div>
+  </div>
+
+  <div id="message">
+    <div id="messageText"></div>
+    <button onclick="restartGame()">🔄 Rejouer</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    let scene, camera, renderer;
+    let p1Mesh, p2Mesh, platform;
+    let bullets = [];
+    let powerups = [];
+    let gameOver = false;
+
+    const world = { width: 80, depth: 40 };
+    
+    const bulletSpeed = 0.8;
+    const maxAmmo = 6;
+    const reloadTime = 60;
+    const dashTimeMax = 15;
+    const dashSpeed = 1.2;
+    const dashCooldownMax = 90;
+    const rollCost = 25;      // coût roulade
+    const rollSpeed = 0.9;    // un peu plus lent que dash
+    const powerupRespawnTime = 60 * 8; // frames
+
+    const keys = {
+      ArrowLeft: false, ArrowRight: false, ArrowUp: false, Space: false,
+      ShiftRight: false, ShiftLeft: false,
+      z: false, q: false, d: false, f: false
+    };
+
+    let p1, p2;
+
+    function createPlayer(x, z, color) {
+      return {
+        x, y: 2, z,
+        width: 2, height: 3, depth: 2,
+        health: 100, maxHealth: 100,
+        color,
+        baseSpeed: 0.3,
+        speed: 0.3,
+        jumpPower: 0.7,
+        gravity: 0.035,
+        vy: 0,
+        isJumping: false,
+        facing: 1,
+        invincibleTime: 0,
+        jumpsLeft: 2,
+        isDashing: false,
+        dashTime: 0,
+        dashCooldown: 0,
+        dashDir: 1,
+        ammo: maxAmmo,
+        reloading: 0,
+        stamina: 100,
+        maxStamina: 100,
+        speedBoostTime: 0,
+        shieldTime: 0,
+        isRolling: false,
+        rollTime: 0
+      };
+    }
+
+    function init() {
+      scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0x87ceeb, 50, 150);
+      
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 35, 45);
+      camera.lookAt(0, 0, 0);
+
+      renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas'), antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      dirLight.position.set(20, 40, 20);
+      dirLight.castShadow = true;
+      dirLight.shadow.camera.left = -50;
+      dirLight.shadow.camera.right = 50;
+      dirLight.shadow.camera.top = 50;
+      dirLight.shadow.camera.bottom = -50;
+      dirLight.shadow.mapSize.width = 2048;
+      dirLight.shadow.mapSize.height = 2048;
+      scene.add(dirLight);
+
+      const pointLight = new THREE.PointLight(0xffaa00, 0.5, 100);
+      pointLight.position.set(0, 20, 0);
+      scene.add(pointLight);
+
+      const groundGeom = new THREE.BoxGeometry(world.width, 1, world.depth);
+      const groundMat = new THREE.MeshStandardMaterial({ 
+        color: 0x2ecc71,
+        roughness: 0.8,
+        metalness: 0.2
+      });
+      platform = new THREE.Mesh(groundGeom, groundMat);
+      platform.position.set(0, 0, 0);
+      platform.receiveShadow = true;
+      scene.add(platform);
+
+      createBorder(0, 1, world.depth/2 + 0.5, world.width, 2, 1);
+      createBorder(0, 1, -world.depth/2 - 0.5, world.width, 2, 1);
+      createBorder(world.width/2 + 0.5, 1, 0, 1, 2, world.depth);
+      createBorder(-world.width/2 - 0.5, 1, 0, 1, 2, world.depth);
+
+      p1 = createPlayer(-20, 0, 0xe74c3c);
+      p2 = createPlayer(20, 0, 0x2ecc71);
+
+      const p1Geom = new THREE.BoxGeometry(p1.width, p1.height, p1.depth);
+      const p1Mat = new THREE.MeshStandardMaterial({ color: p1.color });
+      p1Mesh = new THREE.Mesh(p1Geom, p1Mat);
+      p1Mesh.castShadow = true;
+      p1Mesh.receiveShadow = true;
+      scene.add(p1Mesh);
+
+      const p2Geom = new THREE.BoxGeometry(p2.width, p2.height, p2.depth);
+      const p2Mat = new THREE.MeshStandardMaterial({ color: p2.color });
+      p2Mesh = new THREE.Mesh(p2Geom, p2Mat);
+      p2Mesh.castShadow = true;
+      p2Mesh.receiveShadow = true;
+      scene.add(p2Mesh);
+
+      createPowerups();
+
+      bullets = [];
+      gameOver = false;
+      document.getElementById('message').style.display = 'none';
+    }
+
+    function createBorder(x, y, z, w, h, d) {
+      const geom = new THREE.BoxGeometry(w, h, d);
+      const mat = new THREE.MeshStandardMaterial({ color: 0x34495e });
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.position.set(x, y, z);
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+    }
+
+    function createPowerups() {
+      powerups.forEach(p => {
+        if (p.mesh) scene.remove(p.mesh);
+      });
+      powerups = [];
+
+      const types = [
+        { type: 'heal', color: 0xe74c3c, x: -15, z: -10 },
+        { type: 'speed', color: 0xf1c40f, x: 0, z: 0 },
+        { type: 'heal', color: 0xe74c3c, x: 15, z: 10 },
+        { type: 'shield', color: 0x3498db, x: -10, z: 12 },
+        { type: 'speed', color: 0xf1c40f, x: 10, z: -12 }
+      ];
+
+      types.forEach(t => {
+        const geom = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+        const mat = new THREE.MeshStandardMaterial({ 
+          color: t.color,
+          emissive: t.color,
+          emissiveIntensity: 0.3
+        });
+        const mesh = new THREE.Mesh(geom, mat);
+        mesh.position.set(t.x, 1.5, t.z);
+        mesh.castShadow = true;
+        scene.add(mesh);
+        
+        powerups.push({
+          type: t.type,
+          mesh: mesh,
+          x: t.x,
+          z: t.z,
+          active: true,
+          rotation: 0,
+          respawnTimer: 0
+        });
+      });
+    }
+
+    window.addEventListener('keydown', (e) => {
+      const k = e.key;
+      if (k === 'ArrowLeft') keys.ArrowLeft = true;
+      if (k === 'ArrowRight') keys.ArrowRight = true;
+      if (k === 'ArrowUp') keys.ArrowUp = true;
+      if (k === 'Shift' && e.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT) keys.ShiftRight = true;
+      if (k === 'Shift' && e.location === KeyboardEvent.DOM_KEY_LOCATION_LEFT) keys.ShiftLeft = true;
+      if (k === ' ') {
+        if (!keys.Space && !gameOver) shoot(p1);
+        keys.Space = true;
+      }
+      if (k === 'q' || k === 'Q') keys.q = true;
+      if (k === 'd' || k === 'D') keys.d = true;
+      if (k === 'z' || k === 'Z') keys.z = true;
+      if (k === 'f' || k === 'F') {
+        if (!keys.f && !gameOver) shoot(p2);
+        keys.f = true;
+      }
+      if ((k === 'r' || k === 'R') && gameOver) restartGame();
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const k = e.key;
+      if (k === 'ArrowLeft') keys.ArrowLeft = false;
+      if (k === 'ArrowRight') keys.ArrowRight = false;
+      if (k === 'ArrowUp') keys.ArrowUp = false;
+      if (k === 'Shift' && e.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT) keys.ShiftRight = false;
+      if (k === 'Shift' && e.location === KeyboardEvent.DOM_KEY_LOCATION_LEFT) keys.ShiftLeft = false;
+      if (k === ' ') keys.Space = false;
+      if (k === 'q' || k === 'Q') keys.q = false;
+      if (k === 'd' || k === 'D') keys.d = false;
+      if (k === 'z' || k === 'Z') keys.z = false;
+      if (k === 'f' || k === 'F') keys.f = false;
+    });
+
+    function shoot(player) {
+      if (player.reloading > 0 || player.ammo <= 0) return;
+      if (bullets.length >= 20) return;
+
+      const bulletGeom = new THREE.SphereGeometry(0.3, 8, 8);
+      const bulletMat = new THREE.MeshStandardMaterial({ 
+        color: 0xf39c12,
+        emissive: 0xf39c12,
+        emissiveIntensity: 0.5
+      });
+      const bulletMesh = new THREE.Mesh(bulletGeom, bulletMat);
+      bulletMesh.position.set(player.x + player.facing * 2, player.y, player.z);
+      bulletMesh.castShadow = true;
+      scene.add(bulletMesh);
+
+      bullets.push({
+        mesh: bulletMesh,
+        x: player.x + player.facing * 2,
+        y: player.y,
+        z: player.z,
+        vx: bulletSpeed * player.facing,
+        owner: player
+      });
+
+      player.ammo--;
+      if (player.ammo <= 0) player.reloading = reloadTime;
+    }
+
+    function startDashOrRoll(player) {
+      if (player.isDashing || player.isRolling || player.dashCooldown > 0) return;
+
+      const onGround = (player.y <= player.height/2 + 0.51);
+
+      if (onGround && player.stamina >= rollCost) {
+        player.stamina -= rollCost;
+        player.isRolling = true;
+        player.rollTime = dashTimeMax;
+        player.dashDir = player.facing || 1;
+        player.invincibleTime = dashTimeMax;
+      } else if (!onGround && player.stamina >= 30) {
+        player.stamina -= 30;
+        player.isDashing = true;
+        player.dashTime = dashTimeMax;
+        player.dashCooldown = dashCooldownMax;
+        player.dashDir = player.facing || 1;
+        player.invincibleTime = dashTimeMax;
+      }
+    }
+
+    function handlePlayerInput(player, inputLeft, inputRight, inputJump, dashKey) {
+      if (dashKey && !player.isDashing && !player.isRolling) startDashOrRoll(player);
+
+      if (player.isDashing) {
+        player.x += dashSpeed * player.dashDir;
+        player.dashTime--;
+        if (player.dashTime <= 0) player.isDashing = false;
+      } else if (player.isRolling) {
+        player.x += rollSpeed * player.dashDir;
+        player.rollTime--;
+        if (player.rollTime <= 0) player.isRolling = false;
+      } else {
+        if (inputLeft) { player.x -= player.speed; player.facing = -1; }
+        if (inputRight) { player.x += player.speed; player.facing = 1; }
+      }
+
+      if (player.dashCooldown > 0) player.dashCooldown--;
+
+      if (!player.isDashing && !player.isRolling && inputJump && player.jumpsLeft > 0) {
+        if (!player.isJumping || player.jumpsLeft === 2) {
+          player.vy = player.jumpPower;
+          player.jumpsLeft--;
+          player.isJumping = true;
+        }
+      }
+    }
+
+    function handlePhysics(player) {
+      player.y += player.vy;
+      player.vy -= player.gravity;
+
+      if (player.y <= player.height/2 + 0.5) {
+        player.y = player.height/2 + 0.5;
+        player.vy = 0;
+        player.isJumping = false;
+        player.jumpsLeft = 2;
+      }
+
+      if (player.x < -world.width/2 + player.width/2) player.x = -world.width/2 + player.width/2;
+      if (player.x > world.width/2 - player.width/2) player.x = world.width/2 - player.width/2;
+      if (player.z < -world.depth/2 + player.depth/2) player.z = -world.depth/2 + player.depth/2;
+      if (player.z > world.depth/2 - player.depth/2) player.z = world.depth/2 - player.depth/2;
+
+      if (player.invincibleTime > 0) player.invincibleTime--;
+      if (player.reloading > 0) {
+        player.reloading--;
+        if (player.reloading <= 0) player.ammo = maxAmmo;
+      }
+
+      if (!player.isDashing && !player.isRolling && player.stamina < player.maxStamina) {
+        player.stamina += 0.5;
+        if (player.stamina > player.maxStamina) player.stamina = player.maxStamina;
+      }
+
+      if (player.speedBoostTime > 0) {
+        player.speedBoostTime--;
+        player.speed = player.baseSpeed * 1.6;
+      } else {
+        player.speed = player.baseSpeed;
+      }
+
+      if (player.shieldTime > 0) player.shieldTime--;
+    }
+
+    function applyPowerup(player, powerup) {
+      if (powerup.type === 'heal') {
+        player.health += 30;
+        if (player.health > player.maxHealth) player.health = player.maxHealth;
+      } else if (powerup.type === 'speed') {
+        player.speedBoostTime = 60 * 5;
+      } else if (powerup.type === 'shield') {
+        player.shieldTime = 60 * 8;
+      }
+      powerup.active = false;
+      powerup.mesh.visible = false;
+      powerup.respawnTimer = powerupRespawnTime;
+    }
+
+    function checkCollision(a, b) {
+      return Math.abs(a.x - b.x) < (a.width || 1) && 
+             Math.abs(a.z - b.z) < (a.depth || 1) &&
+             Math.abs(a.y - b.y) < (a.height || 1);
+    }
+
+    function update() {
+      if (gameOver) return;
+
+      handlePlayerInput(p1, keys.ArrowLeft, keys.ArrowRight, keys.ArrowUp, keys.ShiftRight);
+      handlePlayerInput(p2, keys.q, keys.d, keys.z, keys.ShiftLeft);
+
+      handlePhysics(p1);
+      handlePhysics(p2);
+
+      p1Mesh.position.set(p1.x, p1.y, p1.z);
+      p2Mesh.position.set(p2.x, p2.y, p2.z);
+
+      if (p1.invincibleTime > 0 && Math.floor(p1.invincibleTime / 5) % 2 === 0) {
+        p1Mesh.visible = false;
+      } else {
+        p1Mesh.visible = true;
+      }
+
+      if (p2.invincibleTime > 0 && Math.floor(p2.invincibleTime / 5) % 2 === 0) {
+        p2Mesh.visible = false;
+      } else {
+        p2Mesh.visible = true;
+      }
+
+      powerups.forEach(pu => {
+        if (!pu.active) {
+          if (pu.respawnTimer > 0) {
+            pu.respawnTimer--;
+            if (pu.respawnTimer <= 0) {
+              pu.active = true;
+              pu.mesh.visible = true;
+              pu.mesh.position.y = 1.5;
+            }
+          }
+          return;
+        }
+        pu.rotation += 0.02;
+        pu.mesh.rotation.y = pu.rotation;
+        pu.mesh.position.y = 1.5 + Math.sin(pu.rotation * 3) * 0.3;
+
+        if (checkCollision(
+          { x: p1.x, z: p1.z, y: p1.y, width: p1.width, depth: p1.depth, height: p1.height }, 
+          { x: pu.x, z: pu.z, y: 1.5, width: 1.5, depth: 1.5, height: 1.5 }
+        )) {
+          applyPowerup(p1, pu);
+        } else if (checkCollision(
+          { x: p2.x, z: p2.z, y: p2.y, width: p2.width, depth: p2.depth, height: p2.height }, 
+          { x: pu.x, z: pu.z, y: 1.5, width: 1.5, depth: 1.5, height: 1.5 }
+        )) {
+          applyPowerup(p2, pu);
+        }
+      });
+
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        b.x += b.vx;
+        b.mesh.position.x = b.x;
+
+        if (b.x < -world.width/2 || b.x > world.width/2) {
+          scene.remove(b.mesh);
+          bullets.splice(i, 1);
+          continue;
+        }
+
+        if (b.owner === p2 && checkCollision(
+          { x: b.x, z: b.z, y: b.y, width: 0.6, depth: 0.6, height: 0.6 }, 
+          p1
+        ) && p1.invincibleTime <= 0) {
+          const damage = p1.shieldTime > 0 ? 6 : 12;
+          p1.health -= damage;
+          if (p1.health < 0) p1.health = 0;
+          p1.invincibleTime = 30;
+          p1.x += (p1.x < p2.x ? -1 : 1) * 1.2;
+          scene.remove(b.mesh);
+          bullets.splice(i, 1);
+          continue;
+        }
+
+        if (b.owner === p1 && checkCollision(
+          { x: b.x, z: b.z, y: b.y, width: 0.6, depth: 0.6, height: 0.6 }, 
+          p2
+        ) && p2.invincibleTime <= 0) {
+          const damage = p2.shieldTime > 0 ? 6 : 12;
+          p2.health -= damage;
+          if (p2.health < 0) p2.health = 0;
+          p2.invincibleTime = 30;
+          p2.x += (p2.x < p1.x ? -1 : 1) * 1.2;
+          scene.remove(b.mesh);
+          bullets.splice(i, 1);
+          continue;
+        }
+      }
+
+      const centerX = (p1.x + p2.x) / 2;
+      const centerZ = (p1.z + p2.z) / 2;
+      camera.position.x = centerX;
+      camera.position.z = centerZ + 45;
+      camera.lookAt(centerX, 5, centerZ);
+
+      updateUI();
+
+      if (p1.health <= 0 && p2.health > 0) {
+        gameOver = true;
+        showMessage('🏆 Joueur 2 gagne ! 🏆');
+      } else if (p2.health <= 0 && p1.health > 0) {
+        gameOver = true;
+        showMessage('🏆 Joueur 1 gagne ! 🏆');
+      } else if (p1.health <= 0 && p2.health <= 0) {
+        gameOver = true;
+        showMessage('⚔️ Égalité ! ⚔️');
+      }
+    }
+
+    function updateUI() {
+      document.getElementById('p1Health').innerText = `Vie: ${Math.round(p1.health)} / ${p1.maxHealth}`;
+      document.getElementById('p2Health').innerText = `Vie: ${Math.round(p2.health)} / ${p2.maxHealth}`;
+      
+      document.getElementById('p1HealthBar').style.width = (p1.health / p1.maxHealth * 100) + '%';
+      document.getElementById('p2HealthBar').style.width = (p2.health / p2.maxHealth * 100) + '%';
+      
+      document.getElementById('p1StaminaBar').style.width = (p1.stamina / p1.maxStamina * 100) + '%';
+      document.getElementById('p2StaminaBar').style.width = (p2.stamina / p2.maxStamina * 100) + '%';
+
+      const ammo1 = p1.reloading > 0 ? 'Rechargement...' : `Munitions: ${p1.ammo} / ${maxAmmo}`;
+      const ammo2 = p2.reloading > 0 ? 'Rechargement...' : `Munitions: ${p2.ammo} / ${maxAmmo}`;
+      document.getElementById('p1Ammo').innerText = ammo1;
+      document.getElementById('p2Ammo').innerText = ammo2;
+
+      let p1Fx = '';
+      if (p1.speedBoostTime > 0) p1Fx += '⚡ Vitesse ';
+      if (p1.shieldTime > 0) p1Fx += '🛡️ Bouclier ';
+      if (p1.isRolling) p1Fx += '↪️ Roulade ';
+      document.getElementById('p1Effects').innerText = p1Fx;
+
+      let p2Fx = '';
+      if (p2.speedBoostTime > 0) p2Fx += '⚡ Vitesse ';
+      if (p2.shieldTime > 0) p2Fx += '🛡️ Bouclier ';
+      if (p2.isRolling) p2Fx += '↪️ Roulade ';
+      document.getElementById('p2Effects').innerText = p2Fx;
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      update();
+      renderer.render(scene, camera);
+    }
+
+    function showMessage(text) {
+      document.getElementById('messageText').textContent = text;
+      document.getElementById('message').style.display = 'block';
+    }
+
+    function restartGame() {
+      bullets.forEach(b => scene.remove(b.mesh));
+      powerups.forEach(p => p.mesh && scene.remove(p.mesh));
+      scene.remove(p1Mesh);
+      scene.remove(p2Mesh);
+      init();
+    }
+
+    window.restartGame = restartGame;
+
+    window.addEventListener('resize', () => {
+      if (!camera || !renderer) return;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+    animate();
+  </script>
+</body>
+</html>

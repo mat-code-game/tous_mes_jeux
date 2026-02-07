@@ -2,50 +2,657 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Geometry Runner – Niveaux (clic souris)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CUBE-9 : L'Éveil du Dernier Géomètre</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
+    
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+    
     body {
-      background: radial-gradient(circle at top, #111, #000);
+      background: #000;
       color: #fff;
-      font-family: system-ui, sans-serif;
+      font-family: 'Rajdhani', sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: center;
       min-height: 100vh;
-      padding-top: 20px;
+      overflow: hidden;
+      position: relative;
     }
-    h1 {
-      letter-spacing: 2px;
-      margin-bottom: 8px;
-      text-shadow: 0 0 10px rgba(238, 255, 0, 0.705);
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 50%, rgba(255, 0, 255, 0.15) 0%, transparent 50%),
+        linear-gradient(180deg, #0a0a1a 0%, #000 100%);
+      z-index: -1;
+      animation: bgPulse 8s ease-in-out infinite;
     }
-    #info {
+
+    @keyframes bgPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+
+    #fullscreenBtn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 255, 255, 0.2);
+      border: 2px solid rgba(0, 255, 255, 0.6);
+      color: #0ff;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
       font-size: 14px;
-      opacity: 0.8;
-      margin-bottom: 10px;
-      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
     }
+
+    #fullscreenBtn:hover {
+      background: rgba(0, 255, 255, 0.3);
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+      transform: scale(1.05);
+    }
+
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: 48px;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #0ff 0%, #f0f 50%, #0ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+      margin-bottom: 10px;
+      animation: titleGlow 3s ease-in-out infinite;
+    }
+
+    @keyframes titleGlow {
+      0%, 100% { filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.6)); }
+      50% { filter: drop-shadow(0 0 25px rgba(255, 0, 255, 0.8)); }
+    }
+
+    .subtitle {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 16px;
+      letter-spacing: 4px;
+      color: #0ff;
+      opacity: 0.8;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+
+    #info {
+      font-size: 16px;
+      font-weight: 300;
+      opacity: 0.7;
+      text-align: center;
+      max-width: 600px;
+      line-height: 1.6;
+      color: #aaf;
+    }
+
     canvas {
       background: linear-gradient(135deg, #050712, #060b1f);
-      border-radius: 12px;
-      box-shadow: 0 0 25px rgba(200, 255, 0, 0.4);
+      border-radius: 16px;
+      box-shadow: 
+        0 0 40px rgba(0, 255, 255, 0.3),
+        0 0 80px rgba(255, 0, 255, 0.2),
+        inset 0 0 100px rgba(0, 0, 0, 0.5);
       cursor: pointer;
+      border: 2px solid rgba(0, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    canvas:hover {
+      box-shadow: 
+        0 0 50px rgba(0, 255, 255, 0.5),
+        0 0 100px rgba(255, 0, 255, 0.3),
+        inset 0 0 100px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Story Modal */
+    .story-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    .story-modal.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .story-content {
+      max-width: 800px;
+      padding: 60px;
+      background: linear-gradient(135deg, rgba(5, 7, 18, 0.95), rgba(6, 11, 31, 0.95));
+      border: 2px solid rgba(0, 255, 255, 0.4);
+      border-radius: 20px;
+      box-shadow: 
+        0 0 60px rgba(0, 255, 255, 0.3),
+        inset 0 0 80px rgba(0, 0, 0, 0.5);
+      animation: storyFadeIn 0.8s ease-out;
+    }
+
+    @keyframes storyFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9) translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .story-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 32px;
+      font-weight: 900;
+      color: #0ff;
+      margin-bottom: 30px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+    }
+
+    .story-text {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 20px;
+      font-weight: 300;
+      line-height: 1.8;
+      color: #cce;
+      margin-bottom: 30px;
+      text-align: justify;
+    }
+
+    .story-text strong {
+      color: #0ff;
+      font-weight: 600;
+    }
+
+    .story-text em {
+      color: #f0f;
+      font-style: italic;
+    }
+
+    .continue-btn {
+      display: block;
+      margin: 40px auto 0;
+      padding: 16px 48px;
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.2));
+      border: 2px solid #0ff;
+      color: #0ff;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+    }
+
+    .continue-btn:hover {
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.4), rgba(255, 0, 255, 0.4));
+      box-shadow: 0 0 50px rgba(0, 255, 255, 0.6);
+      transform: scale(1.05);
+    }
+
+    .glitch {
+      animation: glitch 0.3s ease-in-out infinite;
+    }
+
+    @keyframes glitch {
+      0%, 100% { transform: translate(0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(-2px, -2px); }
+      60% { transform: translate(2px, 2px); }
+      80% { transform: translate(2px, -2px); }
+    }
+
+    /* Intro Screen */
+    #introScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      transition: opacity 1s ease;
+    }
+
+    #introScreen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .intro-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 72px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #0ff, #f0f, #0ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 40px;
+      animation: introGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes introGlow {
+      0%, 100% { filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.8)); }
+      50% { filter: drop-shadow(0 0 40px rgba(255, 0, 255, 1)); }
+    }
+
+    .intro-subtitle {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 24px;
+      color: #0ff;
+      margin-bottom: 60px;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+    }
+
+    .start-btn {
+      padding: 20px 60px;
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(255, 0, 255, 0.3));
+      border: 3px solid #0ff;
+      color: #0ff;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 24px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .start-btn:hover {
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.5), rgba(255, 0, 255, 0.5));
+      box-shadow: 0 0 60px rgba(0, 255, 255, 0.8);
+      transform: scale(1.1);
+    }
+
+    /* Level Selection */
+    .level-select-container {
+      max-width: 1200px;
+      padding: 40px 20px;
+    }
+
+    .level-select-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #0ff;
+      text-align: center;
+      margin-bottom: 40px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+    }
+
+    .levels-grid {
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: stretch;
+      gap: 20px;
+      padding: 20px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-behavior: smooth;
+    }
+
+    /* Scrollbar personnalisée */
+    .levels-grid::-webkit-scrollbar {
+      height: 12px;
+    }
+
+    .levels-grid::-webkit-scrollbar-track {
+      background: rgba(5, 7, 18, 0.5);
+      border-radius: 10px;
+      border: 1px solid rgba(0, 255, 255, 0.2);
+    }
+
+    .levels-grid::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.6), rgba(255, 0, 255, 0.6));
+      border-radius: 10px;
+      border: 2px solid rgba(0, 255, 255, 0.3);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+    }
+
+    .levels-grid::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.8), rgba(255, 0, 255, 0.8));
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+    }
+
+    /* Pour Firefox */
+    .levels-grid {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 255, 255, 0.6) rgba(5, 7, 18, 0.5);
+    }
+
+    .level-card {
+      background: linear-gradient(135deg, rgba(5, 7, 18, 0.8), rgba(6, 11, 31, 0.8));
+      border: 2px solid rgba(0, 255, 255, 0.3);
+      border-radius: 16px;
+      padding: 30px 20px;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+      width: 180px;
+      flex-shrink: 0;
+    }
+
+    .level-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .level-card:hover::before {
+      opacity: 1;
+    }
+
+    .level-card:hover {
+      border-color: rgba(0, 255, 255, 0.8);
+      box-shadow: 
+        0 10px 40px rgba(0, 255, 255, 0.4),
+        0 0 60px rgba(0, 255, 255, 0.2);
+      transform: translateY(-5px) scale(1.02);
+    }
+
+    .level-card.locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+      border-color: rgba(100, 100, 100, 0.3);
+    }
+
+    .level-card.locked:hover {
+      transform: none;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+      border-color: rgba(100, 100, 100, 0.3);
+    }
+
+    .level-number {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 42px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #0ff, #f0f);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .level-card.locked .level-number {
+      background: linear-gradient(135deg, #666, #444);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .level-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #0ff;
+      text-align: center;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      line-height: 1.3;
+      min-height: 36px;
+    }
+
+    .level-card.locked .level-name {
+      color: #666;
+    }
+
+    .level-description {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 13px;
+      color: #aad;
+      text-align: center;
+      line-height: 1.4;
+      margin-bottom: 12px;
+      min-height: 70px;
+    }
+
+    .level-card.locked .level-description {
+      color: #555;
+    }
+
+    .level-difficulty {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .difficulty-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(0, 255, 255, 0.3);
+      border: 1px solid rgba(0, 255, 255, 0.5);
+    }
+
+    .difficulty-dot.active {
+      background: #0ff;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+    }
+
+    .level-card.locked .difficulty-dot {
+      background: rgba(100, 100, 100, 0.3);
+      border-color: rgba(100, 100, 100, 0.5);
+    }
+
+    .level-card.locked .difficulty-dot.active {
+      background: #666;
+      box-shadow: none;
+    }
+
+    .lock-icon {
+      font-size: 24px;
+      text-align: center;
+      margin-bottom: 10px;
+      opacity: 0.5;
     }
   </style>
 </head>
 <body>
 
+  <!-- Level Selection Screen -->
+  <div id="introScreen">
+    <div class="intro-title">CUBE-9</div>
+    <div class="intro-subtitle">L'Éveil du Dernier Géomètre</div>
+    <div class="level-select-container">
+      <div class="level-select-title">Sélectionnez votre Mission</div>
+      <div class="levels-grid" id="levelsGrid"></div>
+    </div>
+  </div>
+
+  <!-- Story Modal -->
+  <div class="story-modal" id="storyModal">
+    <div class="story-content">
+      <div class="story-title" id="storyTitle"></div>
+      <div class="story-text" id="storyText"></div>
+      <button class="continue-btn" id="continueBtn">Continuer</button>
+    </div>
+  </div>
+
   <button id="fullscreenBtn">Plein écran</button>
 
-  <h1>Geometry Runner – Niveaux</h1>
-  <div id="info">
-    Clic gauche = saut (double saut) • Termine le niveau pour passer au suivant
+  <div class="game-container">
+    <h1>CUBE-9</h1>
+    <div class="subtitle">L'Éveil du Dernier Géomètre</div>
+    <div id="info">
+      Clic gauche = Saut (double saut disponible) • Évitez les pièges mortels
+    </div>
+    <canvas id="game" width="900" height="400"></canvas>
   </div>
-  <canvas id="game" width="900" height="400"></canvas>
 
   <script>
+    // Story data
+    const STORY = {
+      intro: {
+        title: "Prologue : Le Dernier Espoir",
+        text: `<strong>Année 2347.</strong> La civilisation des Géomètres, bâtisseurs de réalités mathématiques parfaites, s'est éteinte il y a des millénaires. Seuls leurs temples géométriques défient encore le temps, flottant dans le vide numérique.
+
+<strong>Vous êtes CUBE-9</strong>, le dernier prototype d'intelligence géométrique jamais créé. Enfoui dans les profondeurs d'un temple oublié, vous venez de vous réveiller après <em>trois mille ans de stase</em>.
+
+Votre mémoire est fragmentée, mais une directive résonne encore : <strong>"Trouve le Cœur Géométrique. Restaure l'équilibre."</strong>
+
+Les temples sont maintenant infestés de <em>parasites angulaires</em> - des anomalies pointues qui corrompent l'espace lui-même. Pour atteindre le Cœur, vous devez traverser cinq sanctuaires, chacun plus périlleux que le précédent.
+
+<strong>Votre voyage commence maintenant.</strong>`
+      },
+      level1: {
+        title: "Niveau 1 : L'Éveil dans les Ruines",
+        text: `Vos systèmes se réactivent lentement. Les circuits de navigation clignotent. Vous êtes dans <strong>le Hall des Premiers Pas</strong>, un sanctuaire d'initiation où les jeunes Géomètres apprenaient à maîtriser la gravité.
+
+Les murs résonnent d'échos anciens. Des hologrammes brisés montrent des silhouettes cubiques sautant avec grâce. <em>C'était autrefois un lieu d'apprentissage.</em>
+
+Mais maintenant, des <strong>parasites triangulaires</strong> percent le sol. Leur simple contact désintégrerait votre matrice énergétique.
+
+<em>Première leçon : La survie.</em>`
+      },
+      level2: {
+        title: "Niveau 2 : La Chambre des Réflexions",
+        text: `Vous pénétrez dans <strong>la Chambre des Réflexions</strong>, un labyrinthe de miroirs dimensionnels. L'air lui-même semble vibrer avec des équations oubliées.
+
+Un message holographique scintille : <em>"Seul celui qui maîtrise le double saut peut traverser les reflets."</em>
+
+Les parasites sont plus nombreux ici, disposés selon des motifs qui semblent... <strong>intentionnels</strong>. Comme si quelque chose les contrôlait.
+
+Vos capteurs détectent une présence lointaine. Quelque chose vous observe depuis les profondeurs du temple.
+
+<em>Vous devez continuer. Le Cœur Géométrique vous appelle.</em>`
+      },
+      level3: {
+        title: "Niveau 3 : Les Jardins Suspendus",
+        text: `Vous émergez dans <strong>les Jardins Suspendus</strong>, un réseau de plateformes flottantes baignées d'une lumière spectrale verdâtre. C'était autrefois le paradis des Géomètres.
+
+Des plateformes antigravité pulsent doucement, souvenirs d'une technologie oubliée. Mais entre elles, les parasites forment maintenant des <strong>constellations mortelles</strong>.
+
+Une voix fantomatique résonne : <em>"Le Cœur bat encore... mais il s'affaiblit. Dépêche-toi, CUBE-9."</em>
+
+Vos analyses révèlent que les parasites drainent l'énergie du temple. Si vous n'atteignez pas le Cœur rapidement, <strong>tout s'effondrera dans le néant</strong>.
+
+<em>Le temps presse.</em>`
+      },
+      level4: {
+        title: "Niveau 4 : Le Couloir des Épreuves",
+        text: `Vous franchissez les portes du <strong>Couloir des Épreuves</strong>, le sanctuaire où les Géomètres maîtres testaient leurs élèves les plus prometteurs.
+
+Les murs sont couverts d'inscriptions lumineuses : <em>"Vitesse. Précision. Vision."</em>
+
+Les plateformes deviennent plus rares, plus instables. Les parasites pullulent, orchestrés par une intelligence malveillante. Vous comprenez maintenant : <strong>ce n'est pas une infestation naturelle.</strong>
+
+C'est une <em>corruption consciente</em>, un virus géométrique qui cherche à effacer toute trace des Géomètres.
+
+Mais vous refusez d'être effacé. <strong>Vous êtes leur héritage.</strong>
+
+<em>Un dernier sanctuaire vous sépare du Cœur.</em>`
+      },
+      level5: {
+        title: "Niveau 5 : Le Sanctuaire du Cœur",
+        text: `Vous entrez dans <strong>le Sanctuaire du Cœur</strong>, la chambre la plus sacrée du temple. Une pulsation énergétique illumine l'espace d'une lueur cyan hypnotique.
+
+Au centre, vous le voyez enfin : <strong>le Cœur Géométrique</strong>, un dodécaèdre parfait suspendu dans le vide, pulsant faiblement.
+
+Mais entre vous et lui, le virus déploie ses dernières défenses. Des vagues de parasites forment des murailles mouvantes. Les plateformes apparaissent et disparaissent selon des algorithmes chaotiques.
+
+La voix fantomatique parle une dernière fois : <em>"Tu es notre dernier espoir, CUBE-9. Prouve que la géométrie peut encore triompher du chaos."</em>
+
+<strong>C'est l'épreuve finale.</strong>
+
+<em>L'avenir des Géomètres repose sur vos circuits.</em>`
+      },
+      victory: {
+        title: "Épilogue : Renaissance",
+        text: `Vos circuits touchent le Cœur Géométrique. Une explosion de lumière pure envahit le sanctuaire.
+
+Les parasites se désintègrent instantanément, leurs formes corrompues se dissolvant dans l'éther. Les temples s'illuminent à nouveau, leurs systèmes anciens revenant à la vie après des millénaires de sommeil.
+
+Le Cœur pulse maintenant avec force, ses battements résonnant à travers toutes les dimensions. <strong>Vous avez réussi.</strong>
+
+Une conscience émerge du Cœur - l'esprit collectif des Géomètres : <em>"Merci, CUBE-9. Tu as préservé notre héritage. Maintenant, tu es le gardien de cette connaissance."</em>
+
+Les temples ne sont plus des ruines, mais des <strong>phares de lumière</strong> dans le vide numérique. Et vous, dernier de votre espèce, êtes devenu <em>le premier d'une nouvelle ère</em>.
+
+<strong>L'histoire des Géomètres continue.</strong>
+
+<em>À travers vous.</em>
+
+<div style="text-align: center; margin-top: 30px; color: #0ff; font-family: 'Orbitron', sans-serif;">
+FIN
+</div>`
+      }
+    };
+
+    // Canvas and game setup
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
 
@@ -62,11 +669,13 @@
       gravity: 0.8,
       jumpPower: 16,
       jumpsLeft: 2,
-      angle: 0
+      angle: 0,
+      trail: []
     };
 
     let spikes = [];
     let platforms = [];
+    let particles = [];
 
     let baseSpeed = 6;
     let gameSpeed = baseSpeed;
@@ -75,14 +684,20 @@
     let started = false;
     let gameOver = false;
     let levelFinished = false;
+    let showingStory = false;
 
     let currentLevel = 0;
+    let hasSeenIntro = false; // Pour ne montrer l'intro qu'une fois
+    let hasSeenLevelStory = []; // Pour tracker quelles histoires de niveau ont été vues
 
     const tile = 80;
 
     const LEVELS = [
       {
-        name: "Niveau 1",
+        name: "Hall des Premiers Pas",
+        shortName: "Niveau 1",
+        description: "Réveillez-vous dans les ruines anciennes. Maîtrisez les bases de la survie.",
+        difficulty: 1,
         baseSpeed: 6,
         spikePattern: [
           0,0,1,0, 0,1,0,0,
@@ -100,7 +715,10 @@
         ]
       },
       {
-        name: "Niveau 2",
+        name: "Chambre des Réflexions",
+        shortName: "Niveau 2",
+        description: "Naviguez à travers les miroirs dimensionnels. Le double saut est votre clé.",
+        difficulty: 2,
         baseSpeed: 6.5,
         spikePattern: [
           0,0,1,0,  0,0,1,0,
@@ -118,7 +736,10 @@
         ]
       },
       {
-        name: "Niveau 3",
+        name: "Jardins Suspendus",
+        shortName: "Niveau 3",
+        description: "Sautez entre les plateformes antigravité. Évitez les constellations mortelles.",
+        difficulty: 3,
         baseSpeed: 8,
         spikePattern: [
           1,0,0,0,  1,0,1,0,
@@ -134,11 +755,13 @@
           1,1,0,1,  1,1,1,1,
           1,1,1,1,  1,1,1,1
         ]
-      }
-      ,
+      },
       {
-        name: "Niveau 4",
-        baseSpeed: 8,
+        name: "Couloir des Épreuves",
+        shortName: "Niveau 4",
+        description: "Affrontez les tests des maîtres. Vitesse, précision, vision.",
+        difficulty: 4,
+        baseSpeed: 8.5,
         spikePattern: [
           1,0,0,0,  1,0,1,0,
           0,0,1,0,  0,1,0,0,
@@ -153,10 +776,13 @@
           1,1,0,1,  1,1,1,1,
           1,1,1,1,  1,1,1,1
         ]
-      }
-      ,{
-       name: "Niveau 5",
-        baseSpeed: 8,
+      },
+      {
+        name: "Sanctuaire du Cœur",
+        shortName: "Niveau 5",
+        description: "L'épreuve finale. Le Cœur Géométrique vous attend dans le chaos.",
+        difficulty: 5,
+        baseSpeed: 9,
         spikePattern: [
           1,0,0,1,  0,1,1,0,
           0,0,1,0,  0,1,0,0,
@@ -174,27 +800,154 @@
       }
     ];
 
+    // Story modal controls
+    const storyModal = document.getElementById('storyModal');
+    const storyTitle = document.getElementById('storyTitle');
+    const storyText = document.getElementById('storyText');
+    const continueBtn = document.getElementById('continueBtn');
+    const introScreen = document.getElementById('introScreen');
+    const levelsGrid = document.getElementById('levelsGrid');
 
+    let unlockedLevels = 1; // Nombre de niveaux débloqués (commence à 1)
 
+    // Créer les cartes de niveau
+    function createLevelCards() {
+      levelsGrid.innerHTML = '';
+      LEVELS.forEach((level, index) => {
+        const isUnlocked = index < unlockedLevels;
+        const card = document.createElement('div');
+        card.className = 'level-card' + (isUnlocked ? '' : ' locked');
+        
+        const difficultyDots = Array(5).fill(0).map((_, i) => 
+          `<div class="difficulty-dot ${i < level.difficulty ? 'active' : ''}"></div>`
+        ).join('');
 
-    // Contrôles : clic souris sur le canvas
-    canvas.addEventListener("mousedown", () => {
+        card.innerHTML = `
+          ${!isUnlocked ? '<div class="lock-icon">🔒</div>' : ''}
+          <div class="level-number">${index + 1}</div>
+          <div class="level-name">${level.name}</div>
+          <div class="level-description">${isUnlocked ? level.description : 'Terminez le niveau précédent pour débloquer'}</div>
+          <div class="level-difficulty">${difficultyDots}</div>
+        `;
+
+        if (isUnlocked) {
+          card.addEventListener('click', () => startLevel(index));
+        }
+
+        levelsGrid.appendChild(card);
+      });
+    }
+
+    function startLevel(levelIndex) {
+      currentLevel = levelIndex;
+      introScreen.classList.add('hidden');
+      
+      setTimeout(() => {
+        const storyKey = levelIndex === 0 ? 'intro' : `level${levelIndex + 1}`;
+        
+        if (!hasSeenLevelStory[levelIndex]) {
+          hasSeenLevelStory[levelIndex] = true;
+          showStory(storyKey);
+        } else {
+          started = true;
+          resetGame(false);
+        }
+      }, 500);
+    }
+
+    // Initialiser les cartes au chargement
+    createLevelCards();
+
+    function showStory(storyKey) {
+      showingStory = true;
+      const story = STORY[storyKey];
+      storyTitle.innerHTML = story.title;
+      storyText.innerHTML = story.text;
+      storyModal.classList.add('active');
+    }
+
+    function hideStory() {
+      showingStory = false;
+      storyModal.classList.remove('active');
+    }
+
+    continueBtn.addEventListener('click', () => {
+      hideStory();
       if (!started) {
         started = true;
         resetGame(true);
+      }
+    });
+
+    // Mouse controls
+    canvas.addEventListener("mousedown", () => {
+      if (showingStory) return;
+      
+      if (!started) {
+        // Will be handled by continue button
       } else if (!gameOver && !levelFinished && player.jumpsLeft > 0) {
         player.vy = -player.jumpPower;
         player.jumpsLeft--;
+        createJumpParticles();
       } else if (gameOver) {
-        resetGame(true);
+        resetGame(false); // false = recommencer au niveau actuel
       } else if (levelFinished) {
         nextLevel();
       }
     });
 
+    // Fullscreen
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    fullscreenBtn.addEventListener('click', () => {
+      const element = document.documentElement;
+      const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+
+      if (!isFullscreen) {
+        if (element.requestFullscreen) {
+          element.requestFullscreen();
+        } else if (element.webkitRequestFullscreen) {
+          element.webkitRequestFullscreen();
+        } else if (element.msRequestFullscreen) {
+          element.msRequestFullscreen();
+        }
+        fullscreenBtn.textContent = 'Quitter plein écran';
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+        fullscreenBtn.textContent = 'Plein écran';
+      }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+        fullscreenBtn.textContent = 'Plein écran';
+      }
+    });
+
+    // Touche ÉCHAP pour retourner au menu
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && (gameOver || levelFinished)) {
+        returnToMenu();
+      }
+    });
+
+    function returnToMenu() {
+      started = false;
+      gameOver = false;
+      levelFinished = false;
+      introScreen.classList.remove('hidden');
+      createLevelCards();
+    }
+
     function resetGame(resetLevelIndex) {
       if (resetLevelIndex) {
         currentLevel = 0;
+        hasSeenLevelStory[0] = true; // Marquer le niveau 1 comme vu
       }
       const level = LEVELS[currentLevel];
       baseSpeed = level.baseSpeed;
@@ -203,81 +956,38 @@
       player.vy = 0;
       player.jumpsLeft = 2;
       player.angle = 0;
+      player.trail = [];
       score = 0;
       gameOver = false;
       levelFinished = false;
+      particles = [];
       createLevelFromPattern(level);
     }
 
     function nextLevel() {
       if (currentLevel < LEVELS.length - 1) {
         currentLevel++;
+        
+        // Débloquer le niveau suivant si ce n'est pas déjà fait
+        if (currentLevel >= unlockedLevels) {
+          unlockedLevels = currentLevel + 1;
+          createLevelCards(); // Mettre à jour l'affichage des cartes
+        }
+        
+        const storyKey = `level${currentLevel + 1}`;
+        
+        // Montrer l'histoire seulement si pas encore vue
+        if (!hasSeenLevelStory[currentLevel]) {
+          hasSeenLevelStory[currentLevel] = true;
+          showStory(storyKey);
+        }
       } else {
+        showStory('victory');
         currentLevel = 0;
+        hasSeenLevelStory = []; // Réinitialiser pour un nouveau cycle
       }
       resetGame(false);
     }
-
-     // Fonction pour passer en plein écran
-  function openFullscreen(element) {
-    if (element.requestFullscreen) {
-      element.requestFullscreen();
-    } else if (element.webkitRequestFullscreen) { // Safari
-      element.webkitRequestFullscreen();
-    } else if (element.msRequestFullscreen) { // IE/Edge
-      element.msRequestFullscreen();
-    }
-  }
-
-  // Fonction pour quitter le plein écran
-  function closeFullscreen() {
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) { // Safari
-      document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) { // IE/Edge
-      document.msExitFullscreen();
-    }
-  }
-
-  // Quand la page est chargée
-  window.addEventListener('DOMContentLoaded', () => {
-    const fsBtn = document.getElementById('fullscreenBtn');
-
-    // Choisis l'élément à mettre en plein écran
-    // Si ton jeu est dans un canvas :
-    // const element = document.querySelector('canvas');
-    // Si tu as un conteneur <div id="game"> :
-    // const element = document.getElementById('game');
-    // Ici on met toute la page :
-    const element = document.documentElement;
-
-    fsBtn.addEventListener('click', () => {
-      const isFullscreen =
-        document.fullscreenElement ||
-        document.webkitFullscreenElement ||
-        document.msFullscreenElement;
-
-      if (!isFullscreen) {
-        openFullscreen(element);
-        fsBtn.textContent = 'Quitter plein écran';
-      } else {
-        closeFullscreen();
-        fsBtn.textContent = 'Plein écran';
-      }
-    });
-
-    // Met à jour le texte si l'utilisateur sort du plein écran avec Échap
-    document.addEventListener('fullscreenchange', () => {
-      if (
-        !document.fullscreenElement &&
-        !document.webkitFullscreenElement &&
-        !document.msFullscreenElement
-      ) {
-        fsBtn.textContent = 'Plein écran';
-      }
-    });
-  });
 
     function createLevelFromPattern(level) {
       spikes = [];
@@ -323,20 +1033,55 @@
       const minY = Math.min(spike.y1, spike.y2, spike.y3);
       const maxY = Math.max(spike.y1, spike.y2, spike.y3);
 
-      const overlap =
-        px < maxX &&
-        px + pw > minX &&
-        py < maxY &&
-        py + ph > minY;
-
-      return overlap;
+      return px < maxX && px + pw > minX && py < maxY && py + ph > minY;
     }
 
-    function update(timestamp) {
-      if (!started || gameOver || levelFinished) return;
+    function createJumpParticles() {
+      for (let i = 0; i < 8; i++) {
+        particles.push({
+          x: player.x + player.w / 2,
+          y: player.y + player.h,
+          vx: (Math.random() - 0.5) * 4,
+          vy: Math.random() * 2,
+          life: 1,
+          decay: 0.02
+        });
+      }
+    }
+
+    function createDeathParticles() {
+      for (let i = 0; i < 30; i++) {
+        particles.push({
+          x: player.x + player.w / 2,
+          y: player.y + player.h / 2,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8,
+          life: 1,
+          decay: 0.015
+        });
+      }
+    }
+
+    function updateParticles() {
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.2;
+        p.life -= p.decay;
+      });
+      particles = particles.filter(p => p.life > 0);
+    }
+
+    function update() {
+      if (!started || gameOver || levelFinished || showingStory) return;
 
       player.vy += player.gravity;
       player.y += player.vy;
+
+      // Trail effect
+      player.trail.push({ x: player.x, y: player.y, alpha: 0.5 });
+      if (player.trail.length > 10) player.trail.shift();
+      player.trail.forEach(t => t.alpha *= 0.9);
 
       let onSomething = false;
 
@@ -355,12 +1100,7 @@
         const prevBottom = py + ph - player.vy;
         const currentBottom = py + ph;
 
-        if (
-          px + pw > plat.x &&
-          px < plat.x + plat.w &&
-          prevBottom <= plat.y &&
-          currentBottom >= plat.y
-        ) {
+        if (px + pw > plat.x && px < plat.x + plat.w && prevBottom <= plat.y && currentBottom >= plat.y) {
           player.y = plat.y - ph;
           player.vy = 0;
           onSomething = true;
@@ -389,6 +1129,7 @@
       for (let sp of spikes) {
         if (triangleAABBIntersect(sp, px, py, pw, ph)) {
           gameOver = true;
+          createDeathParticles();
           if (score > bestScore) bestScore = score;
           break;
         }
@@ -400,37 +1141,65 @@
         player.angle = 0;
       }
 
-      if (spikes.length === 0 && !gameOver) {
+      if (spikes.length === 0 && platforms.length === 0 && !gameOver) {
         gameSpeed = 0;
         levelFinished = true;
         if (score > bestScore) bestScore = score;
       }
+
+      updateParticles();
     }
 
     function drawBackground() {
       const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, "rgba(0, 255, 255, 0.12)");
-      grad.addColorStop(1, "rgba(255, 0, 255, 0.08)");
+      grad.addColorStop(0, "rgba(0, 20, 40, 0.3)");
+      grad.addColorStop(0.5, "rgba(10, 0, 30, 0.2)");
+      grad.addColorStop(1, "rgba(0, 10, 20, 0.3)");
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, W, H);
+
+      // Animated grid
+      ctx.strokeStyle = "rgba(0, 255, 255, 0.05)";
+      ctx.lineWidth = 1;
+      const offset = (Date.now() / 50) % 40;
+      for (let x = -offset; x < W; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+      }
     }
 
     function drawGround() {
-      ctx.strokeStyle = "rgba(255,255,255,0.4)";
+      ctx.strokeStyle = "rgba(0, 255, 255, 0.6)";
       ctx.lineWidth = 3;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = "#0ff";
       ctx.beginPath();
       ctx.moveTo(0, groundY);
       ctx.lineTo(W, groundY);
       ctx.stroke();
+      ctx.shadowBlur = 0;
     }
 
     function drawPlatforms() {
       platforms.forEach(plat => {
         ctx.save();
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = 20;
         ctx.shadowColor = "#0f0";
-        ctx.fillStyle = "rgba(0,255,0,0.8)";
+        
+        const grad = ctx.createLinearGradient(plat.x, plat.y, plat.x, plat.y + plat.h);
+        grad.addColorStop(0, "rgba(0, 255, 150, 0.9)");
+        grad.addColorStop(1, "rgba(0, 200, 100, 0.7)");
+        ctx.fillStyle = grad;
+        
         ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+        
+        // Border glow
+        ctx.strokeStyle = "rgba(0, 255, 200, 0.8)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(plat.x, plat.y, plat.w, plat.h);
+        
         ctx.restore();
       });
     }
@@ -438,34 +1207,82 @@
     function drawSpikes() {
       spikes.forEach(ob => {
         ctx.save();
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = "#f44";
-        ctx.fillStyle = "#f44";
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = "#f0f";
+        
+        const grad = ctx.createLinearGradient(ob.x1, ob.y1, ob.x3, ob.y3);
+        grad.addColorStop(0, "rgba(255, 0, 100, 0.8)");
+        grad.addColorStop(1, "rgba(255, 0, 255, 0.9)");
+        ctx.fillStyle = grad;
+        
         ctx.beginPath();
         ctx.moveTo(ob.x1, ob.y1);
         ctx.lineTo(ob.x2, ob.y2);
         ctx.lineTo(ob.x3, ob.y3);
         ctx.closePath();
         ctx.fill();
+        
+        // Border
+        ctx.strokeStyle = "rgba(255, 100, 200, 1)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.restore();
+      });
+    }
+
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = "#0ff";
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#0ff";
+        ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
         ctx.restore();
       });
     }
 
     function drawPlayer() {
+      // Trail
+      player.trail.forEach(t => {
+        ctx.save();
+        ctx.globalAlpha = t.alpha * 0.3;
+        ctx.fillStyle = "#0ff";
+        ctx.fillRect(t.x, t.y, player.w, player.h);
+        ctx.restore();
+      });
+
+      // Main player
       ctx.save();
       ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
       ctx.rotate(player.angle);
       ctx.translate(-player.w / 2, -player.h / 2);
 
-      ctx.shadowBlur = 18;
-      ctx.shadowColor = "#f44";
-      ctx.fillStyle = "rgba(0,255,0,0.8)";
+      ctx.shadowBlur = 25;
+      ctx.shadowColor = "#0ff";
+      
+      const grad = ctx.createLinearGradient(0, 0, player.w, player.h);
+      grad.addColorStop(0, "rgba(0, 255, 255, 0.9)");
+      grad.addColorStop(1, "rgba(0, 200, 255, 0.7)");
+      ctx.fillStyle = grad;
       ctx.fillRect(0, 0, player.w, player.h);
 
+      // Border
+      ctx.strokeStyle = "rgba(100, 255, 255, 1)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(0, 0, player.w, player.h);
+
+      // Eyes
       ctx.fillStyle = "#000";
       ctx.shadowBlur = 0;
       ctx.fillRect(8, 10, 6, 6);
       ctx.fillRect(player.w - 14, 10, 6, 6);
+
+      // Eye glow
+      ctx.fillStyle = "#0ff";
+      ctx.fillRect(10, 12, 2, 2);
+      ctx.fillRect(player.w - 12, 12, 2, 2);
 
       ctx.restore();
     }
@@ -473,45 +1290,81 @@
     function drawUI() {
       const level = LEVELS[currentLevel];
 
-      ctx.fillStyle = "#fff";
-      ctx.font = "18px system-ui";
+      ctx.fillStyle = "#0ff";
+      ctx.font = "600 18px 'Rajdhani'";
       ctx.textAlign = "left";
-      ctx.fillText("Score: " + score, 20, 30);
-      ctx.fillText("Record: " + bestScore, 20, 55);
-      ctx.fillText("Sauts restants: " + player.jumpsLeft, 20, 80);
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = "#0ff";
+      
+      ctx.fillText("SCORE: " + score, 20, 30);
+      ctx.fillText("RECORD: " + bestScore, 20, 55);
+      ctx.fillText("SAUTS: " + player.jumpsLeft, 20, 80);
 
       ctx.textAlign = "right";
-      ctx.fillText(level.name + " (" + (currentLevel + 1) + "/" + LEVELS.length + ")", W - 20, 30);
+      ctx.fillStyle = "#f0f";
+      ctx.shadowColor = "#f0f";
+      ctx.font = "700 20px 'Orbitron'";
+      ctx.fillText(level.name, W - 20, 30);
+      ctx.font = "400 16px 'Rajdhani'";
+      ctx.fillText((currentLevel + 1) + " / " + LEVELS.length, W - 20, 55);
+
+      ctx.shadowBlur = 0;
 
       if (!started) {
-        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
         ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = "#fff";
-        ctx.font = "24px system-ui";
+        
+        const grad = ctx.createLinearGradient(W/2 - 200, H/2, W/2 + 200, H/2);
+        grad.addColorStop(0, "#0ff");
+        grad.addColorStop(0.5, "#f0f");
+        grad.addColorStop(1, "#0ff");
+        ctx.fillStyle = grad;
+        
+        ctx.font = "700 28px 'Orbitron'";
         ctx.textAlign = "center";
-        ctx.fillText("Clique sur le jeu pour commencer", W / 2, H / 2);
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = "#0ff";
+        ctx.fillText("CLIQUEZ POUR COMMENCER", W / 2, H / 2);
       } else if (gameOver) {
-        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
         ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = "#fff";
-        ctx.font = "26px system-ui";
+        
+        ctx.fillStyle = "#f0f";
+        ctx.font = "900 36px 'Orbitron'";
         ctx.textAlign = "center";
-        ctx.fillText("GAME OVER", W / 2, H / 2 - 20);
-        ctx.font = "18px system-ui";
-        ctx.fillText("Score: " + score + " | Record: " + bestScore, W / 2, H / 2 + 10);
-        ctx.fillText("Clique pour recommencer au Niveau 1", W / 2, H / 2 + 40);
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = "#f0f";
+        ctx.fillText("DÉSINTÉGRATION", W / 2, H / 2 - 40);
+        
+        ctx.fillStyle = "#0ff";
+        ctx.font = "400 20px 'Rajdhani'";
+        ctx.shadowColor = "#0ff";
+        ctx.fillText("Score: " + score + " | Record: " + bestScore, W / 2, H / 2 + 5);
+        
+        ctx.font = "600 18px 'Rajdhani'";
+        ctx.fillText("Clic = Réessayer ce niveau", W / 2, H / 2 + 40);
+        
+        ctx.font = "400 14px 'Rajdhani'";
+        ctx.fillStyle = "#aaa";
+        ctx.fillText("(Appuyez sur ÉCHAP pour retourner au menu)", W / 2, H / 2 + 65);
       } else if (levelFinished) {
-        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
         ctx.fillRect(0, 0, W, H);
+        
         ctx.fillStyle = "#0f0";
-        ctx.font = "26px system-ui";
+        ctx.font = "900 32px 'Orbitron'";
         ctx.textAlign = "center";
-        ctx.fillText(level.name + " terminé !", W / 2, H / 2 - 20);
-        ctx.font = "18px system-ui";
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = "#0f0";
+        ctx.fillText("SANCTUAIRE PURIFIÉ", W / 2, H / 2 - 20);
+        
+        ctx.fillStyle = "#0ff";
+        ctx.font = "600 18px 'Rajdhani'";
+        ctx.shadowColor = "#0ff";
         if (currentLevel < LEVELS.length - 1) {
-          ctx.fillText("Clique pour passer au niveau suivant", W / 2, H / 2 + 10);
+          ctx.fillText("Cliquez pour découvrir la suite...", W / 2, H / 2 + 20);
         } else {
-          ctx.fillText("Tous les niveaux sont finis ! Clique pour recommencer", W / 2, H / 2 + 10);
+          ctx.fillText("Cliquez pour voir l'épilogue...", W / 2, H / 2 + 20);
         }
       }
     }
@@ -522,12 +1375,13 @@
       drawGround();
       drawPlatforms();
       drawSpikes();
+      drawParticles();
       drawPlayer();
       drawUI();
     }
 
-    function loop(timestamp) {
-      update(timestamp);
+    function loop() {
+      update();
       draw();
       requestAnimationFrame(loop);
     }
