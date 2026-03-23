@@ -1,0 +1,116 @@
+import java.awt.*
+import java.awt.event.KeyEvent
+import java.awt.event.KeyListener
+import javax.swing.JFrame
+import javax.swing.JPanel
+import kotlin.system.exitProcess
+
+class CarGamePanel : JPanel(), KeyListener, Runnable {
+
+    private var carX = 380
+    private var carY = 500
+    private val carWidth = 40
+    private val carHeight = 70
+    private var speed = 5
+
+    private var upPressed = false
+    private var downPressed = false
+    private var leftPressed = false
+    private var rightPressed = false
+
+    private var running = true
+
+    init {
+        preferredSize = Dimension(800, 600)
+        background = Color(30, 30, 30)
+        isFocusable = true
+        addKeyListener(this)
+    }
+
+    override fun run() {
+        val fps = 60
+        val frameTime = 1000L / fps
+
+        while (running) {
+            val start = System.currentTimeMillis()
+
+            updateGame()
+            repaint()
+
+            val elapsed = System.currentTimeMillis() - start
+            val sleepTime = frameTime - elapsed
+            if (sleepTime > 0) {
+                Thread.sleep(sleepTime)
+            }
+        }
+    }
+
+    private fun updateGame() {
+        if (upPressed) carY -= speed
+        if (downPressed) carY += speed
+        if (leftPressed) carX -= speed
+        if (rightPressed) carX += speed
+
+        if (carX < 0) carX = 0
+        if (carY < 0) carY = 0
+        if (carX + carWidth > width) carX = width - carWidth
+        if (carY + carHeight > height) carY = height - carHeight
+    }
+
+    override fun paintComponent(g: Graphics) {
+        super.paintComponent(g)
+        val g2 = g as Graphics2D
+
+        g2.color = Color(60, 60, 60)
+        g2.fillRect(width / 4, 0, width / 2, height)
+
+        g2.color = Color.WHITE
+        for (i in 0 until height step 80) {
+            g2.fillRect(width / 2 - 5, i, 10, 40)
+        }
+
+        g2.color = Color.RED
+        g2.fillRoundRect(carX, carY, carWidth, carHeight, 10, 10)
+
+        g2.color = Color.BLACK
+        g2.fillRect(carX + 5, carY + 10, carWidth - 10, 10)
+        g2.fillRect(carX + 5, carY + carHeight - 20, carWidth - 10, 10)
+    }
+
+    override fun keyPressed(e: KeyEvent) {
+        when (e.keyCode) {
+            KeyEvent.VK_UP -> upPressed = true
+            KeyEvent.VK_DOWN -> downPressed = true
+            KeyEvent.VK_LEFT -> leftPressed = true
+            KeyEvent.VK_RIGHT -> rightPressed = true
+            KeyEvent.VK_ESCAPE -> {
+                running = false
+                exitProcess(0)
+            }
+        }
+    }
+
+    override fun keyReleased(e: KeyEvent) {
+        when (e.keyCode) {
+            KeyEvent.VK_UP -> upPressed = false
+            KeyEvent.VK_DOWN -> downPressed = false
+            KeyEvent.VK_LEFT -> leftPressed = false
+            KeyEvent.VK_RIGHT -> rightPressed = false
+        }
+    }
+
+    override fun keyTyped(e: KeyEvent) {}
+}
+
+fun main() {
+    val frame = JFrame("Jeu de voiture en Kotlin")
+    val gamePanel = CarGamePanel()
+
+    frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
+    frame.contentPane = gamePanel
+    frame.pack()
+    frame.setLocationRelativeTo(null)
+    frame.isVisible = true
+
+    Thread(gamePanel).start()
+}

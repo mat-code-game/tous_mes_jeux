@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Orbe Folie Shop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #141e30, #0a0a0a);
+      color: #fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    #game-container {
+      position: relative;
+      width: 100vw;
+      max-width: 600px;
+      aspect-ratio: 9 / 16;
+      border-radius: 20px;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #020817 0, #020617 40%, #000 100%);
+      box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    #hud {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      right: 6px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      text-shadow: 0 0 4px #000;
+      pointer-events: none;
+    }
+    #hud-left span,
+    #hud-right span {
+      margin-right: 6px;
+    }
+    #hud-left, #hud-right {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    #btn-shop {
+      pointer-events: all;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: rgba(15,23,42,0.9);
+      color: #e5e7eb;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    #btn-shop span {
+      margin: 0;
+    }
+    #btn-shop:active {
+      transform: scale(0.95);
+    }
+    #center-msg {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      background: radial-gradient(circle at center, rgba(0,0,0,0.75), rgba(0,0,0,0.95));
+      text-align: center;
+      padding: 16px;
+    }
+    #center-msg h1 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    #center-msg p {
+      font-size: 13px;
+      opacity: 0.9;
+      margin-bottom: 14px;
+    }
+    #center-msg button {
+      border: none;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #22c55e, #22d3ee);
+      color: #020617;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(34,197,94,0.4);
+    }
+    #center-msg button:active {
+      transform: scale(0.97);
+    }
+    #bottom-tip {
+      position: absolute;
+      bottom: 6px;
+      left: 8px;
+      right: 8px;
+      text-align: center;
+      font-size: 10px;
+      opacity: 0.8;
+      text-shadow: 0 0 3px #000;
+      pointer-events: none;
+    }
+    /* Missions + XP bar */
+    #panel-bottom {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      bottom: 20px;
+      font-size: 11px;
+      text-shadow: 0 0 3px #000;
+      pointer-events: none;
+    }
+    #xp-bar-wrap {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+    #xp-bar-inner {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22c55e, #22d3ee);
+      transition: width 0.3s ease-out;
+    }
+    #xp-label {
+      margin-bottom: 2px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #missions {
+      background: rgba(15,23,42,0.75);
+      border-radius: 8px;
+      padding: 4px 6px;
+    }
+    .mission {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+    .mission span {
+      max-width: 80%;
+    }
+    .badge-done {
+      color: #22c55e;
+      font-weight: 700;
+    }
+    /* Boutique */
+    #shop-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15,23,42,0.95);
+      display: none;
+      flex-direction: column;
+      padding: 10px;
+      font-size: 12px;
+    }
+    #shop-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    #shop-header h2 {
+      font-size: 16px;
+    }
+    #shop-close {
+      border: none;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      background: rgba(15,23,42,1);
+      color: #e5e7eb;
+      cursor: pointer;
+    }
+    #shop-close:active {
+      transform: scale(0.95);
+    }
+    #shop-coins {
+      font-size: 12px;
+    }
+    #shop-skins {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .shop-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px;
+      border-radius: 8px;
+      background: rgba(15,23,42,0.9);
+    }
+    .shop-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .shop-name {
+      font-weight: 600;
+    }
+    .shop-desc {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+    .shop-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      background: #22c55e;
+      color: #020617;
+      font-weight: 600;
+    }
+    .shop-btn.selected {
+      background: #22d3ee;
+      color: #020617;
+    }
+    .shop-btn.locked {
+      background: #6b7280;
+      color: #020617;
+      cursor: default;
+    }
+    .shop-price {
+      font-size: 11px;
+      opacity: 0.9;
+    }
+    /* Pop level up */
+    #levelup-pop {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(34,197,94,0.9);
+      color: #020617;
+      font-weight: 700;
+      font-size: 14px;
+      text-shadow: none;
+      display: none;
+      box-shadow: 0 0 25px rgba(34,197,94,0.6);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game"></canvas>
+
+    <div id="hud">
+      <div id="hud-left">
+        <span>Score: <span id="score">0</span></span>
+        <span>Combo: <span id="combo">x1</span></span>
+        <span>Vie: <span id="hp">3</span></span>
+      </div>
+      <div id="hud-right">
+        <span>💎 <span id="coins">0</span></span>
+        <span>Record: <span id="best">0</span></span>
+        <button id="btn-shop"><span>🛒</span><span>Boutique</span></button>
+      </div>
+    </div>
+
+    <div id="center-msg">
+      <h1>Orbe Folie Shop</h1>
+      <p>
+        Déplace le vaisseau avec la souris ou ton doigt.<br />
+        Absorbe les orbes vertes, évite les rouges.<br />
+        Gagne des 💎, achète des skins, complète les missions et monte de niveau !
+      </p>
+      <button id="play-btn">Jouer</button>
+    </div>
+
+    <div id="bottom-tip">
+      PC : bouge la souris dans la zone. Mobile : glisse ton doigt pour te déplacer.
+    </div>
+
+    <div id="panel-bottom">
+      <div id="xp-label">
+        <span>Niveau <span id="level">1</span></span>
+        <span><span id="xp-cur">0</span> / <span id="xp-next">100</span> XP</span>
+      </div>
+      <div id="xp-bar-wrap">
+        <div id="xp-bar-inner"></div>
+      </div>
+      <div id="missions">
+        <div class="mission"><span id="m1-text">Mission 1</span><span id="m1-status">–</span></div>
+        <div class="mission"><span id="m2-text">Mission 2</span><span id="m2-status">–</span></div>
+        <div class="mission"><span id="m3-text">Mission 3</span><span id="m3-status">–</span></div>
+      </div>
+    </div>
+
+    <div id="shop-overlay">
+      <div id="shop-header">
+        <h2>Boutique de Skins</h2>
+        <button id="shop-close">Fermer</button>
+      </div>
+      <div id="shop-coins">Tes 💎 : <span id="shop-coins-val">0</span></div>
+      <div id="shop-skins">
+        <!-- rempli en JS -->
+      </div>
+    </div>
+
+    <div id="levelup-pop">LEVEL UP !</div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('game-container');
+
+    function resizeCanvas() {
+      const rect = container.getBoundingClientRect();
+      canvas.width = rect.width * 2;
+      canvas.height = rect.height * 2;
+      ctx.scale(2, 2);
+    }
+    resizeCanvas();
+    window.addEventListener('resize', () => {
+      ctx.setTransform(1,0,0,1,0,0);
+      resizeCanvas();
+    });
+
+    const scoreEl = document.getElementById('score');
+    const comboEl = document.getElementById('combo');
+    const hpEl = document.getElementById('hp');
+    const bestEl = document.getElementById('best');
+    const coinsEl = document.getElementById('coins');
+    const centerMsg = document.getElementById('center-msg');
+    const playBtn = document.getElementById('play-btn');
+
+    const levelEl = document.getElementById('level');
+    const xpCurEl = document.getElementById('xp-cur');
+    const xpNextEl = document.getElementById('xp-next');
+    const xpBarInner = document.getElementById('xp-bar-inner');
+
+    const m1Text = document.getElementById('m1-text');
+    const m2Text = document.getElementById('m2-text');
+    const m3Text = document.getElementById('m3-text');
+    const m1Status = document.getElementById('m1-status');
+    const m2Status = document.getElementById('m2-status');
+    const m3Status = document.getElementById('m3-status');
+
+    const btnShop = document.getElementById('btn-shop');
+    const shopOverlay = document.getElementById('shop-overlay');
+    const shopClose = document.getElementById('shop-close');
+    const shopCoinsVal = document.getElementById('shop-coins-val');
+    const shopSkins = document.getElementById('shop-skins');
+
+    const levelupPop = document.getElementById('levelup-pop');
+
+    // Sauvegarde / progression
+    let save = {
+      bestScore: 0,
+      coins: 0,
+      level: 1,
+      xp: 0,
+      selectedSkin: 'default',
+      ownedSkins: ['default'],
+      missions: []
+    };
+    try {
+      const s = localStorage.getItem('orbeFolieMeta');
+      if (s) {
+        const parsed = JSON.parse(s);
+        Object.assign(save, parsed);
+      }
+    } catch(e) {}
+
+    bestEl.textContent = save.bestScore;
+    coinsEl.textContent = save.coins;
+    updateLevelUI();
+
+    // Missions de base (simples)
+    const missionTemplates = [
+      { id: 'survive40', text: 'Survivre 40 secondes', reward: 15 },
+      { id: 'score500', text: 'Atteindre 500 points', reward: 20 },
+      { id: 'fever2', text: 'Activer la fièvre 2 fois', reward: 25 },
+      { id: 'collect50', text: 'Ramasser 50 orbes vertes', reward: 20 },
+      { id: 'noHit20', text: 'Tenir 20s sans être touché', reward: 25 }
+    ];
+
+    function initMissionsIfNeeded() {
+      if (!Array.isArray(save.missions) || save.missions.length !== 3) {
+        save.missions = [];
+        const used = new Set();
+        while (save.missions.length < 3) {
+          const m = missionTemplates[Math.floor(Math.random() * missionTemplates.length)];
+          if (used.has(m.id)) continue;
+          used.add(m.id);
+          save.missions.push({
+            id: m.id,
+            text: m.text,
+            reward: m.reward,
+            progress: 0,
+            target: missionTargetFromId(m.id),
+            done: false
+          });
+        }
+        persistSave();
+      }
+      updateMissionUI();
+    }
+
+    function missionTargetFromId(id) {
+      switch(id) {
+        case 'survive40': return 40;
+        case 'score500': return 500;
+        case 'fever2': return 2;
+        case 'collect50': return 50;
+        case 'noHit20': return 20;
+        default: return 1;
+      }
+    }
+
+    function updateMissionUI() {
+      const slots = [
+        [m1Text, m1Status],
+        [m2Text, m2Status],
+        [m3Text, m3Status]
+      ];
+      for (let i = 0; i < 3; i++) {
+        const m = save.missions[i];
+        const [tEl, sEl] = slots[i];
+        if (!m) {
+          tEl.textContent = '—';
+          sEl.textContent = '';
+          continue;
+        }
+        tEl.textContent = m.text + ' (+' + m.reward + '💎)';
+        if (m.done) {
+          sEl.textContent = 'OK';
+          sEl.className = 'badge-done';
+        } else {
+          sEl.textContent = m.progress + '/' + m.target;
+          sEl.className = '';
+        }
+      }
+    }
+
+    function checkMissions(state) {
+      // update progress
+      for (const m of save.missions) {
+        if (m.done) continue;
+        if (m.id === 'survive40') {
+          m.progress = Math.floor(state.time);
+        } else if (m.id === 'score500') {
+          m.progress = Math.max(m.progress, state.score);
+        } else if (m.id === 'fever2') {
+          m.progress = state.feverCount;
+        } else if (m.id === 'collect50') {
+          m.progress = state.collectedOrbs;
+        } else if (m.id === 'noHit20') {
+          m.progress = Math.floor(state.timeWithoutHit);
+        }
+        if (m.progress >= m.target) {
+          m.done = true;
+          save.coins += m.reward;
+        }
+      }
+      coinsEl.textContent = save.coins;
+      shopCoinsVal.textContent = save.coins;
+      updateMissionUI();
+      persistSave();
+    }
+
+    function resetMissionsDailyIfNeeded() {
+      // simple: on ne fait pas de vrai "date", juste un reset possible avec un bouton si tu veux plus tard
+      initMissionsIfNeeded();
+    }
+
+    // Skins
+    const SKINS = [
+      {
+        id: 'default',
+        name: 'Basique',
+        emoji: '🚀',
+        desc: 'Vaisseau standard équilibré.',
+        price: 0
+      },
+      {
+        id: 'flame',
+        name: 'Flamme 🔥',
+        emoji: '🔥',
+        desc: 'Vaisseau orange avec flamme intense.',
+        price: 60
+      },
+      {
+        id: 'shadow',
+        name: 'Ombre 😈',
+        emoji: '😈',
+        desc: 'Vaisseau violet sombre avec aura.',
+        price: 80
+      }
+    ];
+
+    function persistSave() {
+      try {
+        localStorage.setItem('orbeFolieMeta', JSON.stringify(save));
+      } catch(e) {}
+    }
+
+    function updateLevelUI() {
+      levelEl.textContent = save.level;
+      const xpNeeded = xpNeededForLevel(save.level);
+      xpCurEl.textContent = save.xp;
+      xpNextEl.textContent = xpNeeded;
+      const pct = Math.max(0, Math.min(100, (save.xp / xpNeeded) * 100));
+      xpBarInner.style.width = pct + '%';
+    }
+
+    function xpNeededForLevel(level) {
+      // simple courbe: 100, 150, 200, 250...
+      return 100 + (level - 1) * 50;
+    }
+
+    function addXP(amount) {
+      let xp = save.xp + amount;
+      let level = save.level;
+      let leveledUp = false;
+      while (true) {
+        const need = xpNeededForLevel(level);
+        if (xp >= need) {
+          xp -= need;
+          level++;
+          leveledUp = true;
+        } else break;
+      }
+      save.level = level;
+      save.xp = xp;
+      persistSave();
+      updateLevelUI();
+      if (leveledUp) {
+        showLevelUpPop();
+      }
+    }
+
+    function showLevelUpPop() {
+      levelupPop.style.display = 'block';
+      setTimeout(() => {
+        levelupPop.style.display = 'none';
+      }, 1200);
+    }
+
+    function openShop() {
+      shopOverlay.style.display = 'flex';
+      renderShop();
+    }
+
+    function closeShop() {
+      shopOverlay.style.display = 'none';
+    }
+
+    function renderShop() {
+      shopSkins.innerHTML = '';
+      shopCoinsVal.textContent = save.coins;
+      SKINS.forEach(skin => {
+        const div = document.createElement('div');
+        div.className = 'shop-item';
+        const info = document.createElement('div');
+        info.className = 'shop-info';
+        const name = document.createElement('div');
+        name.className = 'shop-name';
+        name.textContent = skin.emoji + ' ' + skin.name;
+        const desc = document.createElement('div');
+        desc.className = 'shop-desc';
+        desc.textContent = skin.desc;
+        info.appendChild(name);
+        info.appendChild(desc);
+
+        const right = document.createElement('div');
+        const price = document.createElement('div');
+        price.className = 'shop-price';
+        price.textContent = skin.price ? skin.price + ' 💎' : 'Gratuit';
+        const btn = document.createElement('button');
+        btn.className = 'shop-btn';
+        if (save.selectedSkin === skin.id) {
+          btn.textContent = 'Sélectionné';
+          btn.classList.add('selected');
+        } else if (!save.ownedSkins.includes(skin.id) && skin.price > 0) {
+          btn.textContent = 'Acheter';
+        } else {
+          btn.textContent = 'Choisir';
+        }
+        btn.onclick = () => {
+          if (save.selectedSkin === skin.id) return;
+          if (!save.ownedSkins.includes(skin.id) && skin.price > 0) {
+            if (save.coins < skin.price) {
+              btn.textContent = 'Pas assez 💎';
+              btn.classList.add('locked');
+              setTimeout(() => renderShop(), 800);
+              return;
+            }
+            save.coins -= skin.price;
+            coinsEl.textContent = save.coins;
+            shopCoinsVal.textContent = save.coins;
+            save.ownedSkins.push(skin.id);
+          }
+          save.selectedSkin = skin.id;
+          persistSave();
+          renderShop();
+        };
+        right.appendChild(price);
+        right.appendChild(btn);
+
+        div.appendChild(info);
+        div.appendChild(right);
+        shopSkins.appendChild(div);
+      });
+    }
+
+    btnShop.addEventListener('click', () => {
+      shopOverlay.style.display === 'flex' ? closeShop() : openShop();
+    });
+    shopClose.addEventListener('click', closeShop);
+
+    // État de partie
+    const state = {
+      running: false,
+      time: 0,
+      score: 0,
+      combo: 1,
+      comboTimer: 0,
+      hp: 3,
+      pointer: { x: 0, y: 0, active: false },
+      ship: { x: 200, y: 300, radius: 12, vx: 0, vy: 0 },
+      orbs: [],
+      fragments: [],
+      shield: 0,
+      shieldCooldown: 0,
+      slowmo: 0,
+      fever: 0,
+      feverCount: 0,
+      collectedOrbs: 0,
+      timeWithoutHit: 0,
+      _spawnTimer: 0,
+      lastFeverActive: false
+    };
+
+    function resetGame() {
+      const rect = container.getBoundingClientRect();
+      state.running = true;
+      state.time = 0;
+      state.score = 0;
+      state.combo = 1;
+      state.comboTimer = 0;
+      state.hp = 3;
+      state.orbs = [];
+      state.fragments = [];
+      state.ship.x = rect.width / 2;
+      state.ship.y = rect.height / 2;
+      state.ship.vx = 0;
+      state.ship.vy = 0;
+      state.shield = 0;
+      state.shieldCooldown = 3;
+      state.slowmo = 0;
+      state.fever = 0;
+      state.feverCount = 0;
+      state.collectedOrbs = 0;
+      state.timeWithoutHit = 0;
+      state._spawnTimer = 0;
+      state.lastFeverActive = false;
+      scoreEl.textContent = '0';
+      comboEl.textContent = 'x1';
+      hpEl.textContent = '3';
+      centerMsg.style.display = 'none';
+      resetMissionsDailyIfNeeded();
+    }
+
+    function endGame(reason) {
+      state.running = false;
+      // score -> coins + xp
+      const gainedCoins = Math.floor(state.score / 50);
+      const gainedXP = Math.floor(state.score / 20);
+      save.coins += gainedCoins;
+      coinsEl.textContent = save.coins;
+      shopCoinsVal.textContent = save.coins;
+      addXP(gainedXP);
+      if (state.score > save.bestScore) {
+        save.bestScore = state.score;
+        bestEl.textContent = save.bestScore;
+      }
+      persistSave();
+      checkMissions(state);
+
+      centerMsg.innerHTML = `
+        <h1>Partie terminée</h1>
+        <p>Raison : ${reason}<br/>
+        Score : ${state.score}<br/>
+        Record : ${save.bestScore}<br/>
+        💎 gagnés : ${gainedCoins}<br/>
+        XP gagné : ${gainedXP}</p>
+        <button id="play-btn">Rejouer</button>
+      `;
+      centerMsg.style.display = 'flex';
+      centerMsg.querySelector('#play-btn').onclick = () => {
+        resetGame();
+      };
+    }
+
+    // pointeur
+    function getPos(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const e = evt.touches ? evt.touches[0] : evt;
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    }
+
+    function pointerDown(evt) {
+      state.pointer.active = true;
+      const p = getPos(evt);
+      state.pointer.x = p.x;
+      state.pointer.y = p.y;
+    }
+    function pointerMove(evt) {
+      if (!state.pointer.active) return;
+      const p = getPos(evt);
+      state.pointer.x = p.x;
+      state.pointer.y = p.y;
+    }
+    function pointerUp() {
+      state.pointer.active = false;
+    }
+
+    canvas.addEventListener('mousedown', pointerDown);
+    canvas.addEventListener('mousemove', pointerMove);
+    window.addEventListener('mouseup', pointerUp);
+
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      pointerDown(e);
+    }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      pointerMove(e);
+    }, { passive: false });
+    window.addEventListener('touchend', pointerUp);
+
+    playBtn.addEventListener('click', resetGame);
+
+    // spawns
+    function spawnOrb() {
+      const rect = container.getBoundingClientRect();
+      const margin = 20;
+      const side = Math.floor(Math.random() * 4);
+      let x, y;
+      if (side === 0) {
+        x = Math.random() * rect.width;
+        y = -margin;
+      } else if (side === 1) {
+        x = rect.width + margin;
+        y = Math.random() * rect.height;
+      } else if (side === 2) {
+        x = Math.random() * rect.width;
+        y = rect.height + margin;
+      } else {
+        x = -margin;
+        y = Math.random() * rect.height;
+      }
+
+      const good = Math.random() < 0.6;
+      const baseSpeed = 1.3 + Math.min(state.time / 30, 3);
+      const angleToCenter = Math.atan2(
+        (rect.height/2) - y,
+        (rect.width/2) - x
+      );
+      const speed = baseSpeed * (0.8 + Math.random() * 0.4);
+      const orb = {
+        x,
+        y,
+        vx: Math.cos(angleToCenter) * speed,
+        vy: Math.sin(angleToCenter) * speed,
+        radius: good ? 8 : 10,
+        good,
+        life: 0,
+        explodeAt: good ? Infinity : 1 + Math.random() * 0.5,
+        type: null
+      };
+      state.orbs.push(orb);
+    }
+
+    function spawnShieldPickup() {
+      const rect = container.getBoundingClientRect();
+      const x = 40 + Math.random() * (rect.width - 80);
+      const y = 60 + Math.random() * (rect.height - 120);
+      state.orbs.push({
+        x, y,
+        vx: 0, vy: 0,
+        radius: 9,
+        good: true,
+        life: 0,
+        explodeAt: Infinity,
+        type: 'shield'
+      });
+    }
+
+    function spawnSlowmoPickup() {
+      const rect = container.getBoundingClientRect();
+      const x = 40 + Math.random() * (rect.width - 80);
+      const y = 60 + Math.random() * (rect.height - 120);
+      state.orbs.push({
+        x, y,
+        vx: 0, vy: 0,
+        radius: 9,
+        good: true,
+        life: 0,
+        explodeAt: Infinity,
+        type: 'slowmo'
+      });
+    }
+
+    function spawnFragments(orb) {
+      const n = 8 + Math.floor(Math.random() * 5);
+      for (let i = 0; i < n; i++) {
+        const angle = (Math.PI * 2 * i) / n + Math.random() * 0.3;
+        const speed = 2 + Math.random() * 2;
+        state.fragments.push({
+          x: orb.x,
+          y: orb.y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          radius: 3 + Math.random() * 2,
+          life: 0,
+          maxLife: 2.5 + Math.random()
+        });
+      }
+    }
+
+    function update(dt) {
+      let speedFactor = 1;
+      if (state.slowmo > 0) {
+        state.slowmo -= dt;
+        if (state.slowmo < 0) state.slowmo = 0;
+        speedFactor = 0.3;
+      }
+      const realDt = dt * speedFactor;
+
+      const rect = container.getBoundingClientRect();
+      state.time += realDt;
+      state.timeWithoutHit += realDt;
+
+      const spawnInterval = Math.max(0.3, 1.2 - state.time / 20);
+      state._spawnTimer += realDt;
+      while (state._spawnTimer > spawnInterval) {
+        state._spawnTimer -= spawnInterval;
+        spawnOrb();
+      }
+
+      if (!state.shield && state.shieldCooldown <= 0 && Math.random() < realDt / 8) {
+        spawnShieldPickup();
+      }
+      if (Math.random() < realDt / 10) {
+        spawnSlowmoPickup();
+      }
+
+      if (state.pointer.active) {
+        const dx = state.pointer.x - state.ship.x;
+        const dy = state.pointer.y - state.ship.y;
+        state.ship.vx += dx * 8 * realDt;
+        state.ship.vy += dy * 8 * realDt;
+      }
+      state.ship.vx *= 0.85;
+      state.ship.vy *= 0.85;
+      state.ship.x += state.ship.vx * realDt;
+      state.ship.y += state.ship.vy * realDt;
+
+      state.ship.x = Math.max(state.ship.radius, Math.min(rect.width - state.ship.radius, state.ship.x));
+      state.ship.y = Math.max(state.ship.radius, Math.min(rect.height - state.ship.radius, state.ship.y));
+
+      if (state.combo > 1) {
+        state.comboTimer -= realDt;
+        if (state.comboTimer <= 0) {
+          state.combo = 1;
+          comboEl.textContent = 'x1';
+        }
+      }
+
+      if (state.shield > 0) {
+        state.shield -= realDt;
+        if (state.shield < 0) state.shield = 0;
+      }
+      if (state.shieldCooldown > 0) {
+        state.shieldCooldown -= realDt;
+      }
+
+      if (state.combo >= 8 && state.fever <= 0) {
+        state.fever = 5;
+        state.feverCount++;
+      }
+      if (state.fever > 0) {
+        state.fever -= realDt;
+        if (state.fever < 0) state.fever = 0;
+      }
+
+      const feverActive = state.fever > 0;
+      if (feverActive && !state.lastFeverActive) {
+        // début fièvre
+      }
+      state.lastFeverActive = feverActive;
+
+      for (let i = state.orbs.length - 1; i >= 0; i--) {
+        const o = state.orbs[i];
+        o.x += o.vx * speedFactor;
+        o.y += o.vy * speedFactor;
+        o.life += realDt;
+
+        if (feverActive && !o.good && !o.type) {
+          o.good = true;
+        }
+
+        if (!o.good && !o.type && o.life >= o.explodeAt) {
+          spawnFragments(o);
+          state.orbs.splice(i,1);
+          continue;
+        }
+
+        const dx = o.x - state.ship.x;
+        const dy = o.y - state.ship.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < o.radius + state.ship.radius) {
+          if (o.type === 'shield') {
+            state.shield = 5;
+            state.shieldCooldown = 10;
+          } else if (o.type === 'slowmo') {
+            state.slowmo = 4;
+          } else if (o.good) {
+            let gain = 10 * state.combo;
+            if (feverActive) gain *= 2;
+            state.score += gain;
+            scoreEl.textContent = state.score;
+            state.combo = Math.min(10, state.combo + 1);
+            state.comboTimer = 3;
+            comboEl.textContent = 'x' + state.combo;
+            state.collectedOrbs++;
+          } else {
+            if (state.shield > 0) {
+              state.shield = 0;
+            } else {
+              state.hp -= 1;
+              hpEl.textContent = state.hp;
+              state.combo = 1;
+              comboEl.textContent = 'x1';
+              state.timeWithoutHit = 0;
+              if (state.hp <= 0) {
+                endGame('Tu as été submergé par les orbes rouges');
+                return;
+              }
+            }
+          }
+          state.orbs.splice(i,1);
+          continue;
+        }
+
+        if (o.x < -50 || o.x > rect.width + 50 || o.y < -50 || o.y > rect.height + 50) {
+          state.orbs.splice(i,1);
+        }
+      }
+
+      for (let i = state.fragments.length - 1; i >= 0; i--) {
+        const f = state.fragments[i];
+        f.x += f.vx * speedFactor;
+        f.y += f.vy * speedFactor;
+        f.life += realDt;
+        const dx = f.x - state.ship.x;
+        const dy = f.y - state.ship.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < f.radius + state.ship.radius) {
+          if (state.shield > 0) {
+            state.shield = 0;
+          } else {
+            state.hp -= 1;
+            hpEl.textContent = state.hp;
+            state.combo = 1;
+            comboEl.textContent = 'x1';
+            state.timeWithoutHit = 0;
+            if (state.hp <= 0) {
+              state.fragments.splice(i,1);
+              endGame('Tu as pris une pluie de fragments');
+              return;
+            }
+          }
+          state.fragments.splice(i,1);
+          continue;
+        }
+        if (f.life > f.maxLife) {
+          state.fragments.splice(i,1);
+        }
+      }
+
+      checkMissions(state);
+    }
+
+    function draw() {
+      const rect = container.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      const slowmoActive = state.slowmo > 0;
+      const feverActive = state.fever > 0;
+      const grd = ctx.createRadialGradient(
+        rect.width/2, rect.height/2, 10,
+        rect.width/2, rect.height/2, rect.height
+      );
+      if (feverActive) {
+        grd.addColorStop(0, 'rgba(74,222,128,0.4)');
+      } else if (slowmoActive) {
+        grd.addColorStop(0, 'rgba(56,189,248,0.25)');
+      } else {
+        grd.addColorStop(0, 'rgba(34,197,94,0.12)');
+      }
+      grd.addColorStop(1, 'rgba(15,23,42,1)');
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, rect.width, rect.height);
+
+      if (feverActive) {
+        ctx.strokeStyle = 'rgba(74,222,128,0.6)';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(4, 4, rect.width - 8, rect.height - 8);
+      }
+
+      for (const o of state.orbs) {
+        const r = o.radius;
+        const grad = ctx.createRadialGradient(
+          o.x - r/3, o.y - r/3, 2,
+          o.x, o.y, r
+        );
+        if (o.type === 'shield') {
+          grad.addColorStop(0, 'rgba(56,189,248,1)');
+          grad.addColorStop(1, 'rgba(56,189,248,0.05)');
+        } else if (o.type === 'slowmo') {
+          grad.addColorStop(0, 'rgba(34,211,238,1)');
+          grad.addColorStop(1, 'rgba(34,211,238,0.05)');
+        } else if (o.good) {
+          grad.addColorStop(0, 'rgba(52,211,153,1)');
+          grad.addColorStop(1, 'rgba(16,185,129,0.1)');
+        } else {
+          grad.addColorStop(0, 'rgba(248,113,113,1)');
+          grad.addColorStop(1, 'rgba(248,113,113,0.05)');
+        }
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle =
+          o.type === 'shield' ? 'rgba(56,189,248,0.5)' :
+          o.type === 'slowmo' ? 'rgba(34,211,238,0.5)' :
+          o.good ? 'rgba(52,211,153,0.5)' :
+          'rgba(248,113,113,0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, r + 3 * Math.sin(o.life * 6), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      for (const f of state.fragments) {
+        const alpha = Math.max(0, 1 - f.life / f.maxLife);
+        ctx.fillStyle = 'rgba(248,250,252,' + alpha.toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const s = state.ship;
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      const angle = Math.atan2(s.vy, s.vx);
+      ctx.rotate(angle);
+
+      const speed = Math.hypot(s.vx, s.vy);
+      const flameLen = Math.min(18, 4 + speed * 0.5);
+
+      const skinId = save.selectedSkin;
+      let bodyColor = '#e5e7eb';
+      let coreColor = '#22c55e';
+      let flameColor = slowmoActive ? 'rgba(59,130,246,0.9)' : 'rgba(56,189,248,0.8)';
+      if (skinId === 'flame') {
+        bodyColor = '#fed7aa';
+        coreColor = '#f97316';
+        flameColor = 'rgba(248,113,113,0.95)';
+      } else if (skinId === 'shadow') {
+        bodyColor = '#a855f7';
+        coreColor = '#6b21a8';
+        flameColor = 'rgba(147,51,234,0.9)';
+      }
+      if (feverActive) {
+        coreColor = '#4ade80';
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(-s.radius - flameLen, 0);
+      ctx.lineTo(-s.radius, -5);
+      ctx.lineTo(-s.radius, 5);
+      ctx.closePath();
+      ctx.fillStyle = flameColor;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(s.radius + 2, 0);
+      ctx.lineTo(-s.radius, -9);
+      ctx.lineTo(-s.radius + 4, 0);
+      ctx.lineTo(-s.radius, 9);
+      ctx.closePath();
+      ctx.fillStyle = bodyColor;
+      ctx.fill();
+
+      ctx.fillStyle = coreColor;
+      ctx.beginPath();
+      ctx.arc(0, 0, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (state.shield > 0) {
+        ctx.strokeStyle = 'rgba(56,189,248,0.9)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, s.radius + 4 + Math.sin(state.time * 8) * 2, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    let lastTime = performance.now();
+    function loop(now) {
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+      if (state.running) {
+        update(dt);
+        draw();
+      } else {
+        draw();
+      }
+      requestAnimationFrame(loop);
+    }
+    resetMissionsDailyIfNeeded();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

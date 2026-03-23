@@ -952,16 +952,25 @@ Les temples anciens n'étaient qu'un prélude. <strong>La vraie aventure commenc
     },
     level7: {
       title: "Chapitre VII : Résonance Fractale",
-      text: `L'espace se plie sur lui-même en patterns infinis. Chaque mouvement crée des échos qui se répercutent à travers les dimensions.
+      text: `L'espace se plie sur lui-même en patterns infinis. 
+      Chaque mouvement crée des échos qui se répercutent à travers les dimensions.
 
-Vous découvrez que les Géomètres n'ont pas disparu - ils se sont <strong>transcendés</strong>, fusionnant avec la géométrie elle-même.
+Vous découvrez que les Géomètres n'ont pas disparu - ils se sont <strong>transcendés</strong>, 
+fusionnant avec la géométrie elle-même.
 
 Et maintenant, ils vous appellent à les rejoindre.
 
 <em>Mais êtes-vous prêt à abandonner votre forme physique pour devenir pur concept mathématique ?</em>
 
 Le choix approche. Pour l'instant, <strong>survivez</strong>.`
+    },
+      level8: {
+      title: "l'entre sinistre",
+      text: `Alors que vous explorez les profondeurs de l'Au-Delà Géométrique, 
+      vous sentez une présence sombre qui vous suit. Des formes angulaires corrompues, 
+      plus grandes et plus agressives que tout ce que vous avez affronté auparavant.`
     }
+
   };
 
 
@@ -1251,7 +1260,7 @@ Le choix approche. Pour l'instant, <strong>survivez</strong>.`
 
     {
     name: "L'Écho des Anciens",
-    shortName: "Niveau 10",
+    shortName: "Niveau 6",
     description: "Traversez l'Au-Delà Géométrique où résonnent les fragments des autres CUBE.",
     difficulty: 10,
     baseSpeed: 10,
@@ -1284,7 +1293,7 @@ Le choix approche. Pour l'instant, <strong>survivez</strong>.`
 },
 {
     name: "Résonance Fractale",
-    shortName: "Niveau 11",
+    shortName: "Niveau 7",
     description: "Survivez dans un espace fractal où chaque mouvement crée des échos mortels.",
     difficulty: 11,
     baseSpeed: 11.5,
@@ -1314,8 +1323,41 @@ Le choix approche. Pour l'instant, <strong>survivez</strong>.`
         0,0,0,0,
         1,1,1,1
     ]
-  }
-  ];
+  },
+{
+  name: "l'entre sinistre",
+    shortName: "Niveau 8",
+    description: "entrez dans une dimension cauchemardesque où les lois de la géométrie sont corrompues. Les pièges sont partout, et les plateformes se font rares. Seuls les plus habiles pourront survivre à cette épreuve ultime.",
+    difficulty: 11,
+    baseSpeed: 11.5,
+    // pattern encore plus agressif, presque continu
+    spikePattern: [
+        1,1,0,1,
+        0,1,1,1,
+        1,0,1,1,
+        1,1,0,0,
+        0,1,1,0,
+        1,0,1,0,
+        1,1,1,1,
+        1,1,0,1,
+        0,0,1,1,
+        0,1,1,0
+    ],
+    // plateformes rares = grande difficulté, très “fin de jeu”
+    platformPattern: [
+        0,0,0,1,
+        0,1,0,0,
+        0,0,1,0,
+        0,0,0,0,
+        0,0,0,1,
+        0,0,0,0,
+        0,1,0,0,
+        0,0,0,1,
+        0,0,0,0,
+        1,0,0,1
+    ]
+ }
+   ];
 
     // Story modal controls
     const storyModal = document.getElementById('storyModal');

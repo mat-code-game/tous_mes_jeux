@@ -2,185 +2,622 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <title>Mini Bomber - 2 Joueurs (5 vies)</title>
+  <title>💣 Bomberman Épique - 2 Joueurs</title>
   <style>
-    body { background:#222; display:flex; justify-content:center; margin-top:24px; color:#ddd; font-family:Arial; }
-    #wrap { text-align:center; }
-    canvas { border:2px solid #fff; background:#eee; display:block; margin-bottom:8px; }
-    small { color:#bbb; display:block; margin-top:6px; }
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display:flex; 
+      justify-content:center; 
+      align-items:center;
+      min-height:100vh;
+      font-family:'Press Start 2P', cursive;
+      overflow:hidden;
+    }
+    #wrap { 
+      text-align:center; 
+      position:relative;
+    }
+    canvas { 
+      border:4px solid #fff;
+      border-radius:8px;
+      background:#2c3e50;
+      display:block; 
+      margin-bottom:12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    #controls {
+      color:#fff;
+      font-size:10px;
+      line-height:1.6;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+      padding:10px;
+      background:rgba(0,0,0,0.3);
+      border-radius:8px;
+    }
+    #startScreen {
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:rgba(0,0,0,0.9);
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      z-index:1000;
+      color:#fff;
+    }
+    #startScreen h1 {
+      font-size:24px;
+      margin-bottom:20px;
+      text-shadow: 0 0 20px #fff;
+      animation: pulse 2s infinite;
+    }
+    #startScreen p {
+      font-size:12px;
+      margin:10px;
+      color:#ffd700;
+    }
+    #victoryScreen {
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:rgba(0,0,0,0.95);
+      display:none;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      z-index:1001;
+      color:#fff;
+    }
+    #victoryScreen.show {
+      display:flex;
+    }
+    #victoryScreen h1 {
+      font-size:28px;
+      margin-bottom:20px;
+      color:#ffd700;
+      text-shadow: 0 0 30px #ffd700;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .particle {
+      position:absolute;
+      pointer-events:none;
+    }
   </style>
 </head>
 <body>
   <div id="wrap">
+    <div id="startScreen">
+      <h1>💣 BOMBERMAN ÉPIQUE 💣</h1>
+      <p>Appuyez sur ESPACE pour commencer!</p>
+      <p style="font-size:10px; margin-top:30px;">P1: Flèches + Espace</p>
+      <p style="font-size:10px;">P2: ZQSD + A</p>
+    </div>
+    <div id="victoryScreen">
+      <h1 id="winnerText">VICTOIRE!</h1>
+      <p style="font-size:14px; margin-top:20px;">Appuyez sur R pour rejouer</p>
+    </div>
     <canvas id="bomber"></canvas>
-    <small>P1 (bleu) → flèches + Espace · P2 (rouge) → ZQSD + A (AZERTY). Sur QWERTY, change Z→W et Q→A.</small>
+    <div id="controls">
+      <div>P1 (Bleu) → Flèches + Espace | P2 (Rouge) → ZQSD + A</div>
+    </div>
   </div>
 
   <script>
     // Configuration
-    const size = 24, W = 10, H = 10;
+    const size = 32, W = 12, H = 12;
     const canvas = document.getElementById('bomber');
     canvas.width = W * size;
     canvas.height = H * size;
     const ctx = canvas.getContext('2d');
+    let gameStarted = false;
+    let gameOver = false;
+    let frameCount = 0;
 
-    // grille (murs aléatoires)
+    // Audio context pour les sons
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(frequency, duration, type='sine') {
+      try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.frequency.value = frequency;
+        oscillator.type = type;
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+      } catch(e) {}
+    }
+
+    // Grille améliorée
     const grid = Array.from({length:H}, () =>
-      Array.from({length:W}, () => Math.random() < 0.18 ? 1 : 0)
+      Array.from({length:W}, () => Math.random() < 0.25 ? 1 : 0)
     );
 
-    // s'assurer que les cases de spawn sont libres
-    const spawnA = {x:1,y:1}, spawnB = {x:W-2, y:H-2};
+    // Bordures fixes
+    for(let y=0; y<H; y++) {
+      for(let x=0; x<W; x++) {
+        if(x === 0 || x === W-1 || y === 0 || y === H-1) {
+          grid[y][x] = 2; // mur indestructible
+        }
+      }
+    }
+
+    const spawnA = {x:1, y:1}, spawnB = {x:W-2, y:H-2};
     grid[spawnA.y][spawnA.x] = 0;
     grid[spawnB.y][spawnB.x] = 0;
+    grid[spawnA.y+1][spawnA.x] = 0;
+    grid[spawnA.y][spawnA.x+1] = 0;
+    grid[spawnB.y-1][spawnB.x] = 0;
+    grid[spawnB.y][spawnB.x-1] = 0;
 
-    // joueurs (avec 5 vies)
+    // Power-ups
+    const powerUps = [];
+    const powerUpTypes = ['speed', 'range', 'bombs'];
+
+    // Joueurs améliorés
     const players = [
-      {x:spawnA.x, y:spawnA.y, color:'blue', score:0, bomb:null, lives:5, keys:{up:'arrowup', down:'arrowdown', left:'arrowleft', right:'arrowright', bomb:' '}},
-      {x:spawnB.x, y:spawnB.y, color:'red',  score:0, bomb:null, lives:5, keys:{up:'z', down:'s', left:'q', right:'d', bomb:'a'}}
+      {
+        x:spawnA.x, y:spawnA.y, 
+        color:'#3498db', 
+        score:0, 
+        bombs:[], 
+        maxBombs:1,
+        lives:5, 
+        speed:1,
+        bombRange:2,
+        keys:{up:'arrowup', down:'arrowdown', left:'arrowleft', right:'arrowright', bomb:' '}
+      },
+      {
+        x:spawnB.x, y:spawnB.y, 
+        color:'#e74c3c', 
+        score:0, 
+        bombs:[], 
+        maxBombs:1,
+        lives:5, 
+        speed:1,
+        bombRange:2,
+        keys:{up:'z', down:'s', left:'q', right:'d', bomb:'a'}
+      }
     ];
 
     let explosions = [];
-    let lastKey = '';
+    let particles = [];
+    const hexToRgba = (hex, a) => {
+      const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
+      return `rgba(${r},${g},${b},${a})`;
+    };
+    let moveCooldown = {p1:0, p2:0};
 
-    function draw() {
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-
-      // murs
-      for(let y=0;y<H;y++){
-        for(let x=0;x<W;x++){
-          if(grid[y][x]){
-            ctx.fillStyle = '#6b6b6b';
-            ctx.fillRect(x*size, y*size, size-2, size-2);
-          } else {
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(x*size, y*size, size-2, size-2);
-          }
-        }
+    // Système de particules
+    function createParticles(x, y, color, count=10) {
+      for(let i=0; i<count; i++) {
+        particles.push({
+          x: x * size + size/2,
+          y: y * size + size/2,
+          vx: (Math.random()-0.5)*4,
+          vy: (Math.random()-0.5)*4,
+          life: 30,
+          color: color,
+          size: Math.random()*3+2
+        });
       }
-
-      // explosions
-      for(let e of explosions){
-        ctx.fillStyle = 'orange';
-        ctx.fillRect(e.x*size+3, e.y*size+3, size-6, size-6);
-      }
-
-      // bombes
-      for(let p of players){
-        if(p.bomb){
-          ctx.fillStyle = 'black';
-          ctx.beginPath();
-          ctx.arc(p.bomb.x*size + size/2, p.bomb.y*size + size/2, size/3, 0, Math.PI*2);
-          ctx.fill();
-        }
-      }
-
-      // joueurs (seulement si encore vivants)
-      for(let p of players){
-        if(p.lives > 0){
-          ctx.fillStyle = p.color;
-          ctx.fillRect(p.x*size+4, p.y*size+4, size-8, size-8);
-        }
-      }
-
-      // HUD
-      ctx.fillStyle = '#000';
-      ctx.font = '14px Arial';
-      ctx.fillText(`P1: ${players[0].score} / ❤️${players[0].lives}`, 6, 16);
-      ctx.fillText(`P2: ${players[1].score} / ❤️${players[1].lives}`, canvas.width - 120, 16);
-      ctx.font = '12px Arial';
-      ctx.fillText(`Key: ${lastKey}`, 6, canvas.height - 6);
     }
 
-    // explosion (portée 2)
-    function explode(owner) {
-      const b = owner.bomb;
-      if(!b) return;
-      const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
-      const affected = [{x:b.x, y:b.y}];
+    function draw() {
+      // Fond animé
+      ctx.fillStyle = '#34495e';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      for(let [dx,dy] of dirs){
-        for(let i=1;i<=2;i++){
-          const nx = b.x + dx*i, ny = b.y + dy*i;
-          if(nx<0 || ny<0 || nx>=W || ny>=H) break;
-          if(grid[ny][nx]) { // détruit le mur et stop
-            grid[ny][nx] = 0;
-            owner.score += 10;
-            affected.push({x:nx, y:ny});
-            break;
+      // Grille de fond
+      ctx.strokeStyle = '#2c3e50';
+      ctx.lineWidth = 1;
+      for(let y=0; y<=H; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y*size);
+        ctx.lineTo(canvas.width, y*size);
+        ctx.stroke();
+      }
+      for(let x=0; x<=W; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x*size, 0);
+        ctx.lineTo(x*size, canvas.height);
+        ctx.stroke();
+      }
+
+      // Murs destructibles
+      for(let y=0; y<H; y++) {
+        for(let x=0; x<W; x++) {
+          if(grid[y][x] === 1) {
+            // Dégradé pour les murs destructibles
+            const grad = ctx.createLinearGradient(x*size, y*size, (x+1)*size, (y+1)*size);
+            grad.addColorStop(0, '#8b4513');
+            grad.addColorStop(1, '#654321');
+            ctx.fillStyle = grad;
+            ctx.fillRect(x*size+1, y*size+1, size-2, size-2);
+            // Détails
+            ctx.fillStyle = '#5a2d0c';
+            ctx.fillRect(x*size+2, y*size+2, size-4, size-4);
+          } else if(grid[y][x] === 2) {
+            // Murs indestructibles
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(x*size, y*size, size, size);
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x*size+2, y*size+2, size-4, size-4);
           }
-          affected.push({x:nx, y:ny});
         }
       }
 
-      explosions = affected.slice();
-      // check collisions joueurs
-      for(let other of players){
-        if(affected.some(e => e.x===other.x && e.y===other.y)){
-          if(other !== owner && other.lives > 0){
+      // Power-ups avec effets visuels améliorés
+      for(let pu of powerUps) {
+        const pulse = Math.sin(frameCount * 0.25) * 0.25 + 0.85;
+        const float = Math.sin(frameCount * 0.15 + pu.x) * 3;
+        const glowPhase = (frameCount * 0.08) % (Math.PI * 2);
+        const cx = pu.x*size + size/2;
+        const cy = pu.y*size + size/2 + float;
+        
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(frameCount * 0.12);
+        
+        // Aura lumineuse pulsante (halo)
+        const glowSize = size * (0.6 + Math.sin(glowPhase) * 0.15);
+        const glowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
+        glowGrad.addColorStop(0, hexToRgba(pu.color, 0.5));
+        glowGrad.addColorStop(0.5, hexToRgba(pu.color, 0.2));
+        glowGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, glowSize, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Anneau brillant qui tourne
+        ctx.strokeStyle = 'rgba(255,255,255,' + (0.6 + Math.sin(glowPhase) * 0.3) + ')';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, size/2.5, 0, Math.PI*2);
+        ctx.stroke();
+        
+        // Icône du power-up
+        ctx.globalAlpha = pulse;
+        ctx.fillStyle = pu.color;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = pu.color;
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        if(pu.type === 'speed') {
+          ctx.arc(0, 0, size/3.5 * pulse, 0, Math.PI*2);
+          ctx.fill();
+          ctx.stroke();
+        } else if(pu.type === 'range') {
+          ctx.fillRect(-size/4.5, -size/4.5, size/2.2 * pulse, size/2.2 * pulse);
+          ctx.strokeRect(-size/4.5, -size/4.5, size/2.2 * pulse, size/2.2 * pulse);
+        } else {
+          ctx.moveTo(0, -size/3.5 * pulse);
+          ctx.lineTo(-size/4.5 * pulse, size/3.5 * pulse);
+          ctx.lineTo(size/4.5 * pulse, size/3.5 * pulse);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.shadowBlur = 0;
+        
+        // Petites particules orbitantes autour du power-up
+        for(let i = 0; i < 4; i++) {
+          const angle = (frameCount * 0.1 + i * Math.PI/2) % (Math.PI * 2);
+          const px = Math.cos(angle) * (size/2 + Math.sin(frameCount * 0.2) * 4);
+          const py = Math.sin(angle) * (size/2 + Math.sin(frameCount * 0.2) * 4);
+          ctx.fillStyle = 'rgba(255,255,255,' + (0.5 + Math.sin(angle + frameCount * 0.15) * 0.3) + ')';
+          ctx.beginPath();
+          ctx.arc(px, py, 2, 0, Math.PI*2);
+          ctx.fill();
+        }
+        
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+
+      // Explosions animées
+      for(let e of explosions) {
+        const alpha = e.life / e.maxLife;
+        const sizeMulti = 0.5 + alpha * 0.5;
+        const grad = ctx.createRadialGradient(
+          e.x*size + size/2, e.y*size + size/2, 0,
+          e.x*size + size/2, e.y*size + size/2, size/2*sizeMulti
+        );
+        grad.addColorStop(0, `rgba(255, 200, 0, ${alpha})`);
+        grad.addColorStop(0.5, `rgba(255, 100, 0, ${alpha*0.7})`);
+        grad.addColorStop(1, `rgba(255, 0, 0, 0)`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(e.x*size, e.y*size, size, size);
+      }
+
+      // Bombes avec animation
+      for(let p of players) {
+        for(let bomb of p.bombs) {
+          const pulse = Math.sin(frameCount * 0.3) * 0.2 + 0.8;
+          ctx.fillStyle = '#1a1a1a';
+          ctx.beginPath();
+          ctx.arc(bomb.x*size + size/2, bomb.y*size + size/2, size/3 * pulse, 0, Math.PI*2);
+          ctx.fill();
+          // Mèche
+          ctx.fillStyle = '#ff4444';
+          ctx.fillRect(bomb.x*size + size/2 - 2, bomb.y*size + size/2 - size/3 - 4, 4, 6);
+        }
+      }
+
+      // Particules
+      for(let part of particles) {
+        ctx.fillStyle = part.color;
+        ctx.globalAlpha = part.life / 30;
+        ctx.fillRect(part.x - part.size/2, part.y - part.size/2, part.size, part.size);
+      }
+      ctx.globalAlpha = 1;
+
+      // Joueurs avec animation
+      for(let p of players) {
+        if(p.lives > 0) {
+          const bounce = Math.sin(frameCount * 0.2) * 2;
+          // Ombre
+          ctx.fillStyle = 'rgba(0,0,0,0.3)';
+          ctx.fillRect(p.x*size+6, p.y*size+size-4, size-12, 4);
+          // Corps
+          const grad = ctx.createRadialGradient(
+            p.x*size + size/2, p.y*size + size/2 - bounce, 0,
+            p.x*size + size/2, p.y*size + size/2 - bounce, size/2
+          );
+          grad.addColorStop(0, p.color);
+          grad.addColorStop(1, p.color.replace(')', ', 0.7)').replace('rgb', 'rgba'));
+          ctx.fillStyle = grad;
+          ctx.fillRect(p.x*size+4, p.y*size+4 - bounce, size-8, size-8);
+          // Yeux
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(p.x*size+8, p.y*size+8 - bounce, 4, 4);
+          ctx.fillRect(p.x*size+size-12, p.y*size+8 - bounce, 4, 4);
+        }
+      }
+
+      // HUD amélioré
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(0, 0, canvas.width, 30);
+      ctx.font = 'bold 12px "Press Start 2P"';
+      ctx.fillStyle = '#3498db';
+      ctx.fillText(`P1: ${players[0].score}`, 8, 20);
+      for(let i=0; i<players[0].lives; i++) {
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillText('❤', 120 + i*15, 20);
+      }
+      ctx.fillStyle = '#e74c3c';
+      ctx.fillText(`P2: ${players[1].score}`, canvas.width - 150, 20);
+      for(let i=0; i<players[1].lives; i++) {
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillText('❤', canvas.width - 50 + i*15, 20);
+      }
+    }
+
+    function explode(bomb, owner) {
+      playSound(100, 0.1, 'square');
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+      const affected = [{x:bomb.x, y:bomb.y, life:20, maxLife:20}];
+      createParticles(bomb.x, bomb.y, '#ff6600', 15);
+
+      for(let [dx,dy] of dirs) {
+        for(let i=1; i<=owner.bombRange; i++) {
+          const nx = bomb.x + dx*i, ny = bomb.y + dy*i;
+          if(nx<0 || ny<0 || nx>=W || ny>=H) break;
+          if(grid[ny][nx] === 2) break; // mur indestructible
+          if(grid[ny][nx] === 1) {
+            grid[ny][nx] = 0;
+            owner.score += 10;
+            createParticles(nx, ny, '#8b4513', 8);
+            // Chance de spawner un power-up (65% - apparaissent souvent)
+            if(Math.random() < 0.65) {
+              const puType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+              let puColor = '#00ff00';
+              if(puType === 'range') puColor = '#ffff00';
+              else if(puType === 'bombs') puColor = '#00ffff';
+              powerUps.push({
+                x: nx,
+                y: ny,
+                type: puType,
+                color: puColor
+              });
+            }
+            affected.push({x:nx, y:ny, life:20, maxLife:20});
+            break;
+          }
+          affected.push({x:nx, y:ny, life:20, maxLife:20});
+        }
+      }
+
+      explosions.push(...affected);
+      
+      // Collisions joueurs
+      for(let other of players) {
+        if(affected.some(e => e.x===other.x && e.y===other.y)) {
+          if(other !== owner && other.lives > 0) {
+            playSound(200, 0.2, 'sawtooth');
             owner.score += 50;
-            other.lives--; // perd une vie
-            if(other.lives > 0){
-              // téléporte la victime au spawn
+            other.lives--;
+            createParticles(other.x, other.y, other.color, 20);
+            if(other.lives > 0) {
               other.x = (other === players[0]) ? spawnA.x : spawnB.x;
               other.y = (other === players[0]) ? spawnA.y : spawnB.y;
             } else {
-              // joueur éliminé → hors plateau
               other.x = -1;
               other.y = -1;
+              checkGameOver();
             }
           }
         }
       }
 
-      owner.bomb = null;
-      setTimeout(()=> explosions = [], 380);
+      // Retirer la bombe
+      owner.bombs = owner.bombs.filter(b => b !== bomb);
     }
 
-    // normaliser touche
-    function normalizeKey(e){
+    function checkGameOver() {
+      const alive = players.filter(p => p.lives > 0);
+      if(alive.length === 1) {
+        gameOver = true;
+        const winner = alive[0];
+        document.getElementById('winnerText').textContent = 
+          `Joueur ${players.indexOf(winner)+1} GAGNE!`;
+        document.getElementById('victoryScreen').classList.add('show');
+        playSound(400, 0.5, 'sine');
+        setTimeout(() => playSound(500, 0.5, 'sine'), 200);
+        setTimeout(() => playSound(600, 0.5, 'sine'), 400);
+      }
+    }
+
+    function normalizeKey(e) {
       if(e.code === 'Space') return ' ';
       return e.key.length === 1 ? e.key.toLowerCase() : e.key.toLowerCase();
     }
 
     document.addEventListener('keydown', e => {
       const k = normalizeKey(e);
-      lastKey = k;
+      
+      if(!gameStarted && k === ' ') {
+        gameStarted = true;
+        document.getElementById('startScreen').style.display = 'none';
+        playSound(300, 0.2);
+        return;
+      }
+
+      if(gameOver && k === 'r') {
+        location.reload();
+        return;
+      }
+
+      if(!gameStarted || gameOver) return;
+
       if(k === 'arrowleft' || k === 'arrowright' || k === 'arrowup' || k === 'arrowdown' || k === ' ') {
         e.preventDefault();
       }
 
-      for(let p of players){
-        if(p.lives <= 0) continue; // ne bouge plus si mort
+      for(let idx=0; idx<players.length; idx++) {
+        const p = players[idx];
+        const pid = idx === 0 ? 'p1' : 'p2';
+        if(p.lives <= 0) continue;
 
-        // mouvements (cases libres uniquement)
-        if(k === p.keys.left && p.x > 0 && !grid[p.y][p.x-1]) p.x--;
-        if(k === p.keys.right && p.x < W-1 && !grid[p.y][p.x+1]) p.x++;
-        if(k === p.keys.up && p.y > 0 && !grid[p.y-1][p.x]) p.y--;
-        if(k === p.keys.down && p.y < H-1 && !grid[p.y+1][p.x]) p.y++;
+        // Mouvements avec cooldown pour éviter les déplacements trop rapides
+        if(moveCooldown[pid] <= 0) {
+          let moved = false;
+          const checkBomb = (x, y) => {
+            return !players[0].bombs.some(b => b.x === x && b.y === y) &&
+                   !players[1].bombs.some(b => b.x === x && b.y === y);
+          };
+          
+          if(k === p.keys.left && p.x > 0 && !grid[p.y][p.x-1] && checkBomb(p.x-1, p.y)) {
+            p.x--;
+            moved = true;
+          }
+          if(k === p.keys.right && p.x < W-1 && !grid[p.y][p.x+1] && checkBomb(p.x+1, p.y)) {
+            p.x++;
+            moved = true;
+          }
+          if(k === p.keys.up && p.y > 0 && !grid[p.y-1][p.x] && checkBomb(p.x, p.y-1)) {
+            p.y--;
+            moved = true;
+          }
+          if(k === p.keys.down && p.y < H-1 && !grid[p.y+1][p.x] && checkBomb(p.x, p.y+1)) {
+            p.y++;
+            moved = true;
+          }
+          if(moved) {
+            moveCooldown[pid] = Math.max(5, 10 - p.speed);
+            playSound(800 + Math.random()*200, 0.05, 'sine');
+          }
+        }
 
-        // poser bombe
-        if(k === p.keys.bomb && !p.bomb){
-          p.bomb = {x: p.x, y: p.y, t: 120}; // 120 frames ≈ 2s
+        // Poser bombe
+        if(k === p.keys.bomb && p.bombs.length < p.maxBombs) {
+          const canPlace = !p.bombs.some(b => b.x === p.x && b.y === p.y) && 
+                          !players[1-idx].bombs.some(b => b.x === p.x && b.y === p.y);
+          if(canPlace) {
+            p.bombs.push({x: p.x, y: p.y, t: 180});
+            playSound(150, 0.1, 'square');
+          }
+        }
+
+        // Collecter power-ups
+        const pu = powerUps.findIndex(pu => pu.x === p.x && pu.y === p.y);
+        if(pu !== -1) {
+          const powerUp = powerUps[pu];
+          playSound(600, 0.2, 'sine');
+          if(powerUp.type === 'speed') {
+            p.speed = Math.min(3, p.speed + 0.5);
+          } else if(powerUp.type === 'range') {
+            p.bombRange = Math.min(5, p.bombRange + 1);
+          } else if(powerUp.type === 'bombs') {
+            p.maxBombs = Math.min(3, p.maxBombs + 1);
+          }
+          powerUps.splice(pu, 1);
         }
       }
     });
 
-    // update loop
-    function update(){
-      for(let p of players){
-        if(p.bomb){
-          p.bomb.t--;
-          if(p.bomb.t <= 0) explode(p);
+    function update() {
+      if(!gameStarted || gameOver) {
+        requestAnimationFrame(update);
+        return;
+      }
+
+      frameCount++;
+      
+      // Réduire cooldowns
+      moveCooldown.p1 = Math.max(0, moveCooldown.p1 - 1);
+      moveCooldown.p2 = Math.max(0, moveCooldown.p2 - 1);
+
+      // Mettre à jour bombes
+      for(let p of players) {
+        for(let bomb of p.bombs) {
+          bomb.t--;
+          if(bomb.t <= 0) {
+            explode(bomb, p);
+          }
         }
       }
+
+      // Mettre à jour explosions
+      for(let e of explosions) {
+        e.life--;
+      }
+      explosions = explosions.filter(e => e.life > 0);
+
+      // Mettre à jour particules
+      for(let part of particles) {
+        part.x += part.vx;
+        part.y += part.vy;
+        part.vy += 0.2; // gravité
+        part.life--;
+      }
+      particles = particles.filter(p => p.life > 0);
+
       draw();
       requestAnimationFrame(update);
     }
 
-    // démarrage
+    // Démarrage
     draw();
     requestAnimationFrame(update);
   </script>
 </body>
+</html>
+
 </html>

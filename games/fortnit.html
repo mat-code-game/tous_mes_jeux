@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fortnite 2D Complet</title>
+  <style>
+    body { margin: 0; padding: 0; background: #228B22; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial; color: white; overflow: hidden; }
+    canvas { border: 2px solid #000; background: #000; max-width: 95vw; max-height: 95vh; touch-action: none; }
+    #ui { position: absolute; top: 10px; left: 10px; font-size: 20px; z-index: 10; }
+    #pseudo { position: absolute; bottom: 10px; left: 10px; font-size: 18px; z-index: 10; }
+    #instructions { position: absolute; top: 10px; right: 10px; font-size: 14px; text-align: right; max-width: 200px; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div id="ui">Vie: <span id="vie">100</span> | Score: <span id="score">0</span></div>
+  <div id="pseudo"></div>
+  <div id="instructions">
+    Souris/Tactile: viser<br>
+    F ou Clic: TIRE!<br>
+    WASD: bouger<br>
+    Espace: saut
+  </div>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const vieEl = document.getElementById('vie');
+    const scoreEl = document.getElementById('score');
+    const pseudoEl = document.getElementById('pseudo');
+
+    let pseudo = localStorage.getItem('pseudo') || prompt('Ton pseudo ?') || 'Joueur';
+    localStorage.setItem('pseudo', pseudo);
+    pseudoEl.textContent = pseudo + ' 🎮';
+
+    let vie = 100, score = 0, lastShot = 0;
+    let keys = {}, pointer = { x: 0, y: 0, down: false };
+    let mapOffsetX = 0, mapOffsetY = 0;
+    let frameCount = 0;
+
+    const player = {
+      x: 200, y: 200, vx: 0, vy: 0, width: 24, height: 24,
+      jumping: false, speed: 1.5
+    };
+
+    let bullets = [];
+    let enemies = [];
+
+    function getTile(x, y) {
+      return Math.floor((x + y) / 40) % 3 === 0 ? 1 : 0;
+    }
+
+    // Événements
+    window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+    window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+    function getPointer(e) {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = (e.clientX || e.touches[0].clientX) - rect.left;
+      pointer.y = (e.clientY || e.touches[0].clientY) - rect.top;
+      pointer.x *= canvas.width / rect.width;
+      pointer.y *= canvas.height / rect.height;
+    }
+
+    canvas.addEventListener('mousemove', getPointer);
+    canvas.addEventListener('mousedown', () => { pointer.down = true; });
+    canvas.addEventListener('mouseup', () => { pointer.down = false; });
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); getPointer(e); pointer.down = true; });
+    canvas.addEventListener('touchend', e => { e.preventDefault(); pointer.down = false; });
+    canvas.addEventListener('touchmove', e => { e.preventDefault(); getPointer(e); });
+
+    class Bullet {
+      constructor(x, y, vx, vy) {
+        this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.speed = 4;
+        this.life = 100;
+      }
+      update() {
+        this.x += this.vx * this.speed;
+        this.y += this.vy * this.speed;
+        this.life--;
+      }
+      draw(mx, my) {
+        ctx.fillStyle = '#ffff00';
+        ctx.fillRect(this.x - mx - 3, this.y - my - 3, 6, 6);
+        ctx.fillStyle = '#ffaa00';
+        ctx.fillRect(this.x - mx - 1, this.y - my - 1, 2, 2);
+      }
+    }
+
+    class Enemy {
+      constructor(x, y) {
+        this.x = x; this.y = y; this.vx = 0; this.vy = 0; this.width = 22; this.height = 22;
+        this.health = 40; this.maxHealth = 40; this.speed = 0.8;
+      }
+      update() {
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 30) {
+          this.vx = (dx / dist) * this.speed;
+          this.vy = (dy / dist) * this.speed;
+        }
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx *= 0.87;
+        this.vy *= 0.87;
+      }
+      draw(mx, my) {
+        // Corps
+        ctx.fillStyle = '#ff4444';
+        ctx.fillRect(this.x - mx, this.y - my, this.width, this.height);
+        // Barre vie
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(this.x - mx, this.y - my - 8, this.width, 4);
+        ctx.fillStyle = '#00ff00';
+        ctx.fillRect(this.x - mx, this.y - my - 8, (this.health / this.maxHealth) * this.width, 4);
+      }
+    }
+
+    function spawnEnemy() {
+      if (Math.random() < 0.008 && enemies.length < 8) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 400;
+        const x = player.x + Math.cos(angle) * dist;
+        const y = player.y + Math.sin(angle) * dist;
+        enemies.push(new Enemy(x, y));
+      }
+    }
+
+    function updatePlayer() {
+      // Mouvement vers pointeur
+      const dx = pointer.x + mapOffsetX - player.x;
+      const dy = pointer.y + mapOffsetY - player.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist > 15) {
+        player.vx += (dx / dist) * 0.08;
+        player.vy += (dy / dist) * 0.08;
+      }
+
+      // Clavier
+      if (keys['a']) player.vx -= 0.12;
+      if (keys['d']) player.vx += 0.12;
+      if (keys['w'] || keys[' ']) {
+        if (!player.jumping) {
+          player.vy -= 9;
+          player.jumping = true;
+        }
+      }
+      if (keys['s']) player.vy += 0.08;
+
+      // Physique
+      player.vy += 0.35;
+      player.x += player.vx;
+      player.y += player.vy;
+      player.vx *= 0.86;
+      player.vy *= 0.91;
+
+      // Sol collision
+      const footY = Math.floor((player.y + player.height) / 40);
+      const footX = Math.floor(player.x / 40);
+      if (getTile(footX, footY) || player.y > 800) {
+        player.y = footY * 40 - player.height + 1;
+        player.vy = 0;
+        player.jumping = false;
+      }
+
+      // Scroll
+      mapOffsetX += (player.x - mapOffsetX - canvas.width / 2) * 0.1;
+      mapOffsetY += (player.y - mapOffsetY - canvas.height / 2) * 0.1;
+
+      // TIR MANUEL F ou CLIC
+      if ((keys['f'] || pointer.down) && Date.now() - lastShot > 200) { // Anti-spam 200ms
+        const bulletDx = dx / dist || 1;
+        const bulletDy = dy / dist || 0;
+        bullets.push(new Bullet(player.x + 12, player.y + 12, bulletDx, bulletDy));
+        lastShot = Date.now();
+      }
+    }
+
+    function updateBullets() {
+      bullets = bullets.filter(b => {
+        b.update();
+        return b.life > 0 && b.x > mapOffsetX - 100 && b.x < mapOffsetX + canvas.width + 100 &&
+               b.y > mapOffsetY - 100 && b.y < mapOffsetY + canvas.height + 100;
+      });
+    }
+
+    function updateEnemies() {
+      enemies.forEach((e, ei) => {
+        e.update();
+
+        // Balle touche ennemi
+        for (let bi = bullets.length - 1; bi >= 0; bi--) {
+          const b = bullets[bi];
+          if (Math.hypot(b.x - e.x, b.y - e.y) < 16) {
+            e.health -= 30;
+            bullets.splice(bi, 1);
+            if (e.health <= 0) {
+              enemies.splice(ei, 1);
+              score += 20;
+              return;
+            }
+          }
+        }
+
+        // Joueur touche ennemi
+        if (Math.hypot(player.x - e.x, player.y - e.y) < 25) {
+          vie -= 0.5;
+        }
+      });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Map
+      const ts = 40;
+      const startTX = Math.floor(mapOffsetX / ts) - 1;
+      const endTX = startTX + Math.ceil(canvas.width / ts) + 2;
+      const startTY = Math.floor(mapOffsetY / ts) - 1;
+      const endTY = startTY + Math.ceil(canvas.height / ts) + 2;
+      for (let tx = startTX; tx < endTX; tx++) {
+        for (let ty = startTY; ty < endTY; ty++) {
+          ctx.fillStyle = getTile(tx * ts, ty * ts) ? '#8B4513' : '#90EE90';
+          ctx.fillRect(tx * ts - mapOffsetX, ty * ts - mapOffsetY, ts, ts);
+        }
+      }
+
+      // Joueur
+      ctx.save();
+      ctx.translate(player.x - mapOffsetX, player.y - mapOffsetY);
+      ctx.fillStyle = '#0066ff';
+      ctx.fillRect(0, 0, player.width, player.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(4, 4, 8, 8); // Œil
+      ctx.restore();
+
+      // Balles
+      bullets.forEach(b => b.draw(mapOffsetX, mapOffsetY));
+
+      // Ennemis
+      enemies.forEach(e => e.draw(mapOffsetX, mapOffsetY));
+
+      // UI vie
+      ctx.fillStyle = '#333';
+      ctx.fillRect(10, canvas.height - 35, canvas.width - 20, 25);
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(15, canvas.height - 30, canvas.width - 30, 15);
+      ctx.fillStyle = '#00ff00';
+      ctx.fillRect(15, canvas.height - 30, Math.max(0, (vie / 100) * (canvas.width - 30)), 15);
+
+      // Update UI
+      vieEl.textContent = Math.max(0, Math.floor(vie));
+      scoreEl.textContent = score;
+
+      if (vie <= 0) {
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 48px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 20);
+        ctx.font = '32px Arial';
+        ctx.fillText('Score: ' + score, canvas.width/2, canvas.height/2 + 30);
+        ctx.fillText('F5 pour rejouer', canvas.width/2, canvas.height/2 + 70);
+      }
+    }
+
+    function loop() {
+      frameCount++;
+      if (frameCount % 2 !== 0) { // ~30fps lent
+        requestAnimationFrame(loop);
+        return;
+      }
+
+      if (vie > 0) {
+        updatePlayer();
+        updateBullets();
+        updateEnemies();
+        spawnEnemy();
+        if (Math.random() < 0.001) vie = Math.min(100, vie + 0.1); // Regen lent
+      } else if (keys[' ']) {
+        location.reload(); // Restart
+      }
+
+      // Resize
+      const size = Math.min(window.innerWidth * 0.95, window.innerHeight * 0.9);
+      canvas.width = size;
+      canvas.height = size * 0.75;
+
+      ctx.imageSmoothingEnabled = false;
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

@@ -2,7 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Mini Pac‑Man JS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pac-Man Deluxe</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -10,39 +11,140 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: system-ui, sans-serif;
+      font-family: 'Courier New', monospace;
       background: radial-gradient(circle at top, #020617, #0f172a);
       color: #e5e7eb;
+      overflow: hidden;
+      gap: 30px;
     }
 
-    #wrapper {
+    #powers-sidebar {
+      background: rgba(29, 78, 216, 0.2);
+      border: 2px solid #1d4ed8;
+      border-radius: 12px;
+      padding: 20px;
+      width: 250px;
+      align-self: flex-start;
+      margin-top: 20px;
+    }
+
+    #powers-sidebar h2 {
+      color: #facc15;
+      font-size: 18px;
+      margin-bottom: 20px;
       text-align: center;
+      text-shadow: 0 0 10px #facc15;
     }
 
-    h1 {
+    .power-item {
+      background: rgba(15, 23, 42, 0.5);
+      border: 2px solid rgba(29, 78, 216, 0.5);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      transition: all 0.3s;
+    }
+
+    .power-item:hover {
+      border-color: #1d4ed8;
+      transform: translateX(5px);
+    }
+
+    .power-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       margin-bottom: 8px;
-      font-size: 22px;
-      color: #38bdf8;
-      letter-spacing: 1px;
     }
 
-    #info {
-      font-size: 13px;
-      margin-bottom: 10px;
-      color: #cbd5f5;
+    .power-icon {
+      font-size: 24px;
+      filter: drop-shadow(0 0 5px currentColor);
     }
 
-    #score {
-      margin-bottom: 8px;
+    .power-name {
+      font-weight: bold;
       font-size: 14px;
     }
 
-    #game {
+    .power-description {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-left: 34px;
+    }
+
+    .power-duration {
+      font-size: 11px;
+      color: #64748b;
+      margin-left: 34px;
+      margin-top: 4px;
+    }
+
+    .power-invincible { color: #facc15; }
+    .power-speed { color: #22c55e; }
+    .power-shield { color: #3b82f6; }
+    .power-freeze { color: #a855f7; }
+
+    #wrapper {
+      text-align: center;
+      position: relative;
+    }
+
+    h1 {
+      margin-bottom: 12px;
+      font-size: 32px;
+      color: #facc15;
+      letter-spacing: 3px;
+      text-shadow: 0 0 20px #facc15, 0 0 40px #facc15;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 20px #facc15, 0 0 40px #facc15; }
+      to { text-shadow: 0 0 30px #facc15, 0 0 60px #facc15, 0 0 80px #facc15; }
+    }
+
+    #stats {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 15px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .stat {
+      padding: 8px 16px;
+      background: rgba(29, 78, 216, 0.3);
       border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 16px 40px rgba(15,23,42,0.9);
       border: 2px solid #1d4ed8;
+      min-width: 120px;
+    }
+
+    .stat-label {
+      color: #94a3b8;
+      font-size: 12px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      color: #facc15;
+      font-size: 20px;
+    }
+
+    #game-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    #game {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(250, 204, 21, 0.3), 0 16px 40px rgba(15,23,42,0.9);
+      border: 3px solid #1d4ed8;
       margin: 0 auto;
+      position: relative;
     }
 
     canvas {
@@ -51,48 +153,300 @@
     }
 
     #message {
-      margin-top: 10px;
-      font-size: 14px;
-      min-height: 18px;
+      margin-top: 15px;
+      font-size: 18px;
+      min-height: 25px;
       color: #facc15;
+      font-weight: bold;
+      text-shadow: 0 0 10px #facc15;
+    }
+
+    #controls {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(29, 78, 216, 0.2);
+      border-radius: 8px;
+      border: 2px solid #1d4ed8;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    .control-row {
+      margin: 5px 0;
+    }
+
+    #fullscreen-btn {
+      margin-top: 15px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      border: 2px solid #3b82f6;
+      border-radius: 8px;
+      color: #facc15;
+      font-size: 16px;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(29, 78, 216, 0.4);
+    }
+
+    #fullscreen-btn:hover {
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(29, 78, 216, 0.6);
+    }
+
+    #fullscreen-btn:active {
+      transform: translateY(0);
+    }
+
+    #pause-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      color: #facc15;
+      font-weight: bold;
+      text-shadow: 0 0 20px #facc15;
+      z-index: 10;
+    }
+
+    #pause-overlay.active {
+      display: flex;
+    }
+
+    .power-pellet-flash {
+      animation: flash 0.3s ease-in-out;
+    }
+
+    @keyframes flash {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(2); }
+    }
+
+    .lives-container {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .life-icon {
+      width: 20px;
+      height: 20px;
+      background: #facc15;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 10px #facc15;
+    }
+
+    #high-score-badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: linear-gradient(135deg, #f59e0b, #facc15);
+      color: #0f172a;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.5);
+      display: none;
+    }
+
+    #high-score-badge.active {
+      display: block;
+      animation: bounce 0.5s ease-in-out;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .combo-popup {
+      position: absolute;
+      font-size: 24px;
+      font-weight: bold;
+      color: #22c55e;
+      text-shadow: 0 0 10px #22c55e;
+      pointer-events: none;
+      animation: popupFloat 1s ease-out forwards;
+      z-index: 5;
+    }
+
+    @keyframes popupFloat {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(0.5);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-50px) scale(1.5);
+      }
     }
   </style>
 </head>
 <body>
-  <div id="wrapper">
-    <h1>Mini Pac‑Man</h1>
-    <div id="info">Utilise les flèches du clavier pour déplacer Pac‑Man.</div>
-    <div id="score">Score : <span id="score-value">0</span></div>
-    <div id="game">
-      <canvas id="canvas" width="448" height="352"></canvas>
+  <div id="powers-sidebar">
+    <h2>🌟 SUPER-POUVOIRS</h2>
+    
+    <div class="power-item">
+      <div class="power-header">
+        <span class="power-icon power-invincible">⚡</span>
+        <span class="power-name power-invincible">Invincibilité</span>
+      </div>
+      <div class="power-description">Mange les fantômes !</div>
+      <div class="power-duration">⏱ Durée: 8 secondes</div>
     </div>
+
+    <div class="power-item">
+      <div class="power-header">
+        <span class="power-icon power-speed">🚀</span>
+        <span class="power-name power-speed">Vitesse</span>
+      </div>
+      <div class="power-description">Double vitesse de déplacement</div>
+      <div class="power-duration">⏱ Durée: 6 secondes</div>
+    </div>
+
+    <div class="power-item">
+      <div class="power-header">
+        <span class="power-icon power-shield">🛡️</span>
+        <span class="power-name power-shield">Bouclier</span>
+      </div>
+      <div class="power-description">Protège contre les collisions</div>
+      <div class="power-duration">⏱ Durée: 10 secondes</div>
+    </div>
+
+    <div class="power-item">
+      <div class="power-header">
+        <span class="power-icon power-freeze">❄️</span>
+        <span class="power-name power-freeze">Freeze</span>
+      </div>
+      <div class="power-description">Gèle tous les fantômes</div>
+      <div class="power-duration">⏱ Durée: 5 secondes</div>
+    </div>
+
+    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #1d4ed8; font-size: 11px; color: #64748b; text-align: center;">
+      ♻️ Les power-ups réapparaissent après 15 secondes
+    </div>
+  </div>
+
+  <div id="wrapper">
+    <h1>PAC-MAN DELUXE</h1>
+    
+    <div id="stats">
+      <div class="stat">
+        <span class="stat-label">SCORE</span>
+        <div class="stat-value" id="score-value">0</div>
+      </div>
+      <div class="stat">
+        <span class="stat-label">NIVEAU</span>
+        <div class="stat-value" id="level-value">1</div>
+      </div>
+      <div class="stat">
+        <span class="stat-label">RECORD</span>
+        <div class="stat-value" id="high-score-value">0</div>
+      </div>
+      <div class="stat">
+        <span class="stat-label">VIES</span>
+        <div class="lives-container" id="lives-container"></div>
+      </div>
+    </div>
+
+    <div id="game-container">
+      <div id="high-score-badge">NOUVEAU RECORD! 🏆</div>
+      <div id="game">
+        <canvas id="canvas" width="448" height="352"></canvas>
+      </div>
+      <div id="pause-overlay">⏸ PAUSE</div>
+    </div>
+
     <div id="message"></div>
+
+    <div id="controls">
+      <div class="control-row">🎮 <strong>Flèches directionnelles</strong> : Déplacer Pac-Man</div>
+      <div class="control-row">⏸ <strong>ESPACE</strong> : Pause / Reprendre</div>
+      <div class="control-row">🔄 <strong>R</strong> : Recommencer au niveau 1</div>
+    </div>
+
+    <button id="fullscreen-btn">🖥️ PLEIN ÉCRAN</button>
   </div>
 
   <script>
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
     const scoreEl = document.getElementById("score-value");
+    const levelEl = document.getElementById("level-value");
+    const highScoreEl = document.getElementById("high-score-value");
+    const livesContainer = document.getElementById("lives-container");
     const messageEl = document.getElementById("message");
+    const pauseOverlay = document.getElementById("pause-overlay");
+    const highScoreBadge = document.getElementById("high-score-badge");
 
-    // 0 : vide, 1 : mur, 2 : pastille
-    const map = [
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [1,2,2,2,1,2,2,2,2,1,2,2,2,1],
-      [1,2,1,2,1,2,1,1,2,1,2,1,2,1],
-      [1,2,1,2,2,2,2,2,2,2,2,1,2,1],
-      [1,2,1,1,1,2,1,1,1,2,1,1,2,1],
-      [1,2,2,2,1,2,2,0,2,2,1,2,2,1],
-      [1,2,1,2,1,1,2,2,2,1,1,2,1,1],
-      [1,2,1,2,2,2,2,2,2,2,2,2,2,1],
-      [1,2,1,2,1,1,2,1,1,1,2,1,2,1],
-      [1,2,2,2,2,2,2,2,2,2,2,2,2,1],
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    // Maps pour différents niveaux
+    // 0: vide, 1: mur, 2: pastille, 3: invincibilité, 4: vitesse, 5: bouclier, 6: freeze
+    const maps = [
+      // Niveau 1
+      [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,2,2,2,1,2,2,2,2,1,2,2,2,1],
+        [1,3,1,2,1,2,1,1,2,1,2,1,4,1],
+        [1,2,1,2,2,2,2,2,2,2,2,1,2,1],
+        [1,2,1,1,1,2,1,1,1,2,1,1,2,1],
+        [1,2,2,2,1,2,2,0,2,2,1,2,2,1],
+        [1,2,1,2,1,1,2,2,2,1,1,2,1,1],
+        [1,2,1,2,2,2,2,2,2,2,2,2,2,1],
+        [1,5,1,2,1,1,2,1,1,1,2,1,6,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+      ],
+      // Niveau 2
+      [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,1,1,2,1,1,1,1,2,1,1,2,1],
+        [1,4,1,2,2,2,2,2,2,2,2,1,3,1],
+        [1,2,2,2,1,1,2,2,1,1,2,2,2,1],
+        [1,2,1,2,2,2,2,0,2,2,2,2,1,1],
+        [1,2,1,2,1,1,2,2,2,1,1,2,1,1],
+        [1,2,2,2,2,2,2,1,2,2,2,2,2,1],
+        [1,5,1,1,2,1,2,2,2,1,2,1,6,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+      ],
+      // Niveau 3
+      [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,2,2,2,2,1,2,2,1,2,2,2,2,1],
+        [1,2,1,1,2,1,2,2,1,2,1,1,2,1],
+        [1,2,1,3,2,2,2,2,2,2,6,1,2,1],
+        [1,2,1,2,1,1,1,1,1,1,2,1,2,1],
+        [1,2,2,2,2,2,2,0,2,2,2,2,2,1],
+        [1,2,1,2,1,1,1,1,1,1,2,1,2,1],
+        [1,2,1,4,2,2,2,2,2,2,5,1,2,1],
+        [1,2,1,1,2,1,2,2,1,2,1,1,2,1],
+        [1,2,2,2,2,1,2,2,1,2,2,2,2,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+      ]
     ];
 
+    // Système de réapparition des power-ups
+    const powerUpRespawn = {
+      enabled: true,
+      respawnTime: 15000, // 15 secondes
+      collected: new Map() // Stocke {row-col: timestamp}
+    };
+
     const tileSize = 32;
-    const rows = map.length;
-    const cols = map[0].length;
+    let currentMap = [];
+    let rows, cols;
 
     const pacman = {
       row: 5,
@@ -101,72 +455,246 @@
       nextDir: { x: 0, y: 0 },
       radius: tileSize / 2 - 4,
       mouthAngle: 0.25,
-      mouthOpening: true
+      mouthOpening: true,
+      powered: false,
+      powerTimer: 0,
+      powerDuration: 8000,
+      speed: 1,
+      shield: false,
+      freeze: false
     };
 
-    const ghost = {
-      row: 1,
-      col: 1,
-      color: "#f97316",
-      dir: { x: 1, y: 0 },
-      stepTimer: 0
-    };
+    const ghosts = [
+      { row: 1, col: 1, color: "#ef4444", baseColor: "#ef4444", dir: { x: 1, y: 0 }, stepTimer: 0, name: "Blinky", scatterTarget: {row: 0, col: 13} },
+      { row: 1, col: 12, color: "#ec4899", baseColor: "#ec4899", dir: { x: -1, y: 0 }, stepTimer: 0, name: "Pinky", scatterTarget: {row: 0, col: 0} },
+      { row: 9, col: 1, color: "#06b6d4", baseColor: "#06b6d4", dir: { x: 1, y: 0 }, stepTimer: 0, name: "Inky", scatterTarget: {row: 10, col: 13} },
+      { row: 9, col: 12, color: "#f97316", baseColor: "#f97316", dir: { x: -1, y: 0 }, stepTimer: 0, name: "Clyde", scatterTarget: {row: 10, col: 0} }
+    ];
 
     let score = 0;
+    let level = 1;
+    let highScore = localStorage.getItem('pacmanHighScore') || 0;
+    let lives = 3;
     let totalDots = 0;
     let gameOver = false;
+    let paused = false;
+    let combo = 0;
+    let comboTimer = 0;
+    let ghostsEaten = 0;
+    let originalMap = []; // Garde une copie de la map originale
 
-    // Vitesse (plus grand = plus lent)
-    const pacmanStepDelay = 120; // ms entre 2 déplacements de Pac-Man
+    const baseGhostDelay = 280;
+    const basePacmanDelay = 120;
+    let ghostStepDelay = baseGhostDelay;
+    let pacmanStepDelay = basePacmanDelay;
     let pacmanStepTimer = 0;
-
-    const ghostStepDelay = 260;  // ms entre 2 déplacements du fantôme
     let lastTime = 0;
 
+    // Définition des power-ups
+    const powerUpTypes = {
+      3: { name: 'Invincibilité', color: '#facc15', duration: 8000, icon: '⚡' },
+      4: { name: 'Vitesse', color: '#22c55e', duration: 6000, icon: '🚀' },
+      5: { name: 'Bouclier', color: '#3b82f6', duration: 10000, icon: '🛡️' },
+      6: { name: 'Freeze', color: '#a855f7', duration: 5000, icon: '❄️' }
+    };
+
+    // Sons (simulation visuelle)
+    const sounds = {
+      eatDot: () => addPoints(10),
+      eatPowerPellet: () => {
+        addPoints(50);
+        canvas.classList.add('power-pellet-flash');
+        setTimeout(() => canvas.classList.remove('power-pellet-flash'), 300);
+      },
+      eatGhost: (multiplier) => {
+        addPoints(200 * multiplier);
+        showComboPopup(200 * multiplier);
+      },
+      death: () => {
+        messageEl.textContent = "💀 Aïe ! Vie perdue...";
+        setTimeout(() => messageEl.textContent = "", 2000);
+      }
+    };
+
     function init() {
+      currentMap = JSON.parse(JSON.stringify(maps[Math.min(level - 1, maps.length - 1)]));
+      originalMap = JSON.parse(JSON.stringify(currentMap)); // Sauvegarde de la map originale
+      rows = currentMap.length;
+      cols = currentMap[0].length;
+      
       totalDots = 0;
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          if (map[r][c] === 2) totalDots++;
+          if (currentMap[r][c] === 2) totalDots++;
         }
       }
-      score = 0;
+      
       scoreEl.textContent = score;
+      levelEl.textContent = level;
+      highScoreEl.textContent = highScore;
+      updateLivesDisplay();
       messageEl.textContent = "";
       gameOver = false;
+      paused = false;
+      
       pacman.row = 5;
       pacman.col = 7;
       pacman.dir = { x: 0, y: 0 };
       pacman.nextDir = { x: 0, y: 0 };
-      ghost.row = 1;
-      ghost.col = 1;
-      ghost.dir = { x: 1, y: 0 };
+      pacman.powered = false;
+      pacman.powerTimer = 0;
+      pacman.speed = 1;
+      pacman.shield = false;
+      pacman.freeze = false;
+      
+      // Difficulté progressive
+      ghostStepDelay = Math.max(150, baseGhostDelay - (level - 1) * 20);
+      pacmanStepDelay = Math.max(80, basePacmanDelay - (level - 1) * 5);
+      
+      // Réinitialiser les fantômes
+      const startPositions = [
+        {row: 1, col: 1}, {row: 1, col: 12}, 
+        {row: 9, col: 1}, {row: 9, col: 12}
+      ];
+      ghosts.forEach((ghost, i) => {
+        ghost.row = startPositions[i].row;
+        ghost.col = startPositions[i].col;
+        ghost.stepTimer = 0;
+        ghost.color = ghost.baseColor;
+      });
+      
       pacmanStepTimer = 0;
-      ghost.stepTimer = 0;
+      combo = 0;
+      ghostsEaten = 0;
+      powerUpRespawn.collected.clear();
+    }
+
+    function updateLivesDisplay() {
+      livesContainer.innerHTML = '';
+      for (let i = 0; i < lives; i++) {
+        const lifeIcon = document.createElement('div');
+        lifeIcon.className = 'life-icon';
+        livesContainer.appendChild(lifeIcon);
+      }
+    }
+
+    function addPoints(points) {
+      score += points;
+      scoreEl.textContent = score;
+      
+      if (score > highScore) {
+        highScore = score;
+        highScoreEl.textContent = highScore;
+        localStorage.setItem('pacmanHighScore', highScore);
+        highScoreBadge.classList.add('active');
+        setTimeout(() => highScoreBadge.classList.remove('active'), 2000);
+      }
+    }
+
+    function showComboPopup(points) {
+      const popup = document.createElement('div');
+      popup.className = 'combo-popup';
+      popup.textContent = `+${points}!`;
+      popup.style.left = (pacman.col * tileSize + tileSize / 2) + 'px';
+      popup.style.top = (pacman.row * tileSize) + 'px';
+      document.getElementById('game').appendChild(popup);
+      setTimeout(() => popup.remove(), 1000);
     }
 
     function drawMap() {
+      const currentTime = Date.now();
+      
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          const tile = map[r][c];
+          let tile = currentMap[r][c];
+          const key = `${r}-${c}`;
+          
+          // Vérifier si un power-up doit réapparaître
+          if (tile === 0 && originalMap[r][c] >= 3 && powerUpRespawn.collected.has(key)) {
+            const collectedTime = powerUpRespawn.collected.get(key);
+            if (currentTime - collectedTime >= powerUpRespawn.respawnTime) {
+              currentMap[r][c] = originalMap[r][c];
+              tile = originalMap[r][c];
+              powerUpRespawn.collected.delete(key);
+            }
+          }
 
           ctx.fillStyle = "#020617";
           ctx.fillRect(c * tileSize, r * tileSize, tileSize, tileSize);
 
           if (tile === 1) {
-            ctx.fillStyle = "#1d4ed8";
-            ctx.fillRect(c * tileSize + 4, r * tileSize + 4, tileSize - 8, tileSize - 8);
+            // Murs avec dégradé
+            const gradient = ctx.createLinearGradient(
+              c * tileSize, r * tileSize, 
+              c * tileSize + tileSize, r * tileSize + tileSize
+            );
+            gradient.addColorStop(0, "#1e40af");
+            gradient.addColorStop(1, "#1d4ed8");
+            ctx.fillStyle = gradient;
+            ctx.fillRect(c * tileSize + 3, r * tileSize + 3, tileSize - 6, tileSize - 6);
+            
+            // Effet de brillance
+            ctx.fillStyle = "rgba(96, 165, 250, 0.3)";
+            ctx.fillRect(c * tileSize + 4, r * tileSize + 4, tileSize - 8, 3);
           } else if (tile === 2) {
-            ctx.fillStyle = "#e5e7eb";
+            // Pastilles normales
+            ctx.fillStyle = "#f1f5f9";
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = "#f1f5f9";
             ctx.beginPath();
             ctx.arc(
               c * tileSize + tileSize / 2,
               r * tileSize + tileSize / 2,
-              4,
+              3,
               0,
               Math.PI * 2
             );
             ctx.fill();
+            ctx.shadowBlur = 0;
+          } else if (tile >= 3 && tile <= 6) {
+            // Power-ups
+            const powerUp = powerUpTypes[tile];
+            const pulseSize = 8 + Math.sin(currentTime / 200) * 2;
+            
+            // Aura
+            ctx.fillStyle = powerUp.color;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = powerUp.color;
+            ctx.globalAlpha = 0.3;
+            ctx.beginPath();
+            ctx.arc(
+              c * tileSize + tileSize / 2,
+              r * tileSize + tileSize / 2,
+              pulseSize + 4,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            
+            // Cercle principal
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(
+              c * tileSize + tileSize / 2,
+              r * tileSize + tileSize / 2,
+              pulseSize,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Icône
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "14px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(
+              powerUp.icon,
+              c * tileSize + tileSize / 2,
+              r * tileSize + tileSize / 2
+            );
           }
         }
       }
@@ -174,7 +702,7 @@
 
     function canMoveTo(row, col) {
       if (row < 0 || col < 0 || row >= rows || col >= cols) return false;
-      return map[row][col] !== 1;
+      return currentMap[row][col] !== 1;
     }
 
     function movePacman() {
@@ -191,33 +719,121 @@
         pacman.row = newRow;
         pacman.col = newCol;
 
-        if (map[newRow][newCol] === 2) {
-          map[newRow][newCol] = 0;
-          score++;
-          scoreEl.textContent = score;
+        const tile = currentMap[newRow][newCol];
+        
+        if (tile === 2) {
+          currentMap[newRow][newCol] = 0;
+          sounds.eatDot();
           totalDots--;
+          combo++;
+          comboTimer = 1000;
+          
           if (totalDots === 0 && !gameOver) {
-            gameOver = true;
-            messageEl.textContent = "Bravo ! Tu as mangé toutes les pastilles 🎉";
+            levelUp();
           }
+        } else if (tile >= 3 && tile <= 6) {
+          // Collecte du power-up
+          const key = `${newRow}-${newCol}`;
+          powerUpRespawn.collected.set(key, Date.now());
+          currentMap[newRow][newCol] = 0;
+          
+          const powerUp = powerUpTypes[tile];
+          
+          // Désactiver les anciens pouvoirs
+          pacman.powered = false;
+          pacman.speed = 1;
+          pacman.shield = false;
+          pacman.freeze = false;
+          
+          // Activer le nouveau pouvoir
+          switch(tile) {
+            case 3: // Invincibilité
+              pacman.powered = true;
+              pacman.powerTimer = powerUp.duration;
+              ghostsEaten = 0;
+              ghosts.forEach(ghost => ghost.color = "#3b82f6");
+              messageEl.textContent = `⚡ ${powerUp.name} activée !`;
+              break;
+              
+            case 4: // Vitesse
+              pacman.speed = 2;
+              pacman.powerTimer = powerUp.duration;
+              messageEl.textContent = `🚀 ${powerUp.name} activée !`;
+              break;
+              
+            case 5: // Bouclier
+              pacman.shield = true;
+              pacman.powerTimer = powerUp.duration;
+              messageEl.textContent = `🛡️ ${powerUp.name} activé !`;
+              break;
+              
+            case 6: // Freeze
+              pacman.freeze = true;
+              pacman.powerTimer = powerUp.duration;
+              messageEl.textContent = `❄️ Fantômes gelés !`;
+              break;
+          }
+          
+          sounds.eatPowerPellet();
+          setTimeout(() => messageEl.textContent = "", 2000);
         }
       }
     }
 
+    function levelUp() {
+      gameOver = true;
+      level++;
+      const bonus = level * 500;
+      addPoints(bonus);
+      messageEl.textContent = `🎉 Niveau ${level - 1} terminé ! Bonus: ${bonus} points`;
+      
+      setTimeout(() => {
+        init();
+      }, 3000);
+    }
+
     function updatePacman(delta) {
+      if (paused || gameOver) return;
+
+      const currentDelay = pacmanStepDelay / pacman.speed;
+      
       pacmanStepTimer += delta;
-      if (pacmanStepTimer >= pacmanStepDelay) {
+      if (pacmanStepTimer >= currentDelay) {
         pacmanStepTimer = 0;
         movePacman();
       }
 
       // Animation de la bouche
       if (pacman.mouthOpening) {
-        pacman.mouthAngle += 0.02;
+        pacman.mouthAngle += 0.02 * pacman.speed;
         if (pacman.mouthAngle >= 0.45) pacman.mouthOpening = false;
       } else {
-        pacman.mouthAngle -= 0.02;
+        pacman.mouthAngle -= 0.02 * pacman.speed;
         if (pacman.mouthAngle <= 0.1) pacman.mouthOpening = true;
+      }
+
+      // Gestion des timers de pouvoirs
+      if (pacman.powerTimer > 0) {
+        pacman.powerTimer -= delta;
+        
+        if (pacman.powerTimer <= 0) {
+          // Désactiver tous les pouvoirs
+          if (pacman.powered) {
+            pacman.powered = false;
+            ghosts.forEach(ghost => ghost.color = ghost.baseColor);
+          }
+          pacman.speed = 1;
+          pacman.shield = false;
+          pacman.freeze = false;
+        }
+      }
+
+      // Combo timer
+      if (comboTimer > 0) {
+        comboTimer -= delta;
+        if (comboTimer <= 0) {
+          combo = 0;
+        }
       }
     }
 
@@ -242,74 +858,273 @@
         angleEnd = Math.PI / 2 - pacman.mouthAngle;
       }
 
+      // Effet de bouclier
+      if (pacman.shield) {
+        ctx.strokeStyle = "#3b82f6";
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#3b82f6";
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, pacman.radius + 8, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      // Effet de vitesse
+      if (pacman.speed > 1) {
+        ctx.strokeStyle = "#22c55e";
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.5;
+        for (let i = 1; i <= 3; i++) {
+          ctx.beginPath();
+          ctx.arc(
+            centerX - pacman.dir.x * i * 8,
+            centerY - pacman.dir.y * i * 8,
+            pacman.radius,
+            angleStart,
+            angleEnd
+          );
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // Effet lumineux si powered
+      if (pacman.powered) {
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = "#facc15";
+      }
+
       ctx.fillStyle = "#facc15";
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
       ctx.arc(centerX, centerY, pacman.radius, angleStart, angleEnd, false);
       ctx.closePath();
       ctx.fill();
+      
+      ctx.shadowBlur = 0;
+
+      // Œil
+      if (pacman.dir.x !== 0 || pacman.dir.y !== 0) {
+        ctx.fillStyle = "#0f172a";
+        const eyeX = centerX + (pacman.dir.x * 4) + (pacman.dir.y === -1 ? 0 : 3);
+        const eyeY = centerY + (pacman.dir.y * 4) + (pacman.dir.x !== 0 ? -5 : 0);
+        ctx.beginPath();
+        ctx.arc(eyeX, eyeY, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    function randomGhostDir(row, col) {
+    function getChaseTarget(ghost) {
+      // Comportement différent selon le fantôme
+      if (ghost.name === "Blinky") {
+        return { row: pacman.row, col: pacman.col };
+      } else if (ghost.name === "Pinky") {
+        return { 
+          row: pacman.row + pacman.dir.y * 4, 
+          col: pacman.col + pacman.dir.x * 4 
+        };
+      } else if (ghost.name === "Inky") {
+        return { 
+          row: pacman.row + pacman.dir.y * 2, 
+          col: pacman.col + pacman.dir.x * 2 
+        };
+      } else {
+        const dist = Math.abs(ghost.row - pacman.row) + Math.abs(ghost.col - pacman.col);
+        return dist > 8 ? { row: pacman.row, col: pacman.col } : ghost.scatterTarget;
+      }
+    }
+
+    function getBestDirection(ghost, target) {
       const dirs = [
         { x: 1, y: 0 },
         { x: -1, y: 0 },
         { x: 0, y: 1 },
         { x: 0, y: -1 }
       ];
-      const possible = dirs.filter(d => canMoveTo(row + d.y, col + d.x));
-      if (possible.length === 0) return { x: 0, y: 0 };
-      return possible[Math.floor(Math.random() * possible.length)];
+
+      let bestDir = ghost.dir;
+      let bestDist = Infinity;
+
+      for (const dir of dirs) {
+        const newRow = ghost.row + dir.y;
+        const newCol = ghost.col + dir.x;
+        
+        if (canMoveTo(newRow, newCol)) {
+          const dist = Math.abs(newRow - target.row) + Math.abs(newCol - target.col);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestDir = dir;
+          }
+        }
+      }
+
+      return bestDir;
     }
 
-    function updateGhost(delta) {
+    function updateGhost(ghost, delta) {
+      if (paused || gameOver) return;
+
+      // Si freeze est actif, les fantômes ne bougent pas
+      if (pacman.freeze) {
+        return;
+      }
+
       ghost.stepTimer += delta;
-      if (ghost.stepTimer >= ghostStepDelay) {
+      const delay = pacman.powered ? ghostStepDelay * 1.5 : ghostStepDelay;
+      
+      if (ghost.stepTimer >= delay) {
         ghost.stepTimer = 0;
+        
+        let target;
+        if (pacman.powered) {
+          // Fuit Pac-Man
+          target = {
+            row: ghost.row - (pacman.row - ghost.row),
+            col: ghost.col - (pacman.col - ghost.col)
+          };
+        } else {
+          target = getChaseTarget(ghost);
+        }
+
+        ghost.dir = getBestDirection(ghost, target);
+        
         const newRow = ghost.row + ghost.dir.y;
         const newCol = ghost.col + ghost.dir.x;
 
-        if (!canMoveTo(newRow, newCol) || Math.random() < 0.3) {
-          ghost.dir = randomGhostDir(ghost.row, ghost.col);
-        } else {
+        if (canMoveTo(newRow, newCol)) {
           ghost.row = newRow;
           ghost.col = newCol;
         }
       }
 
+      // Collision avec Pac-Man
       if (!gameOver && ghost.row === pacman.row && ghost.col === pacman.col) {
-        gameOver = true;
-        messageEl.textContent = "Oh non ! Le fantôme t'a attrapé. Appuie sur une flèche pour rejouer.";
+        if (pacman.powered) {
+          ghostsEaten++;
+          sounds.eatGhost(ghostsEaten);
+          ghost.row = 5;
+          ghost.col = 7;
+          ghost.color = ghost.baseColor;
+        } else if (pacman.shield) {
+          // Le bouclier repousse le fantôme
+          ghost.row = ghost.row - ghost.dir.y;
+          ghost.col = ghost.col - ghost.dir.x;
+          messageEl.textContent = "🛡️ Bouclier activé !";
+          setTimeout(() => messageEl.textContent = "", 1000);
+        } else {
+          lives--;
+          updateLivesDisplay();
+          
+          if (lives <= 0) {
+            gameOver = true;
+            messageEl.textContent = "💀 GAME OVER ! Flèche pour réessayer le niveau, R pour recommencer au niveau 1";
+          } else {
+            sounds.death();
+            // Réinitialiser seulement la position de Pac-Man et des fantômes
+            pacman.row = 5;
+            pacman.col = 7;
+            pacman.dir = { x: 0, y: 0 };
+            pacman.nextDir = { x: 0, y: 0 };
+            pacman.powered = false;
+            pacman.speed = 1;
+            pacman.shield = false;
+            pacman.freeze = false;
+            pacman.powerTimer = 0;
+            
+            // Réinitialiser les fantômes
+            const startPositions = [
+              {row: 1, col: 1}, {row: 1, col: 12}, 
+              {row: 9, col: 1}, {row: 9, col: 12}
+            ];
+            ghosts.forEach((g, i) => {
+              g.row = startPositions[i].row;
+              g.col = startPositions[i].col;
+              g.stepTimer = 0;
+              g.color = g.baseColor;
+            });
+          }
+        }
       }
     }
 
-    function drawGhost() {
+    function drawGhost(ghost) {
       const x = ghost.col * tileSize + tileSize / 2;
       const y = ghost.row * tileSize + tileSize / 2;
       const r = tileSize / 2 - 4;
 
+      // Effet de freeze
+      if (pacman.freeze) {
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#a855f7";
+        ctx.globalAlpha = 0.7;
+      }
+
+      // Corps du fantôme
       ctx.fillStyle = ghost.color;
+      if (pacman.powered && !pacman.freeze) {
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#3b82f6";
+      }
+      
       ctx.beginPath();
       ctx.arc(x, y - 4, r, Math.PI, 0);
-      ctx.lineTo(x + r, y + r - 6);
-      ctx.lineTo(x + r * 0.3, y + r);
-      ctx.lineTo(x, y + r - 6);
-      ctx.lineTo(x - r * 0.3, y + r);
-      ctx.lineTo(x - r, y + r - 6);
+      ctx.lineTo(x + r, y + r - 4);
+      
+      const waves = 3;
+      for (let i = 0; i < waves; i++) {
+        const waveX = x + r - (2 * r * (i + 1)) / (waves + 1);
+        const waveY = y + r - 4 + (i % 2 === 0 ? 4 : -4);
+        ctx.lineTo(waveX, waveY);
+      }
+      
+      ctx.lineTo(x - r, y + r - 4);
       ctx.closePath();
       ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
 
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.arc(x - 6, y - 6, 4, 0, Math.PI * 2);
-      ctx.arc(x + 6, y - 6, 4, 0, Math.PI * 2);
-      ctx.fill();
+      // Icône freeze au-dessus du fantôme
+      if (pacman.freeze) {
+        ctx.fillStyle = "#a855f7";
+        ctx.font = "16px Arial";
+        ctx.textAlign = "center";
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#a855f7";
+        ctx.fillText("❄️", x, y - r - 8);
+        ctx.shadowBlur = 0;
+      }
 
-      ctx.fillStyle = "#0f172a";
-      ctx.beginPath();
-      ctx.arc(x - 6, y - 6, 2, 0, Math.PI * 2);
-      ctx.arc(x + 6, y - 6, 2, 0, Math.PI * 2);
-      ctx.fill();
+      // Yeux
+      if ((!pacman.powered || pacman.powerTimer > 2000) && !pacman.freeze) {
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(x - 6, y - 6, 5, 0, Math.PI * 2);
+        ctx.arc(x + 6, y - 6, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#0f172a";
+        ctx.beginPath();
+        ctx.arc(x - 6, y - 6, 3, 0, Math.PI * 2);
+        ctx.arc(x + 6, y - 6, 3, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Yeux effrayés ou gelés
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x - 8, y - 8);
+        ctx.lineTo(x - 4, y - 4);
+        ctx.moveTo(x - 4, y - 8);
+        ctx.lineTo(x - 8, y - 4);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x + 4, y - 8);
+        ctx.lineTo(x + 8, y - 4);
+        ctx.moveTo(x + 8, y - 8);
+        ctx.lineTo(x + 4, y - 4);
+        ctx.stroke();
+      }
     }
 
     function loop(timestamp) {
@@ -319,33 +1134,76 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawMap();
       updatePacman(delta);
-      updateGhost(delta);
+      ghosts.forEach(ghost => updateGhost(ghost, delta));
       drawPacman();
-      drawGhost();
+      ghosts.forEach(ghost => drawGhost(ghost));
 
       requestAnimationFrame(loop);
     }
 
     document.addEventListener("keydown", (e) => {
-      if (gameOver) {
-        if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) {
-          init();
-        }
+      if (e.key === " ") {
+        e.preventDefault();
+        paused = !paused;
+        pauseOverlay.classList.toggle('active', paused);
+        return;
+      }
+
+      if (e.key === "r" || e.key === "R") {
+        e.preventDefault();
+        score = 0;
+        level = 1;
+        lives = 3;
+        init();
+        return;
+      }
+
+      if (gameOver && ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) {
+        // Redémarre au même niveau
+        lives = 3;
+        init();
       }
 
       if (e.key === "ArrowLeft") {
+        e.preventDefault();
         pacman.nextDir = { x: -1, y: 0 };
       } else if (e.key === "ArrowRight") {
+        e.preventDefault();
         pacman.nextDir = { x: 1, y: 0 };
       } else if (e.key === "ArrowUp") {
+        e.preventDefault();
         pacman.nextDir = { x: 0, y: -1 };
       } else if (e.key === "ArrowDown") {
+        e.preventDefault();
         pacman.nextDir = { x: 0, y: 1 };
       }
     });
 
+    // Initialisation
+    highScoreEl.textContent = highScore;
     init();
     requestAnimationFrame(loop);
+
+    // Gestion du plein écran
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.log('Erreur plein écran:', err);
+        });
+        fullscreenBtn.textContent = '🖥️ QUITTER PLEIN ÉCRAN';
+      } else {
+        document.exitFullscreen();
+        fullscreenBtn.textContent = '🖥️ PLEIN ÉCRAN';
+      }
+    });
+
+    // Détecter quand on quitte le plein écran (touche Échap)
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        fullscreenBtn.textContent = '🖥️ PLEIN ÉCRAN';
+      }
+    });
   </script>
 </body>
 </html>
