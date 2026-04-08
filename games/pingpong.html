@@ -1,324 +1,507 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ping pong smash</title>
-  <style>
-    :root {
-      --bg: #f88000;
-      --fg: #15ff00;
-      --accent: #f88000;
-      --muted: #f88000;
-    }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      background: radial-gradient(1200px 600px at 50% -10%, #f88000, var(--bg));
-      color: var(--fg);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-      display: grid;
-      place-items: center;
-      gap: 16px;
-    }
-    .wrap { width: min(96vw, 900px); }
-    header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    h1 { font-size: 20px; margin: 0; letter-spacing: .3px; font-weight: 700; }
-    .controls { opacity: .9; font-size: 14px; }
-    .controls kbd { background: #002afc; padding: 2px 6px; border-radius: 6px; border: 1px solid #002afc; }
-    .panel {
-      display: flex; gap: 10px; align-items: center; justify-content: space-between; margin: 8px 0;
-    }
-    .btn { cursor: pointer; border: 1px solid #002afc; background: #002afc; color: var(--fg); border-radius: 10px; padding: 8px 12px; font-weight: 600; }
-    .btn:active { transform: translateY(1px); }
-    .score { font-size: 18px; font-weight: 700; letter-spacing: .8px; }
-    canvas { width: 100%; height: auto; display: block; background: #ff00dd; border: 1px solid #ff00dd; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
-    footer { opacity: .65; font-size: 12px; margin-top: 4px; text-align: center; }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>3D Ping Pong Smash</title>
+    <style>
+        :root {
+            --bg: #050505;
+            --fg: #00f2ff;
+            --accent: #ff00ea;
+            --panel-bg: rgba(20, 20, 25, 0.8);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        #ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: auto;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--fg);
+        }
+
+        .score-panel {
+            background: var(--panel-bg);
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 1px solid var(--fg);
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+            pointer-events: auto;
+        }
+
+        .controls-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid var(--accent);
+            pointer-events: auto;
+            transition: opacity 0.3s;
+        }
+
+        .hidden {
+            display: none;
+            opacity: 0;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 0 #b300a3;
+            transition: all 0.1s;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #b300a3;
+        }
+
+        .btn-camera {
+            background: #222;
+            border: 1px solid #444;
+            box-shadow: 0 4px 0 #111;
+        }
+
+        .bottom-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            pointer-events: auto;
+        }
+
+        .touch-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            touch-action: none;
+        }
+
+        #debug {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 10px;
+            color: #555;
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>🏓 ping pong smash</h1>
-      <div class="controls">
-        <span>Joueur: <kbd>Z</kbd>/<kbd>S</kbd> (ou <kbd>↑</kbd>/<kbd>↓</kbd>) · Pause: <kbd>Espace</kbd> · Restart: <kbd>R</kbd></span>
-      </div>
-    </header>
+    <div id="ui-container">
+        <header>
+            <h1>🏓 3D Pong Smash</h1>
+            <div class="score-panel" id="score">0 — 0</div>
+        </header>
 
-    <div class="panel">
-      <div class="score" id="score">0 — 0</div>
-      <div>
-        <button class="btn" id="pauseBtn">Pause</button>
-        <button class="btn" id="restartBtn">Restart</button>
-      </div>
+        <div class="bottom-bar">
+            <div>
+                <button class="btn btn-camera" id="btnCam">🎥 Caméra (C)</button>
+            </div>
+            <div>
+                <button class="btn" id="btnPause">Pause</button>
+                <button class="btn" id="btnRestart">Restart</button>
+            </div>
+        </div>
     </div>
 
-    <canvas id="game" width="900" height="520" aria-label="Pong Game"></canvas>
+    <div class="controls-overlay" id="overlay">
+        <h2 id="msg">PRÊT ?</h2>
+        <button class="btn" id="btnStart">JOUER</button>
+        <div style="font-size: 14px; margin-top: 15px; opacity: 0.8;">
+            Clavier: ↑/↓ ou Z/S · Caméra: C · Pause: Espace<br>
+            Tactile: Glissez sur l'écran pour bouger la raquette
+        </div>
+    </div>
 
-    <footer>
-      ping pong smash
-    </footer>
-  </div>
+    <div class="touch-zone" id="touchZone"></div>
+    <div id="debug"></div>
 
-  <script>
-    // === Utility: DPR-aware canvas scaling for crisp rendering ===
-    function setupHiDPICanvas(canvas) {
-      const ctx = canvas.getContext('2d');
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-      const cssWidth = canvas.clientWidth || canvas.width;
-      const cssHeight = canvas.clientHeight || canvas.height;
-      canvas.width = Math.floor(cssWidth * dpr);
-      canvas.height = Math.floor(cssHeight * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      return ctx;
-    }
+    <!-- Three.js from CDN -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
 
-    // === Game constants ===
-    const W = 900;       // logical canvas width (CSS pixels)
-    const H = 520;       // logical canvas height (CSS pixels)
-    const PADDLE_W = 12;
-    const PADDLE_H = 90;
-    const BALL_SIZE = 12;
-    const PADDLE_SPEED = 7;    // player paddle max speed
-    const AI_MAX_SPEED = 2;    // AI paddle max speed per frame
-    const BALL_SPEED_INIT = 6; // initial ball speed
-    const BALL_SPEED_MAX = 12; // clamp to avoid tunneling
-    const WIN_SCORE = 11;
+    <script type="module">
+        import * as THREE from 'three';
 
-    // === Game state ===
-    const canvas = document.getElementById('game');
-    const scoreEl = document.getElementById('score');
-    const pauseBtn = document.getElementById('pauseBtn');
-    const restartBtn = document.getElementById('restartBtn');
-    const ctx = setupHiDPICanvas(canvas);
+        // --- CONSTANTS ---
+        const TABLE_WIDTH = 20;
+        const TABLE_HEIGHT = 1;
+        const TABLE_DEPTH = 12;
+        const PADDLE_WIDTH = 0.5;
+        const PADDLE_HEIGHT = 1.2;
+        const PADDLE_DEPTH = 2.5;
+        const BALL_RADIUS = 0.3;
+        const WIN_SCORE = 11;
 
-    // Keep logical size in sync with CSS so collisions use CSS pixels
-    function syncCanvasSize() {
-      const cssW = canvas.getBoundingClientRect().width;
-      const scale = cssW / W;
-      canvas.style.height = (H * scale) + 'px';
-      setupHiDPICanvas(canvas);
-    }
-    window.addEventListener('resize', syncCanvasSize);
-    syncCanvasSize();
+        // --- GAME STATE ---
+        const state = {
+            running: false,
+            gameOver: false,
+            scoreL: 0,
+            scoreR: 0,
+            ball: { x: 0, z: 0, vx: 0.15, vz: 0 },
+            paddleL: { x: -TABLE_WIDTH/2 + 1, z: 0, targetZ: 0 },
+            paddleR: { x: TABLE_WIDTH/2 - 1, z: 0, targetZ: 0 },
+            camIndex: 0,
+            touchActive: false
+        };
 
-    const state = {
-      running: true,         // paused when false
-      gameOver: false,
-      leftScore: 0,
-      rightScore: 0,
-      // Entities
-      left: { x: 24, y: H/2 - PADDLE_H/2, w: PADDLE_W, h: PADDLE_H, vy: 0 },
-      right: { x: W - 24 - PADDLE_W, y: H/2 - PADDLE_H/2, w: PADDLE_W, h: PADDLE_H, vy: 0 },
-      ball: { x: W/2, y: H/2, vx: BALL_SPEED_INIT, vy: 0, size: BALL_SIZE },
-      keys: { up: false, down: false, z: false, s: false }
-    };
+        // --- THREE.JS SETUP ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050505);
+        scene.fog = new THREE.Fog(0x050505, 10, 50);
 
-    // === Input handling ===
-    window.addEventListener('keydown', (e) => {
-      switch (e.key) {
-        case 'ArrowUp': state.keys.up = true; break;
-        case 'ArrowDown': state.keys.down = true; break;
-        case 'z': case 'Z': state.keys.z = true; break;
-        case 's': case 'S': state.keys.s = true; break;
-        case ' ': // Space to toggle pause
-          if (!state.gameOver) togglePause();
-          break;
-        case 'r': case 'R': restart(); break;
-      }
-    });
-    window.addEventListener('keyup', (e) => {
-      switch (e.key) {
-        case 'ArrowUp': state.keys.up = false; break;
-        case 'ArrowDown': state.keys.down = false; break;
-        case 'z': case 'Z': state.keys.z = false; break;
-        case 's': case 'S': state.keys.s = false; break;
-      }
-    });
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
 
-    pauseBtn.addEventListener('click', () => { if (!state.gameOver) togglePause(); });
-    restartBtn.addEventListener('click', restart);
+        // --- CAMERAS ---
+        const cameras = [
+            // 0: Arcade View (Side-top)
+            new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000),
+            // 1: Immersive View (Behind P1)
+            new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000),
+            // 2: Top View (Classic)
+            new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000)
+        ];
 
-    function togglePause() {
-      state.running = !state.running;
-      pauseBtn.textContent = state.running ? 'Pause' : 'Resume';
-    }
+        cameras[0].position.set(0, 15, 10);
+        cameras[0].lookAt(0, 0, 0);
 
-    function restart() {
-      state.leftScore = 0; state.rightScore = 0; state.gameOver = false; state.running = true;
-      pauseBtn.textContent = 'Pause';
-      centerBall(Math.random() < 0.5 ? 1 : -1);
-      state.left.y = H/2 - PADDLE_H/2;
-      state.right.y = H/2 - PADDLE_H/2;
-      updateScore();
-    }
+        cameras[1].position.set(-15, 6, 0);
+        cameras[1].lookAt(5, 0, 0);
 
-    function updateScore() {
-      scoreEl.textContent = `${state.leftScore} — ${state.rightScore}`;
-    }
+        cameras[2].position.set(0, 20, 0);
+        cameras[2].lookAt(0, 0, 0);
 
-    function centerBall(direction = 1) {
-      // Reset ball in the center with random vertical velocity
-      state.ball.x = W/2; state.ball.y = H/2;
-      const angle = (Math.random() * 0.6 - 0.3); // -0.3..0.3 rad (~-17°..17°)
-      const speed = BALL_SPEED_INIT * (1 + Math.random() * 0.2);
-      state.ball.vx = Math.sign(direction) * Math.max(4, Math.min(BALL_SPEED_INIT, speed));
-      state.ball.vy = Math.tan(angle) * Math.abs(state.ball.vx);
-    }
+        let activeCamera = cameras[0];
 
-    // === Physics & AI ===
-    function step() {
-      if (!state.running || state.gameOver) return;
+        // --- LIGHTS ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
 
-      // Player input (left paddle)
-      const moveUp = state.keys.up || state.keys.z;
-      const moveDn = state.keys.down || state.keys.s;
-      state.left.vy = (moveUp ? -PADDLE_SPEED : 0) + (moveDn ? PADDLE_SPEED : 0);
-      state.left.y += state.left.vy;
+        const mainLight = new THREE.PointLight(0x00f2ff, 1, 50);
+        mainLight.position.set(0, 10, 0);
+        mainLight.castShadow = true;
+        scene.add(mainLight);
 
-      // Clamp paddles into the field
-      state.left.y = Math.max(0, Math.min(H - PADDLE_H, state.left.y));
-      state.right.y = Math.max(0, Math.min(H - PADDLE_H, state.right.y));
+        const ballLight = new THREE.PointLight(0xff00ea, 2, 8);
+        scene.add(ballLight);
 
-      // Simple AI: track ball with capped speed and a tiny prediction
-      const targetY = state.ball.y - PADDLE_H/2 + state.ball.vy * 4; // lead the target a bit
-      if (targetY < state.right.y) state.right.y -= Math.min(AI_MAX_SPEED, state.right.y - targetY);
-      else if (targetY > state.right.y) state.right.y += Math.min(AI_MAX_SPEED, targetY - state.right.y);
+        // --- OBJECTS ---
+        // Table
+        const tableGeo = new THREE.BoxGeometry(TABLE_WIDTH, TABLE_HEIGHT, TABLE_DEPTH);
+        const tableMat = new THREE.MeshStandardMaterial({ 
+            color: 0x111111, 
+            roughness: 0.2, 
+            metalness: 0.8,
+            emissive: 0x001122
+        });
+        const table = new THREE.Mesh(tableGeo, tableMat);
+        table.position.y = -TABLE_HEIGHT / 2;
+        table.receiveShadow = true;
+        scene.add(table);
 
-      // Move ball
-      state.ball.x += state.ball.vx;
-      state.ball.y += state.ball.vy;
+        // Grid/Lines
+        const grid = new THREE.GridHelper(20, 10, 0x00f2ff, 0x222222);
+        grid.position.y = 0.01;
+        scene.add(grid);
 
-      // Wall collisions
-      if (state.ball.y <= 0 && state.ball.vy < 0) { state.ball.y = 0; state.ball.vy *= -1; }
-      if (state.ball.y + BALL_SIZE >= H && state.ball.vy > 0) { state.ball.y = H - BALL_SIZE; state.ball.vy *= -1; }
+        // Side Walls (Neon)
+        const wallGeo = new THREE.BoxGeometry(TABLE_WIDTH, 0.2, 0.2);
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x00f2ff, emissive: 0x00f2ff, emissiveIntensity: 2 });
+        
+        const wallUp = new THREE.Mesh(wallGeo, wallMat);
+        wallUp.position.set(0, 0.1, -TABLE_DEPTH/2);
+        scene.add(wallUp);
 
-      // Paddle collisions (AABB)
-      // Left paddle
-      if (rectIntersect(state.ball.x, state.ball.y, BALL_SIZE, BALL_SIZE, state.left.x, state.left.y, PADDLE_W, PADDLE_H) && state.ball.vx < 0) {
-        bounceOffPaddle(state.left);
-      }
-      // Right paddle
-      if (rectIntersect(state.ball.x, state.ball.y, BALL_SIZE, BALL_SIZE, state.right.x, state.right.y, PADDLE_W, PADDLE_H) && state.ball.vx > 0) {
-        bounceOffPaddle(state.right);
-      }
+        const wallDown = new THREE.Mesh(wallGeo, wallMat);
+        wallDown.position.set(0, 0.1, TABLE_DEPTH/2);
+        scene.add(wallDown);
 
-      // Scoring
-      if (state.ball.x + BALL_SIZE < 0) { // right player scores
-        state.rightScore += 1; onScore(-1);
-      }
-      if (state.ball.x > W) { // left player scores
-        state.leftScore += 1; onScore(1);
-      }
-    }
+        // Ball
+        const ballGeo = new THREE.SphereGeometry(BALL_RADIUS, 32, 32);
+        const ballMat = new THREE.MeshStandardMaterial({ 
+            color: 0xff00ea, 
+            emissive: 0xff00ea, 
+            emissiveIntensity: 2 
+        });
+        const ballMesh = new THREE.Mesh(ballGeo, ballMat);
+        ballMesh.castShadow = true;
+        scene.add(ballMesh);
 
-    function onScore(nextServeDir) {
-      updateScore();
-      if (state.leftScore >= WIN_SCORE || state.rightScore >= WIN_SCORE) {
-        state.gameOver = true;
-        state.running = false;
-        pauseBtn.textContent = 'Resume';
-      } else {
-        centerBall(nextServeDir);
-      }
-    }
+        // Paddles
+        const paddleGeo = new THREE.BoxGeometry(PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_DEPTH);
+        const paddleMatL = new THREE.MeshStandardMaterial({ color: 0x00f2ff, emissive: 0x00f2ff, emissiveIntensity: 1 });
+        const paddleMatR = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xaaaaaa, emissiveIntensity: 0.5 });
+        
+        const paddleL = new THREE.Mesh(paddleGeo, paddleMatL);
+        paddleL.position.set(state.paddleL.x, PADDLE_HEIGHT/2, 0);
+        paddleL.castShadow = true;
+        scene.add(paddleL);
 
-    function rectIntersect(ax, ay, aw, ah, bx, by, bw, bh) {
-      return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
-    }
+        const paddleR = new THREE.Mesh(paddleGeo, paddleMatR);
+        paddleR.position.set(state.paddleR.x, PADDLE_HEIGHT/2, 0);
+        paddleR.castShadow = true;
+        scene.add(paddleR);
 
-    function bounceOffPaddle(paddle) {
-      // Compute contact point (-1 top .. +1 bottom) to add vertical deflection
-      const paddleCenter = paddle.y + PADDLE_H / 2;
-      const ballCenter = state.ball.y + BALL_SIZE / 2;
-      const rel = (ballCenter - paddleCenter) / (PADDLE_H / 2);
-      const speed = Math.min(BALL_SPEED_MAX, Math.hypot(state.ball.vx, state.ball.vy) * 1.05);
-      const angle = rel * 0.6; // max ~34° off horizontal
-      const dir = paddle === state.left ? 1 : -1;
-      state.ball.vx = Math.cos(angle) * speed * dir;
-      state.ball.vy = Math.sin(angle) * speed;
+        // --- CONTROLS ---
+        const keys = {};
+        window.addEventListener('keydown', e => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.code === 'Space') togglePause();
+            if (e.key.toLowerCase() === 'c') cycleCamera();
+            if (e.key.toLowerCase() === 'r') restart();
+        });
+        window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
-      // Nudge the ball outside the paddle to avoid sticking
-      if (dir === 1) state.ball.x = state.left.x + PADDLE_W + 0.5;
-      else state.ball.x = state.right.x - BALL_SIZE - 0.5;
-    }
+        const touchZone = document.getElementById('touchZone');
+        touchZone.addEventListener('touchstart', handleTouch, { passive: false });
+        touchZone.addEventListener('touchmove', handleTouch, { passive: false });
+        touchZone.addEventListener('touchend', () => state.touchActive = false);
 
-    // === Rendering ===
-    function draw() {
-      // Clear
-      ctx.fillStyle = '#0b0f24';
-      ctx.fillRect(0, 0, W, H);
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            state.touchActive = true;
+            // Map vertical screen position to table depth
+            const z = ((touch.clientY / window.innerHeight) * 2 - 1) * (TABLE_DEPTH / 2);
+            state.paddleL.targetZ = z;
+        }
 
-      // Middle dashed line
-      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-      ctx.setLineDash([10, 14]);
-      ctx.beginPath();
-      ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
-      ctx.setLineDash([]);
+        // Mouse support for desktop
+        touchZone.addEventListener('mousemove', e => {
+            if (e.buttons > 0 || !state.touchActive) {
+                const z = ((e.clientY / window.innerHeight) * 2 - 1) * (TABLE_DEPTH / 2);
+                state.paddleL.targetZ = z;
+            }
+        });
 
-      // Paddles
-      ctx.fillStyle = '#e8ecf3';
-      roundRect(ctx, state.left.x, state.left.y, PADDLE_W, PADDLE_H, 6);
-      roundRect(ctx, state.right.x, state.right.y, PADDLE_W, PADDLE_H, 6);
+        // --- UI ACTIONS ---
+        const scoreEl = document.getElementById('score');
+        const overlay = document.getElementById('overlay');
+        const msgEl = document.getElementById('msg');
+        const btnStart = document.getElementById('btnStart');
+        const btnPause = document.getElementById('btnPause');
+        const btnRestart = document.getElementById('btnRestart');
+        const btnCam = document.getElementById('btnCam');
 
-      // Ball
-      ctx.fillStyle = '#7ac6ff';
-      ctx.fillRect(state.ball.x, state.ball.y, BALL_SIZE, BALL_SIZE);
+        btnStart.onclick = () => {
+            overlay.classList.add('hidden');
+            state.running = true;
+            if (state.gameOver) restart();
+        };
 
-      // Overlay for pause / game over
-      if (!state.running || state.gameOver) {
-        ctx.fillStyle = 'rgba(0,0,0,0.45)';
-        ctx.fillRect(0,0,W,H);
-        ctx.fillStyle = '#e8ecf3';
-        ctx.font = 'bold 28px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(state.gameOver ? winnerText() : 'Pause', W/2, H/2 - 10);
-        ctx.font = '16px system-ui, sans-serif';
-        ctx.fillText('Espace: Reprendre · R: Restart', W/2, H/2 + 20);
-      }
+        btnPause.onclick = togglePause;
+        btnRestart.onclick = restart;
+        btnCam.onclick = cycleCamera;
 
-      // Score (also in DOM, but keep HUD on canvas for full-screen use)
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.font = 'bold 20px system-ui, sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(`${state.leftScore}`, 20, 28);
-      ctx.textAlign = 'right';
-      ctx.fillText(`${state.rightScore}`, W - 20, 28);
-    }
+        function togglePause() {
+            state.running = !state.running;
+            btnPause.textContent = state.running ? 'Pause' : 'Reprendre';
+            if (!state.running) {
+                overlay.classList.remove('hidden');
+                msgEl.textContent = "PAUSE";
+            } else {
+                overlay.classList.add('hidden');
+            }
+        }
 
-    function winnerText() {
-      if (state.leftScore > state.rightScore) return 'Victoire !';
-      if (state.leftScore < state.rightScore) return 'Défaite...';
-      return 'Terminé';
-    }
+        function restart() {
+            state.scoreL = 0; state.scoreR = 0;
+            updateScore();
+            resetBall(1);
+            state.gameOver = false;
+            state.running = true;
+            overlay.classList.add('hidden');
+            msgEl.textContent = "C'EST PARTI !";
+        }
 
-    function roundRect(ctx, x, y, w, h, r) {
-      const rr = Math.min(r, w/2, h/2);
-      ctx.beginPath();
-      ctx.moveTo(x + rr, y);
-      ctx.arcTo(x + w, y, x + w, y + h, rr);
-      ctx.arcTo(x + w, y + h, x, y + h, rr);
-      ctx.arcTo(x, y + h, x, y, rr);
-      ctx.arcTo(x, y, x + w, y, rr);
-      ctx.closePath();
-      ctx.fill();
-    }
+        function cycleCamera() {
+            state.camIndex = (state.camIndex + 1) % cameras.length;
+            activeCamera = cameras[state.camIndex];
+        }
 
-    // === Main loop ===
-    function loop() {
-      step();
-      draw();
-      requestAnimationFrame(loop);
-    }
+        function updateScore() {
+            scoreEl.textContent = `${state.scoreL} — ${state.scoreR}`;
+        }
 
-    // Init
-    updateScore();
-    centerBall(Math.random() < 0.5 ? 1 : -1);
-    loop();
-  </script>
+        function resetBall(dir) {
+            state.ball.x = 0;
+            state.ball.z = 0;
+            state.ball.vx = 0.15 * dir;
+            state.ball.vz = (Math.random() - 0.5) * 0.2;
+        }
+
+        // --- GAME LOGIC ---
+        function update() {
+            if (!state.running || state.gameOver) return;
+
+            // Player movement (L)
+            const speed = 0.25;
+            if (keys['arrowup'] || keys['z']) state.paddleL.targetZ -= speed;
+            if (keys['arrowdown'] || keys['s']) state.paddleL.targetZ += speed;
+            
+            // Apply smoothing to paddle
+            state.paddleL.z += (state.paddleL.targetZ - state.paddleL.z) * 0.2;
+            state.paddleL.z = Math.max(-TABLE_DEPTH/2 + PADDLE_DEPTH/2, Math.min(TABLE_DEPTH/2 - PADDLE_DEPTH/2, state.paddleL.z));
+            paddleL.position.z = state.paddleL.z;
+
+            // AI movement (R)
+            const aiSpeed = 0.12;
+            const targetZ = state.ball.z;
+            if (targetZ < state.paddleR.z - 0.5) state.paddleR.z -= aiSpeed;
+            else if (targetZ > state.paddleR.z + 0.5) state.paddleR.z += aiSpeed;
+            state.paddleR.z = Math.max(-TABLE_DEPTH/2 + PADDLE_DEPTH/2, Math.min(TABLE_DEPTH/2 - PADDLE_DEPTH/2, state.paddleR.z));
+            paddleR.position.z = state.paddleR.z;
+
+            // Ball movement
+            state.ball.x += state.ball.vx;
+            state.ball.z += state.ball.vz;
+
+            // Wall collisions
+            if (Math.abs(state.ball.z) > TABLE_DEPTH/2 - BALL_RADIUS) {
+                state.ball.vz *= -1;
+                state.ball.z = Math.sign(state.ball.z) * (TABLE_DEPTH/2 - BALL_RADIUS);
+            }
+
+            // Paddle collisions
+            // Left
+            if (state.ball.vx < 0 && 
+                state.ball.x < state.paddleL.x + PADDLE_WIDTH/2 + BALL_RADIUS && 
+                state.ball.x > state.paddleL.x - PADDLE_WIDTH/2 &&
+                Math.abs(state.ball.z - state.paddleL.z) < PADDLE_DEPTH/2 + BALL_RADIUS) {
+                
+                state.ball.vx *= -1.1; // accelerate
+                state.ball.vz += (state.ball.z - state.paddleL.z) * 0.2;
+                state.ball.x = state.paddleL.x + PADDLE_WIDTH/2 + BALL_RADIUS;
+            }
+
+            // Right
+            if (state.ball.vx > 0 && 
+                state.ball.x > state.paddleR.x - PADDLE_WIDTH/2 - BALL_RADIUS && 
+                state.ball.x < state.paddleR.x + PADDLE_WIDTH/2 &&
+                Math.abs(state.ball.z - state.paddleR.z) < PADDLE_DEPTH/2 + BALL_RADIUS) {
+                
+                state.ball.vx *= -1.1;
+                state.ball.vz += (state.ball.z - state.paddleR.z) * 0.2;
+                state.ball.x = state.paddleR.x - PADDLE_WIDTH/2 - BALL_RADIUS;
+            }
+
+            // Scoring
+            if (state.ball.x < -TABLE_WIDTH/2) {
+                state.scoreR++;
+                checkWin();
+                if (!state.gameOver) resetBall(1);
+            } else if (state.ball.x > TABLE_WIDTH/2) {
+                state.scoreL++;
+                checkWin();
+                if (!state.gameOver) resetBall(-1);
+            }
+
+            // Clamp max speed
+            const maxSpeed = 0.4;
+            if (Math.abs(state.ball.vx) > maxSpeed) state.ball.vx = Math.sign(state.ball.vx) * maxSpeed;
+
+            // Sync Meshes
+            ballMesh.position.set(state.ball.x, BALL_RADIUS, state.ball.z);
+            ballLight.position.set(state.ball.x, BALL_RADIUS + 0.5, state.ball.z);
+        }
+
+        function checkWin() {
+            updateScore();
+            if (state.scoreL >= WIN_SCORE || state.scoreR >= WIN_SCORE) {
+                state.gameOver = true;
+                state.running = false;
+                overlay.classList.remove('hidden');
+                msgEl.textContent = state.scoreL >= WIN_SCORE ? "VICTOIRE !" : "DÉFAITE...";
+            }
+        }
+
+        // --- RENDER LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            update();
+
+            // Camera follow logic for perspective 1 (Immersive)
+            if (state.camIndex === 1) {
+                cameras[1].position.z += (state.paddleL.z - cameras[1].position.z) * 0.05;
+                cameras[1].lookAt(10, 0, 0);
+            }
+
+            renderer.render(scene, activeCamera);
+        }
+
+        window.addEventListener('resize', () => {
+            cameras.forEach(cam => {
+                cam.aspect = window.innerWidth / window.innerHeight;
+                cam.updateProjectionMatrix();
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+        updateScore();
+    </script>
 </body>
 </html>

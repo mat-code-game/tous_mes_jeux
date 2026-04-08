@@ -117,7 +117,28 @@
             border-radius: 10px;
             margin-bottom: 15px;
             text-align: center;
+
         }
+
+        #fullscreen-Btn {
+  /* Positionnement */
+  position: absolute;
+  top: 20px;      /* Distance du haut */
+  right: 20px;    /* Distance de la droite - changez selon besoin */
+  
+  /* Taille */
+  width: 50px;    /* Largeur du bouton */
+  height: 50px;   /* Hauteur du bouton */
+  
+  /* Optionnel : style */
+  font-size: 24px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  border-radius: 8px;
+  color: white;
+}
+
 
         #levelTitle {
             font-size: 18px;
@@ -369,7 +390,7 @@
 </head>
 <body>
 
-    <button id="fullscreenBtn">Plein écran</button>
+    <button id="fullscreen-Btn">Plein écran</button>
 
     <div id="gameContainer">
         <div id="stats">

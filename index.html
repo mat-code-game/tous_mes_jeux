@@ -1,282 +1,517 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Mes jeux HTML</title>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Arcade Mathéo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Police moderne -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+    />
+
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        }
+      :root {
+        --bg: #020617;
+        --bg-soft: #0f172a;
+        --card: #020617;
+        --accent: #22c55e;
+        --accent-dark: #16a34a;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+      }
 
-        body {
-            background: radial-gradient(circle at top, #0084ff, #0084ff);
-            color: #0084ff;
-            min-height: 100vh;
-        }
+      * {
+        box-sizing: border-box;
+      }
 
-        .container {
-            max-width: 1100px;
-            margin: 40px auto;
-            padding: 0 16px 32px;
-        }
+      body {
+        margin: 0;
+        font-family: "Poppins", sans-serif;
+        background: radial-gradient(circle at top, #1e293b, #020617 55%);
+        color: var(--text);
+        min-height: 100vh;
+      }
 
+      .page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px 16px 40px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 18px;
+        margin-bottom: 24px;
+        background: rgba(15, 23, 42, 0.9);
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(148, 163, 184, 0.3);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: conic-gradient(from 160deg, #22c55e, #0ea5e9, #22c55e);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 20px;
+      }
+
+      .brand-text h1 {
+        font-size: 20px;
+        margin: 0;
+      }
+
+      .brand-text p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .nav-btn {
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: none;
+        background: rgba(15, 23, 42, 0.9);
+        color: var(--text);
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid rgba(148, 163, 184, 0.6);
+      }
+
+      .nav-btn span.icon {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        background: var(--accent);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #0f172a;
+        font-size: 12px;
+      }
+
+      .hero {
+        margin-bottom: 18px;
+      }
+
+      .hero-title {
+        font-size: 26px;
+        margin: 0 0 4px;
+      }
+
+      .hero-sub {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .tags-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .tag {
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        color: var(--muted);
+      }
+
+      .games-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .games-header h2 {
+        font-size: 16px;
+        margin: 0;
+      }
+
+      .games-header span {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .games-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+      }
+
+      .game-card {
+        background: linear-gradient(
+          135deg,
+          rgba(15, 23, 42, 0.95),
+          rgba(15, 23, 42, 0.98)
+        );
+        border-radius: 16px;
+        padding: 12px 12px 13px;
+        border: 1px solid rgba(30, 64, 175, 0.4);
+        box-shadow: 0 12px 25px rgba(15, 23, 42, 0.8);
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        transition:
+          transform 0.15s ease-out,
+          box-shadow 0.15s ease-out,
+          border-color 0.15s;
+      }
+
+      .game-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 30px rgba(15, 23, 42, 0.95);
+        border-color: rgba(56, 189, 248, 0.9);
+      }
+
+      .game-pill {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        font-size: 10px;
+        padding: 3px 7px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.9);
+        color: var(--muted);
+        border: 1px solid rgba(148, 163, 184, 0.5);
+      }
+
+      .thumb {
+        height: 110px;
+        border-radius: 10px;
+        margin-bottom: 8px;
+        overflow: hidden;
+        background: #020617;
+      }
+
+      .thumb-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .thumb-label {
+        position: absolute;
+        left: 10px;
+        bottom: 8px;
+        font-size: 11px;
+        padding: 4px 7px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.85);
+        color: #e5e7eb;
+      }
+
+      .game-title {
+        margin: 0 0 2px;
+        font-size: 15px;
+      }
+
+      .game-desc {
+        margin: 0 0 6px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .game-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .play-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: none;
+        background: var(--accent);
+        color: #0f172a;
+        font-weight: 600;
+        font-size: 12px;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(34, 197, 94, 0.6);
+        transition:
+          background 0.15s,
+          transform 0.1s,
+          box-shadow 0.1s;
+      }
+
+      .play-btn:hover {
+        background: var(--accent-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(34, 197, 94, 0.7);
+      }
+
+      .play-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 6px 14px rgba(34, 197, 94, 0.6);
+      }
+
+      footer {
+        margin-top: 26px;
+        font-size: 11px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      @media (max-width: 600px) {
         header {
-            text-align: center;
-            margin-bottom: 28px;
+          flex-direction: column;
+          align-items: flex-start;
         }
-
-        header h1 {
-            font-size: 2.4rem;
-            color: #ff8800;
-            margin-bottom: 6px;
-            letter-spacing: 0.03em;
-        }
-
-        header p {
-            color: #ff8800;
-            font-size: 0.95rem;
-            opacity: 0.9;
-        }
-
-        .games-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 22px;
-            margin-top: 28px;
-        }
-
-        a.game-link {
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .game-card {
-            background: rgb(255, 145, 0);
-            border-radius: 20px;
-            padding: 16px;
-            box-shadow: 0 16px 40px rgba(1, 255, 1);
-            border: 1px solid rgb(1, 255, 1);
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-            overflow: hidden;
-        }
-
-        .game-card:hover {
-            transform: translateY(-4px) scale(1.01);
-            box-shadow: 0 22px 50px rgb(255, 145, 0);
-            border-color: #ff8800;
-            background: rgb(255, 145, 0);
-        }
-
-        .game-image-wrapper {
-            position: relative;
-            border-radius: 14px;
-            overflow: hidden;
-            margin-bottom: 14px;
-            border: 1px solid rgba(0, 60, 255, 0.8);
-        }
-
-        .game-image {
-            display: block;
-            width: 100%;
-            height: 260px;
-            object-fit: cover;
-            transform: scale(1.02);
-            transition: transform 0.3s ease;
-        }
-
-        .game-card:hover .game-image {
-            transform: scale(1.07);
-        }
-
-        .game-label {
-            position: absolute;
-            left: 10px;
-            bottom: 10px;
-            padding: 4px 9px;
-            border-radius: 999px;
-            font-size: 0.7rem;
-            background: rgba(15, 23, 42, 0.85);
-            border: 1px solid rgba(0, 0, 0, 0.4);
-            color: #e5e7eb;
-        }
-
-        .game-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: #f9fafb;
-        }
-
-        .game-desc {
-            font-size: 0.85rem;
-            color: #000000;
-            margin-bottom: 10px;
-            min-height: 34px;
-        }
-
-        .game-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.8rem;
-            color: #0055ff;
-        }
-
-        .btn-play {
-            padding: 6px 12px;
-            border-radius: 999px;
-            border: none;
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-            color: #022c22;
-            font-weight: 600;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
-        }
-
-        .btn-play:hover {
-            background: linear-gradient(135deg, #16a34a, #22c55e);
-            transform: translateY(-1px);
-            box-shadow: 0 8px 20px rgba(22, 163, 74, 0.6);
-        }
-
-        .tag {
-            padding: 3px 8px;
-            border-radius: 999px;
-            background: rgb(2, 2, 2);
-            color: #09ff0085;
-        }
-
-        @media (max-width: 600px) {
-            header h1 {
-                font-size: 2rem;
-            }
-        }
+      }
     </style>
-</head>
-<body>
-<div class="container">
-    <header>
-        <h1>Mes jeux HTML</h1>
-        <p>Clique sur un jeu pour le lancer :</p>
-    </header>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div class="brand">
+          <div class="brand-logo">M</div>
+          <div class="brand-text">
+            <h1>Arcade Mathéo</h1>
+            <p>Mini-jeux gratuits, jouables directement dans ton navigateur.</p>
+          </div>
+        </div>
+        <button class="nav-btn" onclick="window.location.reload()">
+          <span class="icon">🏠</span>
+          Accueil
+        </button>
+      </header>
 
-    <section class="games-grid">
+      <section class="hero">
+        <h2 class="hero-title">Choisis ton prochain défi</h2>
+        <p class="hero-sub">
+          Tir à 2 joueurs, mots mystères, bombes, fruits et bien plus à venir.
+        </p>
+        <div class="tags-row">
+          <span class="tag">Local 2 joueurs</span>
+          <span class="tag">Action</span>
+          <span class="tag">Réflexion</span>
+          <span class="tag">Arcade</span>
+        </div>
+      </section>
 
-        <!-- Jeu de tir -->
-        <a href="games/tire_tire.html" class="game-link">
-            <article class="game-card">
-                <div class="game-image-wrapper">
-                    <img src="games/images/tire_tire.png" alt="jeu de tire" class="game-image">
-                    <span class="game-label">Jeu de tir</span>
-                </div>
-                <h2 class="game-title">Tir à 2 joueurs</h2>
-                <p class="game-desc">
-                    Jeu de tir avec possibilité de jouer à 2 joueurs en local.
-                </p>
-                <div class="game-footer">
-                    <span class="tag">Arcade</span>
-                    <button class="btn-play">Jouer</button>
-                </div>
-            </article>
-        </a>
+      <div class="games-header">
+        <h2>Jeux disponibles</h2>
+        <span>+ de jeux bientôt</span>
+      </div>
 
-        <!-- Devinettes -->
-        <a href="games/jeu_devinettes.html" class="game-link">
-            <article class="game-card">
-                <div class="game-image-wrapper">
-                    <img src="games/images/devinette.png" alt="jeu de Devinettes" class="game-image">
-                    <span class="game-label">Devinettes</span>
-                </div>
-                <h2 class="game-title">Jeu de Devinettes</h2>
-                <p class="game-desc">
-                    Tente de deviner le mot mystère avant d’être à court d’essais.
-                </p>
-                <div class="game-footer">
-                    <span class="tag">Réflexion</span>
-                    <button class="btn-play">Jouer</button>
-                </div>
-            </article>
-        </a>
+      <section class="games-grid">
+        <!-- Tir à 2 joueurs -->
+        <article class="game-card" onclick="launchGame('tir2')">
+          <span class="game-pill">2 joueurs</span>
+          <div class="thumb">
+            <img
+              src="games/images/tire_tire.png"
+              alt="Tir à 2 joueurs"
+              class="thumb-img"
+            />
+          </div>
+          <h3 class="game-title">Tir à 2 joueurs</h3>
+          <p class="game-desc">
+            Affronte ton ami dans un duel de tir local. Vise juste, esquive et
+            gagne la manche.
+          </p>
+          <div class="game-meta">
+            <span>Clavier partagé</span>
+            <span>3+ manches</span>
+          </div>
+          <button class="play-btn" type="button">▶ Jouer</button>
+        </article>
 
-        <!-- Combat -->
-        <a href="games/jeu_arcade_combat_epique_ultimate-PCtour.html" class="game-link">
-            <article class="game-card">
-                <div class="game-image-wrapper">
-                    <img src="games/images/Combat.png" alt="jeu de combat" class="game-image">
-                    <span class="game-label">Combat épique</span>
-                </div>
-                <h2 class="game-title">Kill Max</h2>
-                <p class="game-desc">
-                    Affronte des vagues d’ennemis dans un combat intense.
-                </p>
-                <div class="game-footer">
-                    <span class="tag">Arcade</span>
-                    <button class="btn-play">Jouer</button>
-                </div>
-            </article>
-        </a>
+        <!-- Mot mystère -->
+        <article class="game-card" onclick="launchGame('mot')">
+          <span class="game-pill">Réflexion</span>
+          <div class="thumb">
+            <img
+              src="games/images/devinette.png"
+              alt="Mot mystère"
+              class="thumb-img"
+            />
+          </div>
+          <h3 class="game-title">Mot mystère</h3>
+          <p class="game-desc">
+            Devine le mot avant d’être à court d’essais. Chaque tentative te
+            rapproche de la solution.
+          </p>
+          <div class="game-meta">
+            <span>Solo</span>
+            <span>Mode illimité</span>
+          </div>
+          <button class="play-btn" type="button">▶ Jouer</button>
+        </article>
 
-        <!-- Bomberman -->
-        <a href="games/bomberman_prototype.html" class="game-link">
-            <article class="game-card">
-                <div class="game-image-wrapper">
-                    <img src="games/images/bombe.png" alt="Jeu de bombe" class="game-image">
-                    <span class="game-label">Bomberman</span>
-                </div>
-                <h2 class="game-title">Mini Bomberman</h2>
-                <p class="game-desc">
-                    Pose des bombes et deviens le dernier survivant. Mode 2 joueurs.
-                </p>
-                <div class="game-footer">
-                    <span class="tag">Arcade</span>
-                    <button class="btn-play">Jouer</button>
-                </div>
-            </article>
-        </a>
+        <!-- Vagues d’ennemis -->
+        <article class="game-card" onclick="launchGame('vagues')">
+          <span class="game-pill">Action</span>
+          <div class="thumb">
+            <img
+              src="games/images/Combat.png"
+              alt="Vagues d’ennemis"
+              class="thumb-img"
+            />
+          </div>
+          <h3 class="game-title">Vagues d’ennemis</h3>
+          <p class="game-desc">
+            Affronte des vagues d’ennemis dans un combat intense. Tiens le plus
+            longtemps possible.
+          </p>
+          <div class="game-meta">
+            <span>Solo</span>
+            <span>Score infini</span>
+          </div>
+          <button class="play-btn" type="button">▶ Jouer</button>
+        </article>
 
-        <!-- Memory -->
-        <a href="games/memory_fruits.html" class="game-link">
-            <article class="game-card">
-                <div class="game-image-wrapper">
-                    <img src="games/images/memory.png" alt="Jeu de memory" class="game-image">
-                    <span class="game-label">Memory</span>
-                </div>
-                <h2 class="game-title">Memory de fruits</h2>
-                <p class="game-desc">
-                    Retrouve les paires de fruits le plus vite possible.
-                </p>
-                <div class="game-footer">
-                    <span class="tag">Réflexion</span>
-                    <button class="btn-play">Jouer</button>
-                </div>
-            </article>
-        </a>
+        <!-- Bombes (type bomberman) -->
+        <article class="game-card" onclick="launchGame('bombes')">
+          <span class="game-pill">2 joueurs</span>
+          <div class="thumb">
+            <img
+              src="games/images/bombe.png"
+              alt="Bombes en arène"
+              class="thumb-img"
+            />
+          </div>
+          <h3 class="game-title">Bombes en arène</h3>
+          <p class="game-desc">
+            Pose des bombes, piège ton adversaire et deviens le dernier
+            survivant.
+          </p>
+          <div class="game-meta">
+            <span>Local</span>
+            <span>Arènes</span>
+          </div>
+          <button class="play-btn" type="button">▶ Jouer</button>
+        </article>
 
-        <!-- Chance -->
-        <a href="games/secret.html" class="game-link">
-            <article class="game-card">
-                <div class="game-image-wrapper">
-                    <img src="games/images/chance.png" alt="Jeu de chance" class="game-image">
-                    <span class="game-label">Jeu de chance</span>
-                </div>
-                <h2 class="game-title">Code secret</h2>
-                <p class="game-desc">
-                    Tente ta chance et essaie de trouver le code secret.
-                </p>
-                <div class="game-footer">
-                    <span class="tag">Hasard</span>
-                    <button class="btn-play">Jouer</button>
-                </div>
-            </article>
-        </a>
+        <!-- Memory fruits -->
+        <article class="game-card" onclick="launchGame('fruits')">
+          <span class="game-pill">Mémoire</span>
+          <div class="thumb">
+            <img
+              src="games/images/memory.png"
+              alt="Fruits memory"
+              class="thumb-img"
+            />
+          </div>
+          <h3 class="game-title">Fruits memory</h3>
+          <p class="game-desc">
+            Retourne les cartes et retrouve les paires de fruits le plus vite
+            possible.
+          </p>
+          <div class="game-meta">
+            <span>1 ou 2 joueurs</span>
+            <span>Temps record</span>
+          </div>
+          <button class="play-btn" type="button">▶ Jouer</button>
+        </article>
 
+         <!-- runner -->
+        <article class="game-card" onclick="launchGame('runner')">
+          <span class="game-pill">solo</span>
+          <div class="thumb">
+            <img
+              src="games/images/runner.png"
+              alt="geometry runner"
+              class="thumb-img"
+            />
+          </div>
+          <h3 class="game-title">geometry runner</h3>
+          <p class="game-desc">
+            saute escive les piques et sauve tout le monde.
+          </p>
+          <div class="game-meta">
+            <span>Local</span>
+            <span>runner</span>
+          </div>
+          <button class="play-btn" type="button">▶ Jouer</button>
+        </article>
 
-       
-    </section>
-</div>
-</body>
+        <!-- Code secret -->
+        <article class="game-card" onclick="launchGame('code')">
+          <span class="game-pill">Chance</span>
+          <div class="thumb">
+            <img
+              src="games/images/chance.png"
+              alt="Code secret"
+              class="thumb-img"
+            />
+          </div>
+          <h3 class="game-title">Code secret</h3>
+          <p class="game-desc">
+            Tente ta chance pour trouver le code secret en un minimum d’essais.
+          </p>
+          <div class="game-meta">
+            <span>Solo</span>
+            <span>Essais limités</span>
+          </div>
+          <button class="play-btn" type="button">▶ Jouer</button>
+        </article>
+      </section>
+
+      <footer>Arcade créée par Mathéo • Plus de jeux bientôt</footer>
+    </div>
+
+    <script>
+      // À adapter: mets ici les vrais chemins de tes jeux
+      const games = {
+        tir2: { url: "games/tiretire.html" },
+        mot: { url: "games/jeuDevinettes.html" },
+        vagues: { url: "games/jeu_arcade_combat_epique_ultimate-PCtour.html" },
+        bombes: { url: "games/bomberman_prototype.html" },
+        fruits: { url: "games/memoryFruits.html" },
+        course: { url: "games/runner.html" },
+        code: { url: "games/secret.html" }
+      };
+
+      function launchGame(id) {
+        const game = games[id];
+        if (!game) return;
+        window.location.href = game.url;
+      }
+
+      // Empêche le clic sur le bouton de ne pas lancer la carte
+      document.querySelectorAll(".game-card .play-btn").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const card = e.currentTarget.closest(".game-card");
+          const key =
+            card && card.getAttribute("onclick")
+              ? card.getAttribute("onclick").match(/'(.*)'/)[1]
+              : null;
+          if (key) launchGame(key);
+        });
+      });
+    </script>
+  </body>
 </html>
