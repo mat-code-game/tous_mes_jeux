@@ -187,6 +187,50 @@
         color: #555;
         pointer-events: none;
       }
+
+      /* Panneau latéral pour le classement */
+      #side-leaderboard {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 250px;
+        max-height: 80vh;
+        background: var(--panel-bg);
+        border: 1px solid var(--fg);
+        border-radius: 15px;
+        padding: 15px;
+        pointer-events: auto;
+        z-index: 100;
+        backdrop-filter: blur(5px);
+        overflow-y: auto;
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+        display: flex;
+        flex-direction: column;
+      }
+
+      #side-leaderboard h3 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        text-align: center;
+        color: var(--fg);
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--fg);
+        padding-bottom: 5px;
+      }
+
+      .mobile-only {
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        #side-leaderboard {
+          width: 180px;
+          right: 5px;
+          padding: 8px;
+        }
+        #side-leaderboard h3 { font-size: 12px; }
+      }
     </style>
   </head>
   <body>
@@ -204,6 +248,13 @@
           <button class="btn" id="btnPause">Pause</button>
           <button class="btn" id="btnRestart">Restart</button>
         </div>
+      </div>
+    </div>
+
+    <div id="side-leaderboard">
+      <h3>🏆 TOP JOUEURS</h3>
+      <div id="leaderboardContent">
+        Chargement...
       </div>
     </div>
 
@@ -262,6 +313,20 @@
       const BALL_RADIUS = 0.3;
     //   const WIN_SCORE = 1;
       const WIN_SCORE = 11;
+      
+      // --- DIVISIONS CONFIG ---
+      const DIVISIONS = [
+        { name: "Cuir", min: -Infinity, max: 49, color: "#8B4513", icon: "🟫" },
+        { name: "Cuivre", min: 50, max: 149, color: "#CD7F32", icon: "🟧" },
+        { name: "Fer", min: 150, max: 299, color: "#A9A9A9", icon: "⬜" },
+        { name: "Or", min: 300, max: 599, color: "#FFD700", icon: "🟨" },
+        { name: "Diamant", min: 600, max: 999, color: "#00BFFF", icon: "💎" },
+        { name: "Netherite", min: 1000, max: Infinity, color: "#4B0082", icon: "🟣" }
+      ];
+
+      function getDivision(pts) {
+        return DIVISIONS.find(d => pts >= d.min && pts <= d.max) || DIVISIONS[0];
+      }
 
       // --- GAME STATE ---
       const state = {
@@ -415,6 +480,7 @@
       // --- CONTROLS ---
       const keys = {};
       window.addEventListener("keydown", (e) => {
+        if (document.activeElement.tagName === "INPUT") return; // Désactiver les raccourcis si on tape un pseudo
         keys[e.key.toLowerCase()] = true;
         if (e.code === "Space") togglePause();
         if (e.key.toLowerCase() === "c") cycleCamera();
@@ -667,18 +733,92 @@
           
           // Sauvegarde dans Supabase
           if (supabase) {
+            const avatarUrl = customAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(currentPseudo)}`;
             supabase.from("championnat_pingpong").insert([{
               pseudo: currentPseudo,
               score_joueur: state.scoreL,
               score_ia: state.scoreR,
-              resultat: isWin ? "victoire" : "defaite"
+              resultat: isWin ? "victoire" : "defaite",
+              photo_profil: avatarUrl
             }]).then(({ error }) => {
               if (error) console.error("Erreur d'enregistrement Supabase :", error);
-              else console.log("Résultat du championnat enregistré !");
+              else {
+                  console.log("Résultat du championnat enregistré !");
+                  loadLeaderboard(); // Rafraîchir le classement après la partie
+              }
             });
           }
         }
       }
+
+      // --- LEADERBOARD LOGIC ---
+      async function loadLeaderboard() {
+        if (!supabase) return;
+        
+        const { data, error } = await supabase.from("championnat_pingpong").select("*");
+        if (error) {
+          console.error("Erreur chargement classement:", error);
+          return;
+        }
+
+        // Grouper par pseudo
+        const players = {};
+        data.forEach(match => {
+          if (!players[match.pseudo]) {
+            players[match.pseudo] = { pts: 0, avatar: match.photo_profil, wins: 0, losses: 0 };
+          }
+          if (match.resultat === "victoire") {
+            players[match.pseudo].pts += 10;
+            players[match.pseudo].wins++;
+          } else {
+            players[match.pseudo].pts -= 5;
+            players[match.pseudo].losses++;
+          }
+          // Garder l'avatar le plus récent
+          if (match.photo_profil) players[match.pseudo].avatar = match.photo_profil;
+        });
+
+        // Convertir en tableau et trier
+        const sorted = Object.entries(players).map(([pseudo, info]) => ({
+          pseudo, ...info
+        })).sort((a, b) => b.pts - a.pts);
+
+        updateLeaderboardUI(sorted);
+        
+        // Mettre à jour la division du joueur actuel dans le menu
+        const me = sorted.find(p => p.pseudo === currentPseudo);
+        if (me) {
+            const div = getDivision(me.pts);
+            msgEl.innerHTML = `${div.icon} ${div.name.toUpperCase()} <br> <span style="font-size: 14px; opacity: 0.8">${me.pts} pts (${me.wins}V / ${me.losses}D)</span>`;
+        }
+      }
+
+      function updateLeaderboardUI(players) {
+        const container = document.getElementById("leaderboardContent");
+        if (players.length === 0) {
+          container.innerHTML = "Aucun joueur enregistré.";
+          return;
+        }
+
+        container.innerHTML = players.map((p, i) => {
+          const div = getDivision(p.pts);
+          return `
+            <div style="display: flex; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); ${p.pseudo === currentPseudo ? 'background: rgba(0,242,255,0.1);' : ''}">
+              <span style="width: 18px; font-size: 10px; font-weight: bold; color: var(--accent);">${i + 1}</span>
+              <img src="${p.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + p.pseudo}" style="width: 20px; height: 20px; border-radius: 50%; margin: 0 6px; border: 1px solid ${div.color};" />
+              <div style="flex: 1; overflow: hidden;">
+                <div style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: white;">${p.pseudo}</div>
+                <div style="font-size: 9px; color: ${div.color};">${div.icon} ${p.pts} pts</div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      // Supprimer les anciens boutons de leaderboard si nécessaire
+
+      // Panneau latéral toujours visible
+      const sideLeaderboard = document.getElementById("side-leaderboard");
 
       // --- RENDER LOOP ---
       function animate() {
@@ -706,6 +846,7 @@
 
       animate();
       updateScore();
+      loadLeaderboard();
     </script>
   </body>
 </html>
