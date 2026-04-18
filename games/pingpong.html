@@ -69,19 +69,54 @@
         pointer-events: auto;
       }
 
+      .avatar-hint {
+        font-size: 10px;
+        color: var(--fg);
+        margin-bottom: 5px;
+        opacity: 0.7;
+      }
+
+      /* Style pour le sélecteur de difficulté */
+      .difficulty-selector {
+        display: flex;
+        gap: 5px;
+        margin: 15px 0;
+      }
+
+      .diff-btn {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid var(--fg);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s;
+      }
+
+      .diff-btn.active {
+        background: var(--fg);
+        color: black;
+        box-shadow: 0 0 10px var(--fg);
+      }
+
       .controls-overlay {
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
         text-align: center;
-        background: rgba(0, 0, 0, 0.7);
+        background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.9)), 
+                    url('images/pingpong_serious.png');
+        background-size: cover;
+        background-position: center;
         padding: 30px;
         border-radius: 20px;
         border: 2px solid var(--accent);
         pointer-events: auto;
         transition: opacity 0.3s;
         z-index: 20;
+        min-width: 320px;
       }
 
       .hidden {
@@ -156,6 +191,41 @@
         box-shadow: 0 0 0 #b300a3;
       }
 
+      /* Galerie d'Avatars */
+      .avatar-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        margin-bottom: 15px;
+        max-height: 150px;
+        overflow-y: auto;
+        padding: 5px;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px;
+        background: rgba(0,0,0,0.3);
+      }
+
+      .avatar-option {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.2s;
+        object-fit: cover;
+      }
+
+      .avatar-option:hover {
+        transform: scale(1.1);
+        border-color: var(--fg);
+      }
+
+      .avatar-option.selected {
+        border-color: var(--accent);
+        box-shadow: 0 0 10px var(--accent);
+        transform: scale(1.1);
+      }
+
       .btn-camera {
         background: #222;
         border: 1px solid #444;
@@ -207,6 +277,11 @@
         box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
         display: flex;
         flex-direction: column;
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      #side-leaderboard.hidden-panel {
+        transform: translateY(-50%) translateX(calc(100% + 40px));
       }
 
       #side-leaderboard h3 {
@@ -231,39 +306,95 @@
         }
         #side-leaderboard h3 { font-size: 12px; }
       }
+
+      /* Overlay Rotation Mobile */
+      #orientation-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        z-index: 1000;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 20px;
+      }
+
+      @media screen and (max-width: 900px) and (orientation: portrait) {
+        #orientation-overlay {
+          display: flex;
+        }
+      }
+
+      .rotate-icon {
+        font-size: 50px;
+        margin-bottom: 20px;
+        animation: rotate 2s infinite;
+      }
+
+      @keyframes rotate {
+        0% { transform: rotate(0deg); }
+        50% { transform: rotate(90deg); }
+        100% { transform: rotate(0deg); }
+      }
     </style>
   </head>
   <body>
+    <!-- Overlay de rotation pour mobile -->
+    <div id="orientation-overlay">
+      <div class="rotate-icon">📱🔄</div>
+      <h2>Pivotez votre appareil</h2>
+      <p>Pour une meilleure expérience, le jeu se joue en mode paysage.</p>
+    </div>
+
     <div id="ui-container">
       <header>
-        <h1>🏓 3D Pong Smash</h1>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <h1>🏓 3D Pong Smash</h1>
+        </div>
         <div class="score-panel" id="score">0 — 0</div>
       </header>
 
       <div class="bottom-bar">
         <div>
           <button class="btn btn-camera" id="btnCam">🎥 Caméra (C)</button>
+          <button class="btn" id="btnToggleLeaderboard" style="background: #333; font-size: 14px;">🏆 ON/OFF</button>
+          <button class="btn" id="btnMute" style="background: #222; font-size: 14px;">🔊</button>
         </div>
         <div>
           <button class="btn" id="btnPause">Pause</button>
+          <button class="btn" id="btnShare" style="background: #25d366; font-size: 14px;">📤 Partager</button>
           <button class="btn" id="btnRestart">Restart</button>
+          <button class="btn" id="btnFullscreen" style="padding: 12px 18px; font-size: 14px; margin: 0;">⛶</button>
         </div>
       </div>
     </div>
 
     <div id="side-leaderboard">
-      <h3>🏆 TOP JOUEURS</h3>
+      <h3 id="leaderboardTitle">🏆 TOP JOUEURS</h3>
       <div id="leaderboardContent">
         Chargement...
       </div>
     </div>
 
-    <div class="controls-overlay" id="overlay">
+      <div class="controls-overlay" id="overlay">
       <div id="profileSetup" class="profile-setup">
-        <img id="avatarPreview" class="avatar-preview" src="https://api.dicebear.com/7.x/bottts/svg?seed=Joueur" alt="Avatar" title="Cliquez pour changer d'image" />
-        <div class="avatar-hint">Cliquez sur l'image pour la changer</div>
-        <input type="file" id="avatarUpload" accept="image/*" style="display:none;" />
+        <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--fg);">Choisissez votre Avatar</h3>
+        <div id="avatarGallery" class="avatar-grid">
+          <!-- Les 20 avatars seront générés ici -->
+        </div>
         <input type="text" id="pseudoInput" class="pseudo-input" placeholder="Entrez votre pseudo" maxlength="15" />
+        
+        <div class="difficulty-selector">
+          <button class="diff-btn" data-diff="0">Recrue</button>
+          <button class="diff-btn active" data-diff="1">Pro</button>
+          <button class="diff-btn" data-diff="2">Champion</button>
+          <button class="diff-btn" data-diff="3">Légende</button>
+        </div>
       </div>
       <h2 id="msg">PRÊT ?</h2>
       <button class="btn" id="btnStart">JOUER</button>
@@ -284,6 +415,11 @@
         }
       }
     </script>
+
+    <!-- AUDIO -->
+    <audio id="bgMusic" loop preload="auto">
+      <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    </audio>
 
     <script type="module">
       import * as THREE from "three";
@@ -339,7 +475,16 @@
         paddleR: { x: TABLE_WIDTH / 2 - 1, z: 0, targetZ: 0 },
         camIndex: 0,
         touchActive: false,
+        difficulty: 1, // 0: Recrue, 1: Pro, 2: Champion, 3: Légende
+        mute: false,
       };
+
+      const DIFF_SETTINGS = [
+        { aiSpeed: 0.08, aiReaction: 1.0 }, // Recrue
+        { aiSpeed: 0.12, aiReaction: 0.5 }, // Pro
+        { aiSpeed: 0.18, aiReaction: 0.2 }, // Champion
+        { aiSpeed: 0.25, aiReaction: 0.05 }, // Légende
+      ];
 
       // --- THREE.JS SETUP ---
       const scene = new THREE.Scene();
@@ -399,6 +544,85 @@
 
       const ballLight = new THREE.PointLight(0xff00ea, 2, 8);
       scene.add(ballLight);
+
+      // --- PARTICLES ---
+      const particlesGeo = new THREE.BufferGeometry();
+      const particlesCount = 50;
+      const positions = new Float32Array(particlesCount * 3);
+      particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const particlesMat = new THREE.PointsMaterial({
+        color: 0xff00ea,
+        size: 0.1,
+        transparent: true,
+        opacity: 0,
+      });
+      const particleSystem = new THREE.Points(particlesGeo, particlesMat);
+      scene.add(particleSystem);
+
+      let particleVelocities = [];
+
+      function emitParticles(x, z) {
+        const positions = particleSystem.geometry.attributes.position.array;
+        particleVelocities = [];
+        for (let i = 0; i < particlesCount; i++) {
+          positions[i * 3] = x;
+          positions[i * 3 + 1] = BALL_RADIUS;
+          positions[i * 3 + 2] = z;
+          
+          particleVelocities.push({
+            x: (Math.random() - 0.5) * 0.2,
+            y: (Math.random()) * 0.1,
+            z: (Math.random() - 0.5) * 0.2
+          });
+        }
+        particleSystem.geometry.attributes.position.needsUpdate = true;
+        particlesMat.opacity = 1;
+      }
+
+      function updateParticles() {
+        if (particlesMat.opacity <= 0) return;
+        const positions = particleSystem.geometry.attributes.position.array;
+        for (let i = 0; i < particlesCount; i++) {
+          positions[i * 3] += particleVelocities[i].x;
+          positions[i * 3 + 1] += particleVelocities[i].y;
+          positions[i * 3 + 2] += particleVelocities[i].z;
+          particleVelocities[i].y -= 0.005; // gravity
+        }
+        particleSystem.geometry.attributes.position.needsUpdate = true;
+        particlesMat.opacity -= 0.02;
+      }
+
+      // --- BALL TRAIL ---
+      const trailCount = 10;
+      const trailGeo = new THREE.SphereGeometry(BALL_RADIUS * 0.8, 8, 8);
+      const trailMeshes = [];
+      for (let i = 0; i < trailCount; i++) {
+        const mat = new THREE.MeshStandardMaterial({
+          color: 0xff00ea,
+          transparent: true,
+          opacity: (1 - (i / trailCount)) * 0.3,
+          emissive: 0xff00ea,
+          emissiveIntensity: 1,
+        });
+        const mesh = new THREE.Mesh(trailGeo, mat);
+        scene.add(mesh);
+        trailMeshes.push(mesh);
+      }
+      const ballHistory = [];
+
+      function updateTrail() {
+        ballHistory.unshift({ x: state.ball.x, z: state.ball.z });
+        if (ballHistory.length > trailCount) ballHistory.pop();
+        
+        for (let i = 0; i < trailMeshes.length; i++) {
+          if (ballHistory[i]) {
+            trailMeshes[i].position.set(ballHistory[i].x, BALL_RADIUS, ballHistory[i].z);
+            trailMeshes[i].visible = state.running;
+          } else {
+            trailMeshes[i].visible = false;
+          }
+        }
+      }
 
       // --- OBJECTS ---
       // Table
@@ -523,74 +747,140 @@
       const btnPause = document.getElementById("btnPause");
       const btnRestart = document.getElementById("btnRestart");
       const btnCam = document.getElementById("btnCam");
+      const btnFullscreen = document.getElementById("btnFullscreen");
+      const btnMute = document.getElementById("btnMute");
+      const btnShare = document.getElementById("btnShare");
+      const bgMusic = document.getElementById("bgMusic");
       
       const pseudoInput = document.getElementById("pseudoInput");
-      const avatarPreview = document.getElementById("avatarPreview");
+      const avatarGallery = document.getElementById("avatarGallery");
       const profileSetup = document.getElementById("profileSetup");
-      const avatarUpload = document.getElementById("avatarUpload");
       
       let currentPseudo = localStorage.getItem("pingpong_pseudo") || "Joueur";
       let customAvatar = localStorage.getItem("pingpong_custom_avatar") || null;
       
       pseudoInput.value = currentPseudo;
-      updateAvatarDisplay();
+
+      // Générer les 20 avatars
+      const AVATAR_COUNT = 20;
+      for (let i = 1; i <= AVATAR_COUNT; i++) {
+        const seed = `Bot${i}`;
+        const url = `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
+        const img = document.createElement("img");
+        img.src = url;
+        img.className = "avatar-option";
+        if (customAvatar === url) img.classList.add("selected");
+        
+        img.onclick = () => {
+          // Désélectionner les autres
+          document.querySelectorAll(".avatar-option").forEach(opt => opt.classList.remove("selected"));
+          // Sélectionner celui-ci
+          img.classList.add("selected");
+          customAvatar = url;
+          localStorage.setItem("pingpong_custom_avatar", url);
+          loadLeaderboard(); // Pour mettre à jour l'affichage de notre division avec le nouvel avatar
+        };
+        avatarGallery.appendChild(img);
+      }
 
       pseudoInput.addEventListener("input", (e) => {
         currentPseudo = e.target.value.trim() || "Joueur";
-        updateAvatarDisplay();
       });
 
-      function updateAvatarDisplay() {
-        if (customAvatar) {
-          avatarPreview.src = customAvatar;
-        } else {
-          avatarPreview.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(currentPseudo)}`;
-        }
+      // Gestion Difficulté
+      const diffBtns = document.querySelectorAll(".diff-btn");
+      diffBtns.forEach(btn => {
+        btn.onclick = () => {
+          diffBtns.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          state.difficulty = parseInt(btn.dataset.diff);
+        };
+      });
+
+      // Audio Context pour SFX
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      function playSFX(freq, duration, type = "square") {
+        if (state.mute) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
       }
 
-      // Permettre le choix d'un avatar personalisé
-      avatarPreview.addEventListener("click", () => {
-        avatarUpload.click();
-      });
-
-      avatarUpload.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-              // Redimensionner l'image pour ne pas saturer le stockage
-              const canvas = document.createElement("canvas");
-              const ctx = canvas.getContext("2d");
-              canvas.width = 100;
-              canvas.height = 100;
-              // Remplir avec du noir pour les PNG transparents
-              ctx.fillStyle = "#050505";
-              ctx.fillRect(0, 0, 100, 100);
-              ctx.drawImage(img, 0, 0, 100, 100);
-              
-              customAvatar = canvas.toDataURL("image/jpeg", 0.9);
-              localStorage.setItem("pingpong_custom_avatar", customAvatar);
-              updateAvatarDisplay();
-            };
-            img.src = event.target.result;
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-
       btnStart.onclick = () => {
+        // Tenter de passer en plein écran et verrouiller le paysage sur mobile
+        if (window.innerWidth < 1000) {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          }
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {});
+          }
+        }
+        
         localStorage.setItem("pingpong_pseudo", currentPseudo);
         profileSetup.style.display = "none";
         overlay.classList.add("hidden");
         state.running = true;
+        
+        // Démarrer la musique
+        if (!state.mute) {
+            bgMusic.play().catch(e => console.warn("Auto-play bloqué:", e));
+        }
+        
         if (state.gameOver) restart();
       };
 
       btnPause.onclick = togglePause;
       btnRestart.onclick = restart;
       btnCam.onclick = cycleCamera;
+      btnFullscreen.onclick = () => {
+          if (!document.fullscreenElement) {
+              document.documentElement.requestFullscreen().catch(err => {
+                  alert(`Erreur plein écran: ${err.message}`);
+              });
+          } else {
+              if (document.exitFullscreen) {
+                  document.exitFullscreen();
+              }
+          }
+      };
+
+      btnMute.onclick = () => {
+        state.mute = !state.mute;
+        btnMute.textContent = state.mute ? "🔇" : "🔊";
+        bgMusic.muted = state.mute;
+      };
+
+      btnShare.onclick = async () => {
+        let pts = 0;
+        // Tenter de récupérer les points depuis le leaderboard localement
+        const me = (window.lastSortedLeaderboard || []).find(p => p.pseudo === currentPseudo);
+        if (me) pts = me.pts;
+
+        const text = `J'ai fait ${pts} points au Ping Pong Smash ! Arriveras-tu à me battre ? 🏓🔥`;
+        const url = window.location.href;
+
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: '3D Ping Pong Smash',
+              text: text,
+              url: url,
+            });
+          } catch (err) { console.error(err); }
+        } else {
+          navigator.clipboard.writeText(`${text} ${url}`).then(() => {
+            alert("Score copié ! Prêt à être partagé.");
+          });
+        }
+      };
 
       function togglePause() {
         state.running = !state.running;
@@ -650,10 +940,14 @@
         paddleL.position.z = state.paddleL.z;
 
         // AI movement (R)
-        const aiSpeed = 0.12;
+        const diff = DIFF_SETTINGS[state.difficulty];
+        const aiSpeed = diff.aiSpeed;
         const targetZ = state.ball.z;
-        if (targetZ < state.paddleR.z - 0.5) state.paddleR.z -= aiSpeed;
-        else if (targetZ > state.paddleR.z + 0.5) state.paddleR.z += aiSpeed;
+        const error = (Math.random() - 0.5) * diff.aiReaction * TABLE_DEPTH;
+        
+        if (targetZ < state.paddleR.z - 0.5 + error) state.paddleR.z -= aiSpeed;
+        else if (targetZ > state.paddleR.z + 0.5 + error) state.paddleR.z += aiSpeed;
+        
         state.paddleR.z = Math.max(
           -TABLE_DEPTH / 2 + PADDLE_DEPTH / 2,
           Math.min(TABLE_DEPTH / 2 - PADDLE_DEPTH / 2, state.paddleR.z),
@@ -669,6 +963,7 @@
           state.ball.vz *= -1;
           state.ball.z =
             Math.sign(state.ball.z) * (TABLE_DEPTH / 2 - BALL_RADIUS);
+          playSFX(200, 0.1, "sine"); // SFX Rebond mur
         }
 
         // Paddle collisions
@@ -683,6 +978,8 @@
           state.ball.vx *= -1.1; // accelerate
           state.ball.vz += (state.ball.z - state.paddleL.z) * 0.2;
           state.ball.x = state.paddleL.x + PADDLE_WIDTH / 2 + BALL_RADIUS;
+          playSFX(440, 0.15); // SFX Impact
+          emitParticles(state.ball.x, state.ball.z);
         }
 
         // Right
@@ -696,15 +993,19 @@
           state.ball.vx *= -1.1;
           state.ball.vz += (state.ball.z - state.paddleR.z) * 0.2;
           state.ball.x = state.paddleR.x - PADDLE_WIDTH / 2 - BALL_RADIUS;
+          playSFX(330, 0.15); // SFX Impact
+          emitParticles(state.ball.x, state.ball.z);
         }
 
         // Scoring
         if (state.ball.x < -TABLE_WIDTH / 2) {
           state.scoreR++;
+          playSFX(150, 0.5, "sawtooth"); // SFX Point perdu
           checkWin();
           if (!state.gameOver) resetBall(1);
         } else if (state.ball.x > TABLE_WIDTH / 2) {
           state.scoreL++;
+          playSFX(600, 0.5, "sine"); // SFX Point gagné
           checkWin();
           if (!state.gameOver) resetBall(-1);
         }
@@ -783,14 +1084,22 @@
           pseudo, ...info
         })).sort((a, b) => b.pts - a.pts);
 
-        updateLeaderboardUI(sorted);
-        
+        window.lastSortedLeaderboard = sorted; // Stocker pour le partage
+
         // Mettre à jour la division du joueur actuel dans le menu
         const me = sorted.find(p => p.pseudo === currentPseudo);
+        let myDivName = "Cuir";
         if (me) {
             const div = getDivision(me.pts);
+            myDivName = div.name;
             msgEl.innerHTML = `${div.icon} ${div.name.toUpperCase()} <br> <span style="font-size: 14px; opacity: 0.8">${me.pts} pts (${me.wins}V / ${me.losses}D)</span>`;
         }
+        
+        // Filtrer les joueurs pour ne garder que ceux de la même division
+        const sameDivPlayers = sorted.filter(p => getDivision(p.pts).name === myDivName);
+        
+        document.getElementById("leaderboardTitle").textContent = `🏆 Division ${myDivName}`;
+        updateLeaderboardUI(sameDivPlayers);
       }
 
       function updateLeaderboardUI(players) {
@@ -817,14 +1126,20 @@
 
       // Supprimer les anciens boutons de leaderboard si nécessaire
 
-      // Panneau latéral toujours visible
+      const btnToggleLeaderboard = document.getElementById("btnToggleLeaderboard");
       const sideLeaderboard = document.getElementById("side-leaderboard");
+      
+      btnToggleLeaderboard.onclick = () => {
+          sideLeaderboard.classList.toggle("hidden-panel");
+      };
 
       // --- RENDER LOOP ---
       function animate() {
         requestAnimationFrame(animate);
 
         update();
+        updateParticles();
+        updateTrail();
 
         // Camera follow logic for perspective 1 (Immersive)
         if (state.camIndex === 1) {
