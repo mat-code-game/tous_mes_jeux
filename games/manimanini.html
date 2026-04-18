@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Pac-Man Mobile</title>
+    <title>ManiManini: Neon Heist</title>
     <style>
       * {
         box-sizing: border-box;
@@ -118,6 +118,7 @@
         width: 100%;
         max-width: 448px;
         height: auto;
+        touch-action: none;
       }
 
       #pseudo-overlay {
@@ -237,6 +238,7 @@
         width: 200px;
         height: 200px;
         margin: 0 auto 15px;
+        touch-action: none;
       }
 
       #joystick-base {
@@ -1096,7 +1098,7 @@
     </style>
   </head>
   <body>
-    <h1>PAC-MAN MOBILE</h1>
+    <h1>ManiManini: Neon Heist</h1>
 
     <div id="stats">
       <div class="stat">
@@ -1121,31 +1123,31 @@
       <!-- Pouvoirs à gauche -->
       <div id="powers-info">
         <div class="power-mini">
-          <span class="power-mini-icon power-invincible">⚡</span>
+          <span class="power-mini-icon power-invincible">🔋</span>
           <div class="power-mini-text">
-            <span class="power-mini-name power-invincible">Invincibilité</span>
+            <span class="power-mini-name power-invincible">Overclock</span>
             <span class="power-mini-duration">8s</span>
           </div>
         </div>
         <div class="power-mini">
-          <span class="power-mini-icon power-speed">🚀</span>
+          <span class="power-mini-icon power-speed">💿</span>
           <div class="power-mini-text">
-            <span class="power-mini-name power-speed">Vitesse</span>
+            <span class="power-mini-name power-speed">Data-Link</span>
             <span class="power-mini-duration">6s</span>
           </div>
         </div>
         <div class="power-mini">
-          <span class="power-mini-icon power-shield">🛡️</span>
+          <span class="power-mini-icon power-shield">📟</span>
           <div class="power-mini-text">
-            <span class="power-mini-name power-shield">Bouclier</span>
+            <span class="power-mini-name power-shield">Pare-feu</span>
             <span class="power-mini-duration">10s</span>
           </div>
         </div>
 
         <div class="power-mini">
-          <span class="power-mini-icon power-freeze">❄️</span>
+          <span class="power-mini-icon power-freeze">💾</span>
           <div class="power-mini-text">
-            <span class="power-mini-name power-freeze">Freeze</span>
+            <span class="power-mini-name power-freeze">Système-Lock</span>
             <span class="power-mini-duration">5s</span>
           </div>
         </div>
@@ -1174,23 +1176,8 @@
 
       <!-- Contrôles à droite -->
       <div id="controls-mobile">
-        <div id="joystick-container">
-          <div id="joystick-base">
-            <span class="joystick-direction joystick-up">▲</span>
-            <span class="joystick-direction joystick-down">▼</span>
-            <span class="joystick-direction joystick-left">◄</span>
-            <span class="joystick-direction joystick-right">►</span>
-          </div>
-          <div id="joystick-stick"></div>
-        </div>
-
-        <!-- Ancien dpad caché -->
-        <div id="dpad" style="display: none">
-          <button class="dpad-btn" id="up-btn">▲</button>
-          <button class="dpad-btn" id="left-btn">◄</button>
-          <button class="dpad-btn center" id="pause-btn">⏸</button>
-          <button class="dpad-btn" id="right-btn">►</button>
-          <button class="dpad-btn" id="down-btn">▼</button>
+        <div style="color: #00ffff; font-size: 14px; text-align: center; margin-bottom: 20px; font-weight: bold; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; border: 1px solid #00ffff;">
+          👉 Dessine directement ton chemin sur le labyrinthe !
         </div>
 
         <div class="action-buttons">
@@ -1228,7 +1215,7 @@
               <div class="stat-box-label">Parties Jouées</div>
             </div>
             <div class="stat-box">
-              <div class="stat-box-value" id="total-ghosts">0</div>
+              <div class="stat-box-value" id="total-drones">0</div>
               <div class="stat-box-label">Fantômes Mangés</div>
             </div>
             <div class="stat-box">
@@ -1240,7 +1227,7 @@
 
         <!-- Skins -->
         <div class="menu-section">
-          <div class="section-title">👤 Skins Pac-Man</div>
+          <div class="section-title">👤 Skins ManiManini</div>
           <div class="skins-grid" id="skins-grid"></div>
         </div>
 
@@ -1248,6 +1235,24 @@
         <div class="menu-section">
           <div class="section-title">🎨 Thèmes</div>
           <div class="themes-grid" id="themes-grid"></div>
+        </div>
+
+        <!-- La Grande Carte Mère (Progression) -->
+        <div class="menu-section">
+          <div class="section-title">🖥️ État de la Grande Carte Mère</div>
+          <div
+            id="motherboard-progress"
+            style="
+              display: flex;
+              gap: 8px;
+              justify-content: space-between;
+              padding: 10px;
+              background: rgba(0, 0, 0, 0.3);
+              border-radius: 8px;
+            "
+          >
+            <!-- Rempli dynamiquement -->
+          </div>
         </div>
 
         <!-- Succès -->
@@ -1291,7 +1296,7 @@
             icon: "👽",
             name: "Alien",
             unlocked: false,
-            requirement: "ghosts20",
+            requirement: "drones20",
           },
           {
             id: "ninja",
@@ -1319,7 +1324,7 @@
             icon: "🧛",
             name: "Vampire",
             unlocked: false,
-            requirement: "ghosts50",
+            requirement: "drones50",
           },
           {
             id: "wizard",
@@ -1385,7 +1390,7 @@
             unlocked: false,
           },
           {
-            id: "ghosts20",
+            id: "drones20",
             icon: "👻",
             name: "Chasseur",
             desc: "Manger 20 fantômes",
@@ -1394,7 +1399,7 @@
             unlocked: false,
           },
           {
-            id: "ghosts50",
+            id: "drones50",
             icon: "💀",
             name: "Exterminateur",
             desc: "Manger 50 fantômes",
@@ -1456,14 +1461,12 @@
         currentTheme: "classic",
         totalScore: 0,
         totalGames: 0,
-        totalGhosts: 0,
+        totalDrones: 0,
         highestLevel: 1,
         speedPowerUps: 0,
       };
 
       async function syncStatsToSupabase() {
-        console.log("syncStatsToSupabase called with", playerStats);
-
         if (!playerStats.pseudo || playerStats.pseudo.trim().length === 0)
           return;
 
@@ -1471,24 +1474,28 @@
           pseudo: playerStats.pseudo.trim(),
           total_score: playerStats.totalScore,
           total_games: playerStats.totalGames,
-          total_ghosts: playerStats.totalGhosts,
+          total_drones: playerStats.totalDrones,
           highest_level: playerStats.highestLevel,
         };
 
+        console.log("Syncing to Supabase (insert mode)...", payload);
+
+        // On utilise insert pour garder un historique de toutes les parties
         const { data, error } = await sbClient
-          .from("pacman_players")
+          .from("manimanini_players")
           .insert(payload);
 
-
         if (error) {
-          console.error("Error syncing stats to Supabase:", error);
+          console.error("❌ Erreur Supabase:", error.message, error.details);
+        } else {
+          console.log("✅ Partie enregistrée dans l'historique !");
         }
       }
 
 
       // Charger les données sauvegardées
       function loadGameData() {
-        const saved = localStorage.getItem("pacmanPlayerData");
+        const saved = localStorage.getItem("maniPlayerData");
         if (saved) {
           const data = JSON.parse(saved);
           playerStats = {
@@ -1547,7 +1554,7 @@
       // Sauvegarder les données
       function saveGameData() {
         localStorage.setItem(
-          "pacmanPlayerData",
+          "maniPlayerData",
           JSON.stringify({
             stats: playerStats,
             skins: gameData.skins,
@@ -1569,11 +1576,11 @@
             case "score1000":
               shouldUnlock = playerStats.totalScore >= 1000;
               break;
-            case "ghosts20":
-              shouldUnlock = playerStats.totalGhosts >= 20;
+            case "drones20":
+              shouldUnlock = playerStats.totalDrones >= 20;
               break;
-            case "ghosts50":
-              shouldUnlock = playerStats.totalGhosts >= 50;
+            case "drones50":
+              shouldUnlock = playerStats.totalDrones >= 50;
               break;
             case "level5":
               shouldUnlock = playerStats.highestLevel >= 5;
@@ -1614,11 +1621,11 @@
             case "score1000":
               newProgress = Math.min(playerStats.totalScore, 1000);
               break;
-            case "ghosts20":
-              newProgress = Math.min(playerStats.totalGhosts, 20);
+            case "drones20":
+              newProgress = Math.min(playerStats.totalDrones, 20);
               break;
-            case "ghosts50":
-              newProgress = Math.min(playerStats.totalGhosts, 50);
+            case "drones50":
+              newProgress = Math.min(playerStats.totalDrones, 50);
               break;
             case "level5":
               newProgress = Math.min(playerStats.highestLevel, 5);
@@ -1687,8 +1694,8 @@
           playerStats.totalScore.toLocaleString();
         document.getElementById("total-games").textContent =
           playerStats.totalGames;
-        document.getElementById("total-ghosts").textContent =
-          playerStats.totalGhosts;
+        document.getElementById("total-drones").textContent =
+          playerStats.totalDrones;
         const unlockedCount = gameData.achievements.filter(
           (a) => a.unlocked,
         ).length;
@@ -1730,6 +1737,29 @@
           themesGrid.appendChild(div);
         });
 
+        // Carte Mère (Progression par niveau)
+        const mbProgress = document.getElementById("motherboard-progress");
+        mbProgress.innerHTML = "";
+        for (let i = 1; i <= 6; i++) {
+          const sector = document.createElement("div");
+          sector.style.flex = "1";
+          sector.style.height = "12px";
+          sector.style.borderRadius = "4px";
+          const isCleared = playerStats.highestLevel > i;
+          const isCurrent = playerStats.highestLevel === i;
+
+          if (isCleared) {
+            sector.style.background = "#22c55e"; // Vert purifié
+            sector.style.boxShadow = "0 0 10px #22c55e";
+          } else if (isCurrent) {
+            sector.style.background = "#3b82f6"; // Bleu en cours
+            sector.style.boxShadow = "0 0 10px #3b82f6";
+          } else {
+            sector.style.background = "#1e293b"; // Sombre infecté
+          }
+          mbProgress.appendChild(sector);
+        }
+
         // Succès
         const achievementsList = document.getElementById("achievements-list");
         achievementsList.innerHTML = "";
@@ -1753,12 +1783,12 @@
 
       // Partager le score
       function shareScore() {
-        const text = `🎮 J'ai marqué ${score} points au Pac-Man ! Niveau ${level} 🏆\n\nBattez mon score : https://urlr.me/ebMSPR`;
+        const text = `🎮 J'ai marqué ${score} points au ManiManini ! Niveau ${level} 🏆\n\nBattez mon score : https://urlr.me/ebMSPR`;
 
         if (navigator.share) {
           navigator
             .share({
-              title: "Mon score Pac-Man",
+              title: "Mon score ManiManini",
               text: text,
             })
             .catch(() => {});
@@ -1853,6 +1883,48 @@
           [1, 2, 2, 2, 2, 1, 2, 2, 1, 2, 2, 2, 2, 1],
           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         ],
+        // Niveau 4 (Le Secteur Central)
+        [
+          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          [1, 3, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 6, 1],
+          [1, 2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 2, 1],
+          [1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1],
+          [1, 2, 1, 2, 1, 1, 0, 0, 1, 1, 2, 1, 2, 1],
+          [1, 2, 2, 2, 1, 0, 0, 0, 0, 1, 2, 2, 2, 1],
+          [1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1],
+          [1, 2, 1, 2, 2, 2, 4, 5, 2, 2, 2, 1, 2, 1],
+          [1, 2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 2, 1],
+          [1, 2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 2, 1],
+          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        ],
+        // Niveau 5 (Le Labyrinthe Optique)
+        [
+          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+          [1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1],
+          [1, 2, 1, 3, 1, 2, 2, 2, 2, 1, 4, 1, 2, 1],
+          [1, 2, 1, 2, 1, 2, 1, 1, 2, 1, 2, 1, 2, 1],
+          [1, 2, 2, 2, 2, 2, 0, 0, 2, 2, 2, 2, 2, 1],
+          [1, 2, 1, 2, 1, 2, 1, 1, 2, 1, 2, 1, 2, 1],
+          [1, 2, 1, 5, 1, 2, 2, 2, 2, 1, 6, 1, 2, 1],
+          [1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1],
+          [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        ],
+        // Niveau 6 (La Forteresse Finale)
+        [
+          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          [1, 2, 1, 2, 2, 3, 1, 1, 6, 2, 2, 1, 2, 1],
+          [1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1],
+          [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+          [1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1],
+          [1, 0, 0, 2, 2, 2, 0, 0, 2, 2, 2, 0, 0, 1],
+          [1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1],
+          [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+          [1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1],
+          [1, 2, 1, 4, 2, 2, 2, 2, 2, 2, 5, 1, 2, 1],
+          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        ],
       ];
 
       // Système de réapparition des power-ups
@@ -1867,7 +1939,7 @@
       let originalMap = [];
       let rows, cols;
 
-      const pacman = {
+      const mani = {
         row: 5,
         col: 7,
         dir: { x: 0, y: 0 },
@@ -1883,7 +1955,7 @@
         freeze: false,
       };
 
-      const ghosts = [
+      const drones = [
         {
           row: 1,
           col: 1,
@@ -1891,7 +1963,7 @@
           baseColor: "#ef4444",
           dir: { x: 1, y: 0 },
           stepTimer: 0,
-          name: "Blinky",
+          name: "Volt",
           scatterTarget: { row: 0, col: 13 },
         },
         {
@@ -1901,7 +1973,7 @@
           baseColor: "#ec4899",
           dir: { x: -1, y: 0 },
           stepTimer: 0,
-          name: "Pinky",
+          name: "Nova",
           scatterTarget: { row: 0, col: 0 },
         },
         {
@@ -1911,7 +1983,7 @@
           baseColor: "#06b6d4",
           dir: { x: 1, y: 0 },
           stepTimer: 0,
-          name: "Inky",
+          name: "Glitch",
           scatterTarget: { row: 10, col: 13 },
         },
         {
@@ -1921,39 +1993,39 @@
           baseColor: "#f97316",
           dir: { x: -1, y: 0 },
           stepTimer: 0,
-          name: "Clyde",
+          name: "Void",
           scatterTarget: { row: 10, col: 0 },
         },
       ];
 
       let score = 0;
       let level = 1;
-      let highScore = localStorage.getItem("pacmanHighScore") || 0;
+      let highScore = localStorage.getItem("maniHighScore") || 0;
       let lives = 3;
       let totalDots = 0;
       let gameOver = false;
       let paused = false;
       let combo = 0;
       let comboTimer = 0;
-      let ghostsEaten = 0;
+      let dronesEaten = 0;
 
       const baseGhostDelay = 280;
       const basePacmanDelay = 120;
-      let ghostStepDelay = baseGhostDelay;
-      let pacmanStepDelay = basePacmanDelay;
-      let pacmanStepTimer = 0;
+      let droneStepDelay = baseGhostDelay;
+      let maniStepDelay = basePacmanDelay;
+      let maniStepTimer = 0;
       let lastTime = 0;
 
       const powerUpTypes = {
         3: {
-          name: "Invincibilité",
+          name: "Overclocking",
           color: "#facc15",
           duration: 8000,
-          icon: "⚡",
+          icon: "🔋",
         },
-        4: { name: "Vitesse", color: "#22c55e", duration: 6000, icon: "🚀" },
-        5: { name: "Bouclier", color: "#3b82f6", duration: 10000, icon: "🛡️" },
-        6: { name: "Freeze", color: "#a855f7", duration: 5000, icon: "❄️" },
+        4: { name: "Accès Rapide", color: "#22c55e", duration: 6000, icon: "💿" },
+        5: { name: "Pare-feu Matériel", color: "#3b82f6", duration: 10000, icon: "📟" },
+        6: { name: "Verrouillage Système", color: "#a855f7", duration: 5000, icon: "💾" },
       };
 
       const sounds = {
@@ -1973,7 +2045,7 @@
         },
       };
 
-      const pacmanSpeed = { normal: 0.5 , powered: 2, frozen: 0.005, };
+      const maniSpeed = { normal: 0.5 , powered: 2, frozen: 0.005, };
       function init() {
         currentMap = JSON.parse(
           JSON.stringify(maps[Math.min(level - 1, maps.length - 1)]),
@@ -1997,18 +2069,19 @@
         gameOver = false;
         paused = false;
 
-        pacman.row = 5;
-        pacman.col = 7;
-        pacman.dir = { x: 0, y: 0 };
-        pacman.nextDir = { x: 0, y: 0 };
-        pacman.powered = false;
-        pacman.powerTimer = 0;
-        pacman.speed = pacmanSpeed.normal;
-        pacman.shield = false;
-        pacman.freeze = false;
+        mani.row = 5;
+        mani.col = 7;
+        mani.dir = { x: 0, y: 0 };
+        mani.nextDir = { x: 0, y: 0 };
+        mani.powered = false;
+        mani.powerTimer = 0;
+        mani.speed = maniSpeed.normal;
+        mani.shield = false;
+        mani.freeze = false;
+        userPath = []; // Réinitialise le tracé au restart
 
-        ghostStepDelay = Math.max(150, baseGhostDelay - (level - 1) * 20);
-        pacmanStepDelay = Math.max(80, basePacmanDelay - (level - 1) * 5);
+        droneStepDelay = Math.max(150, baseGhostDelay - (level - 1) * 20);
+        maniStepDelay = Math.max(80, basePacmanDelay - (level - 1) * 5);
 
         const startPositions = [
           { row: 1, col: 1 },
@@ -2016,16 +2089,27 @@
           { row: 9, col: 1 },
           { row: 9, col: 12 },
         ];
-        ghosts.forEach((ghost, i) => {
-          ghost.row = startPositions[i].row;
-          ghost.col = startPositions[i].col;
-          ghost.stepTimer = 0;
-          ghost.color = ghost.baseColor;
+        drones.forEach((drone, i) => {
+          drone.row = startPositions[i].row;
+          drone.col = startPositions[i].col;
+          drone.stepTimer = 0;
+          drone.color = drone.baseColor;
         });
 
-        pacmanStepTimer = 0;
+        const levelMessages = [
+          "Mani, le Secteur Alpha est infecté par les Drones ! Purifie-le !",
+          "Attention, les Drones deviennent plus rapides dans le Secteur Beta.",
+          "Le Secteur Gamma est un véritable labyrinthe technologique.",
+          "Tu approches du Cœur Central de la Carte Mère !",
+          "Système en surcharge ! Le Labyrinthe Optique est instable.",
+          "Ultime étape : Libère la Forteresse Finale des Drones Maléfiques !"
+        ];
+        messageEl.textContent = levelMessages[Math.min(level - 1, levelMessages.length - 1)];
+        setTimeout(() => { if (!gameOver) messageEl.textContent = ""; }, 4000);
+
+        maniStepTimer = 0;
         combo = 0;
-        ghostsEaten = 0;
+        dronesEaten = 0;
         powerUpRespawn.collected.clear();
       }
 
@@ -2045,7 +2129,7 @@
         if (score > highScore) {
           highScore = score;
           highScoreEl.textContent = highScore;
-          localStorage.setItem("pacmanHighScore", highScore);
+          localStorage.setItem("maniHighScore", highScore);
         }
       }
 
@@ -2053,8 +2137,8 @@
         const popup = document.createElement("div");
         popup.className = "combo-popup";
         popup.textContent = `+${points}!`;
-        popup.style.left = pacman.col * tileSize + tileSize / 2 + "px";
-        popup.style.top = pacman.row * tileSize + "px";
+        popup.style.left = mani.col * tileSize + tileSize / 2 + "px";
+        popup.style.top = mani.row * tileSize + "px";
         document.getElementById("game").appendChild(popup);
         setTimeout(() => popup.remove(), 1000);
       }
@@ -2084,78 +2168,89 @@
             ctx.fillRect(c * tileSize, r * tileSize, tileSize, tileSize);
 
             if (tile === 1) {
-              const gradient = ctx.createLinearGradient(
-                c * tileSize,
-                r * tileSize,
-                c * tileSize + tileSize,
-                r * tileSize + tileSize,
-              );
-              gradient.addColorStop(0, "#1e40af");
-              gradient.addColorStop(1, "#1d4ed8");
-              ctx.fillStyle = gradient;
-              ctx.fillRect(
-                c * tileSize + 3,
-                r * tileSize + 3,
-                tileSize - 6,
-                tileSize - 6,
-              );
+              // Mur style Circuit Board
+              const wx = c * tileSize;
+              const wy = r * tileSize;
 
-              ctx.fillStyle = "rgba(96, 165, 250, 0.3)";
-              ctx.fillRect(c * tileSize + 4, r * tileSize + 4, tileSize - 8, 3);
-            } else if (tile === 2) {
-              ctx.fillStyle = "#f1f5f9";
-              ctx.shadowBlur = 5;
-              ctx.shadowColor = "#f1f5f9";
+              const gradient = ctx.createLinearGradient(wx, wy, wx + tileSize, wy + tileSize);
+              gradient.addColorStop(0, "#0f172a");
+              gradient.addColorStop(1, "#1e293b");
+              ctx.fillStyle = gradient;
+              ctx.fillRect(wx, wy, tileSize, tileSize);
+
+              // Bordure néon
+              ctx.strokeStyle = "#3b82f6";
+              ctx.lineWidth = 1;
+              ctx.strokeRect(wx + 1, wy + 1, tileSize - 2, tileSize - 2);
+
+              // Lignes de circuit
+              ctx.strokeStyle = "rgba(59, 130, 246, 0.4)";
               ctx.beginPath();
-              ctx.arc(
-                c * tileSize + tileSize / 2,
-                r * tileSize + tileSize / 2,
-                3,
-                0,
-                Math.PI * 2,
-              );
+              // Ligne horizontale
+              ctx.moveTo(wx, wy + tileSize/2);
+              ctx.lineTo(wx + tileSize, wy + tileSize/2);
+              // Ligne verticale
+              ctx.moveTo(wx + tileSize/2, wy);
+              ctx.lineTo(wx + tileSize/2, wy + tileSize);
+              ctx.stroke();
+
+              // Noeuds lumineux aux intersections
+              if ((c + r) % 2 === 0) {
+                ctx.fillStyle = "#60a5fa";
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = "#60a5fa";
+                ctx.fillRect(wx + tileSize/2 - 2, wy + tileSize/2 - 2, 4, 4);
+                ctx.shadowBlur = 0;
+              }
+            } else if (tile === 2) {
+              // Baie d'énergie (Petit fruit)
+              ctx.fillStyle = "#fb7185"; // Rose baie
+              ctx.beginPath();
+              const bx = c * tileSize + tileSize / 2;
+              const by = r * tileSize + tileSize / 2;
+              ctx.arc(bx, by, 4, 0, Math.PI * 2);
               ctx.fill();
-              ctx.shadowBlur = 0;
+              // Petite feuille verte
+              ctx.fillStyle = "#4ade80";
+              ctx.beginPath();
+              ctx.ellipse(bx, by - 4, 2, 4, Math.PI/4, 0, Math.PI*2);
+              ctx.fill();
             } else if (tile >= 3 && tile <= 6) {
               const powerUp = powerUpTypes[tile];
-              const pulseSize = 8 + Math.sin(currentTime / 200) * 2;
+              const bx = c * tileSize + tileSize / 2;
+              const by = r * tileSize + tileSize / 2;
+              const pulseSize = 10 + Math.sin(currentTime / 200) * 2;
 
               ctx.fillStyle = powerUp.color;
               ctx.shadowBlur = 20;
               ctx.shadowColor = powerUp.color;
-              ctx.globalAlpha = 0.3;
-              ctx.beginPath();
-              ctx.arc(
-                c * tileSize + tileSize / 2,
-                r * tileSize + tileSize / 2,
-                pulseSize + 4,
-                0,
-                Math.PI * 2,
-              );
-              ctx.fill();
-              ctx.globalAlpha = 1;
 
-              ctx.shadowBlur = 15;
-              ctx.beginPath();
-              ctx.arc(
-                c * tileSize + tileSize / 2,
-                r * tileSize + tileSize / 2,
-                pulseSize,
-                0,
-                Math.PI * 2,
-              );
-              ctx.fill();
-              ctx.shadowBlur = 0;
+              // Dessin du composant électronique (forme carrée style puce)
+              const size = pulseSize * 1.5;
+              ctx.fillRect(bx - size/2, by - size/2, size, size);
+              
+              // Bordure métallique
+              ctx.strokeStyle = "#fff";
+              ctx.lineWidth = 1;
+              ctx.strokeRect(bx - size/2, by - size/2, size, size);
 
-              ctx.fillStyle = "#0f172a";
+              // Petites pattes de puce
+              ctx.fillStyle = "#cbd5e1";
+              for(let i=-1; i<=1; i++) {
+                ctx.fillRect(bx-size/2-3, by + i*size/4-2, 3, 4); // gauche
+                ctx.fillRect(bx+size/2, by + i*size/4-2, 3, 4);   // droite
+                ctx.fillRect(bx + i*size/4-2, by-size/2-3, 4, 3); // haut
+                ctx.fillRect(bx + i*size/4-2, by+size/2, 4, 3);   // bas
+              }
+
+              // Icône au centre
+              ctx.fillStyle = "#fff";
               ctx.font = "14px Arial";
               ctx.textAlign = "center";
               ctx.textBaseline = "middle";
-              ctx.fillText(
-                powerUp.icon,
-                c * tileSize + tileSize / 2,
-                r * tileSize + tileSize / 2,
-              );
+              ctx.fillText(powerUp.icon, bx, by);
+
+              ctx.shadowBlur = 0;
             }
           }
         }
@@ -2166,19 +2261,19 @@
         return currentMap[row][col] !== 1;
       }
 
-      function movePacman() {
-        const targetRow = pacman.row + pacman.nextDir.y;
-        const targetCol = pacman.col + pacman.nextDir.x;
+      function moveMani() {
+        const targetRow = mani.row + mani.nextDir.y;
+        const targetCol = mani.col + mani.nextDir.x;
         if (canMoveTo(targetRow, targetCol)) {
-          pacman.dir = { ...pacman.nextDir };
+          mani.dir = { ...mani.nextDir };
         }
 
-        const newRow = pacman.row + pacman.dir.y;
-        const newCol = pacman.col + pacman.dir.x;
+        const newRow = mani.row + mani.dir.y;
+        const newCol = mani.col + mani.dir.x;
 
         if (canMoveTo(newRow, newCol)) {
-          pacman.row = newRow;
-          pacman.col = newCol;
+          mani.row = newRow;
+          mani.col = newCol;
 
           const tile = currentMap[newRow][newCol];
 
@@ -2199,37 +2294,37 @@
 
             const powerUp = powerUpTypes[tile];
 
-            pacman.powered = false;
-            pacman.speed = pacmanSpeed.normal;
-            pacman.shield = false;
-            pacman.freeze = false;
+            mani.powered = false;
+            mani.speed = maniSpeed.normal;
+            mani.shield = false;
+            mani.freeze = false;
 
             switch (tile) {
               case 3:
-                pacman.powered = true;
-                pacman.powerTimer = powerUp.duration;
-                ghostsEaten = 0;
-                ghosts.forEach((ghost) => (ghost.color = "#3b82f6"));
-                messageEl.textContent = `⚡ ${powerUp.name} activée !`;
+                mani.powered = true;
+                mani.powerTimer = powerUp.duration;
+                dronesEaten = 0;
+                drones.forEach((drone) => (drone.color = "#3b82f6"));
+                messageEl.textContent = `🔋 ${powerUp.name} activé !`;
                 break;
 
               case 4:
-                pacman.speed = pacmanSpeed.powered;
-                pacman.powerTimer = powerUp.duration;
-                messageEl.textContent = `🚀 ${powerUp.name} activée !`;
+                mani.speed = maniSpeed.powered;
+                mani.powerTimer = powerUp.duration;
+                messageEl.textContent = `💿 ${powerUp.name} activé !`;
                 playerStats.speedPowerUps++;
                 break;
 
               case 5:
-                pacman.shield = true;
-                pacman.powerTimer = powerUp.duration;
-                messageEl.textContent = `🛡️ ${powerUp.name} activé !`;
+                mani.shield = true;
+                mani.powerTimer = powerUp.duration;
+                messageEl.textContent = `📟 ${powerUp.name} activé !`;
                 break;
 
               case 6:
-                pacman.freeze = true;
-                pacman.powerTimer = powerUp.duration;
-                messageEl.textContent = `❄️ Fantômes gelés !`;
+                mani.freeze = true;
+                mani.powerTimer = powerUp.duration;
+                messageEl.textContent = `💾 Verrouillage Drones !`;
                 break;
             }
 
@@ -2251,36 +2346,53 @@
         }, 3000);
       }
 
-      function updatePacman(delta) {
+      function updateMani(delta) {
         if (paused || gameOver) return;
 
-        const currentDelay = pacmanStepDelay / pacman.speed;
+        const currentDelay = maniStepDelay / mani.speed;
 
-        pacmanStepTimer += delta;
-        if (pacmanStepTimer >= currentDelay) {
-          pacmanStepTimer = 0;
-          movePacman();
-        }
-
-        if (pacman.mouthOpening) {
-          pacman.mouthAngle += 0.02 * pacman.speed;
-          if (pacman.mouthAngle >= 0.45) pacman.mouthOpening = false;
-        } else {
-          pacman.mouthAngle -= 0.02 * pacman.speed;
-          if (pacman.mouthAngle <= 0.1) pacman.mouthOpening = true;
-        }
-
-        if (pacman.powerTimer > 0) {
-          pacman.powerTimer -= delta;
-
-          if (pacman.powerTimer <= 0) {
-            if (pacman.powered) {
-              pacman.powered = false;
-              ghosts.forEach((ghost) => (ghost.color = ghost.baseColor));
+        maniStepTimer += delta;
+        if (maniStepTimer >= currentDelay) {
+          maniStepTimer = 0;
+          
+          if (userPath && userPath.length > 0) {
+            let nextTarget = userPath[0];
+            // Si Mani est déjà sur la première case cible, on passe à la suivante
+            if (mani.row === nextTarget.row && mani.col === nextTarget.col) {
+              userPath.shift();
+              nextTarget = userPath.length > 0 ? userPath[0] : null;
             }
-            pacman.speed = pacmanSpeed.normal;
-            pacman.shield = false;
-            pacman.freeze = false;
+
+            if (nextTarget) {
+              mani.nextDir = {
+                x: Math.sign(nextTarget.col - mani.col),
+                y: Math.sign(nextTarget.row - mani.row)
+              };
+            }
+          }
+          
+          moveMani();
+        }
+
+        if (mani.mouthOpening) {
+          mani.mouthAngle += 0.02 * mani.speed;
+          if (mani.mouthAngle >= 0.45) mani.mouthOpening = false;
+        } else {
+          mani.mouthAngle -= 0.02 * mani.speed;
+          if (mani.mouthAngle <= 0.1) mani.mouthOpening = true;
+        }
+
+        if (mani.powerTimer > 0) {
+          mani.powerTimer -= delta;
+
+          if (mani.powerTimer <= 0) {
+            if (mani.powered) {
+              mani.powered = false;
+              drones.forEach((drone) => (drone.color = drone.baseColor));
+            }
+            mani.speed = maniSpeed.normal;
+            mani.shield = false;
+            mani.freeze = false;
           }
         }
 
@@ -2292,123 +2404,131 @@
         }
       }
 
-      function drawPacman() {
-        const centerX = pacman.col * tileSize + tileSize / 2;
-        const centerY = pacman.row * tileSize + tileSize / 2;
+      function drawMani() {
+        const centerX = mani.col * tileSize + tileSize / 2;
+        const centerY = mani.row * tileSize + tileSize / 2;
 
-        // Récupérer le skin actuel
+        // Récupérer le skin actuel (on garde les emojis comme option de skin)
         const currentSkin = gameData.skins.find(
           (s) => s.id === playerStats.currentSkin,
         );
         const useSkinIcon = currentSkin && currentSkin.icon !== "🟡";
 
-        let angleStart = 0;
-        let angleEnd = Math.PI * 2;
-
-        if (pacman.dir.x === 1) {
-          angleStart = pacman.mouthAngle;
-          angleEnd = Math.PI * 2 - pacman.mouthAngle;
-        } else if (pacman.dir.x === -1) {
-          angleStart = Math.PI + pacman.mouthAngle;
-          angleEnd = Math.PI - pacman.mouthAngle;
-        } else if (pacman.dir.y === -1) {
-          angleStart = -Math.PI / 2 + pacman.mouthAngle;
-          angleEnd = Math.PI * 1.5 - pacman.mouthAngle;
-        } else if (pacman.dir.y === 1) {
-          angleStart = Math.PI / 2 + pacman.mouthAngle;
-          angleEnd = Math.PI / 2 - pacman.mouthAngle;
-        }
-
-        if (pacman.shield) {
+        if (mani.shield) {
           ctx.strokeStyle = "#3b82f6";
           ctx.lineWidth = 3;
           ctx.shadowBlur = 15;
           ctx.shadowColor = "#3b82f6";
           ctx.beginPath();
-          ctx.arc(centerX, centerY, pacman.radius + 8, 0, Math.PI * 2);
+          ctx.arc(centerX, centerY, mani.radius + 8, 0, Math.PI * 2);
           ctx.stroke();
           ctx.shadowBlur = 0;
         }
 
-        if (pacman.speed > pacmanSpeed.normal) {
+        if (mani.speed > maniSpeed.normal) {
           ctx.strokeStyle = "#22c55e";
           ctx.lineWidth = 2;
           ctx.globalAlpha = 0.5;
           for (let i = 1; i <= 3; i++) {
             ctx.beginPath();
             ctx.arc(
-              centerX - pacman.dir.x * i * 8,
-              centerY - pacman.dir.y * i * 8,
-              pacman.radius,
-              angleStart,
-              angleEnd,
+              centerX - mani.dir.x * i * 8,
+              centerY - mani.dir.y * i * 8,
+              mani.radius,
+              0,
+              Math.PI * 2,
             );
             ctx.stroke();
           }
           ctx.globalAlpha = 1;
         }
 
-        if (pacman.powered) {
+        if (mani.powered) {
           ctx.shadowBlur = 25;
           ctx.shadowColor = "#facc15";
         }
 
-        // Dessiner le skin ou le cercle classique
         if (useSkinIcon) {
-          // Utiliser emoji/icône
-          ctx.font = `${pacman.radius * 2}px Arial`;
+          ctx.font = `${mani.radius * 2}px Arial`;
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           ctx.fillText(currentSkin.icon, centerX, centerY);
         } else {
-          // Dessin classique
-          ctx.fillStyle = "#facc15";
+          // Dessin original de Mani (Petit Animal Stylisé)
+          const r = mani.radius;
+
+          // Oreilles
+          ctx.fillStyle = "#f87171"; // Couleur principale (rouge corail)
+          // Oreille gauche
           ctx.beginPath();
-          ctx.moveTo(centerX, centerY);
-          ctx.arc(centerX, centerY, pacman.radius, angleStart, angleEnd, false);
-          ctx.closePath();
+          ctx.moveTo(centerX - r, centerY - r/2);
+          ctx.lineTo(centerX - r * 1.2, centerY - r * 1.5);
+          ctx.lineTo(centerX - r/4, centerY - r);
+          ctx.fill();
+          // Oreille droite
+          ctx.beginPath();
+          ctx.moveTo(centerX + r, centerY - r/2);
+          ctx.lineTo(centerX + r * 1.2, centerY - r * 1.5);
+          ctx.lineTo(centerX + r/4, centerY - r);
           ctx.fill();
 
+          // Corps/Tête ronde
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Yeux brillants
+          ctx.fillStyle = "#fff";
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = "#fff";
+          ctx.beginPath();
+          ctx.arc(centerX - r/3, centerY - r/4, r/4, 0, Math.PI * 2);
+          ctx.arc(centerX + r/3, centerY - r/4, r/4, 0, Math.PI * 2);
+          ctx.fill();
           ctx.shadowBlur = 0;
 
-          if (pacman.dir.x !== 0 || pacman.dir.y !== 0) {
-            ctx.fillStyle = "#0f172a";
-            const eyeX =
-              centerX + pacman.dir.x * 4 + (pacman.dir.y === -1 ? 0 : 3);
-            const eyeY =
-              centerY + pacman.dir.y * 4 + (pacman.dir.x !== 0 ? -5 : 0);
-            ctx.beginPath();
-            ctx.arc(eyeX, eyeY, 2, 0, Math.PI * 2);
-            ctx.fill();
-          }
+          // Pupilles (regardent dans la direction du mouvement)
+          ctx.fillStyle = "#000";
+          const pX = mani.dir.x * 2;
+          const pY = mani.dir.y * 2;
+          ctx.beginPath();
+          ctx.arc(centerX - r/3 + pX, centerY - r/4 + pY, r/10, 0, Math.PI * 2);
+          ctx.arc(centerX + r/3 + pX, centerY - r/4 + pY, r/10, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Petit nez
+          ctx.fillStyle = "#000";
+          ctx.beginPath();
+          ctx.arc(centerX, centerY + r/10, r/8, 0, Math.PI * 2);
+          ctx.fill();
         }
 
         ctx.shadowBlur = 0;
       }
 
-      function getChaseTarget(ghost) {
-        if (ghost.name === "Blinky") {
-          return { row: pacman.row, col: pacman.col };
-        } else if (ghost.name === "Pinky") {
+      function getChaseTarget(drone) {
+        if (drone.name === "Volt") {
+          return { row: mani.row, col: mani.col };
+        } else if (drone.name === "Nova") {
           return {
-            row: pacman.row + pacman.dir.y * 4,
-            col: pacman.col + pacman.dir.x * 4,
+            row: mani.row + mani.dir.y * 4,
+            col: mani.col + mani.dir.x * 4,
           };
-        } else if (ghost.name === "Inky") {
+        } else if (drone.name === "Glitch") {
           return {
-            row: pacman.row + pacman.dir.y * 2,
-            col: pacman.col + pacman.dir.x * 2,
+            row: mani.row + mani.dir.y * 2,
+            col: mani.col + mani.dir.x * 2,
           };
         } else {
           const dist =
-            Math.abs(ghost.row - pacman.row) + Math.abs(ghost.col - pacman.col);
+            Math.abs(drone.row - mani.row) + Math.abs(drone.col - mani.col);
           return dist > 8
-            ? { row: pacman.row, col: pacman.col }
-            : ghost.scatterTarget;
+            ? { row: mani.row, col: mani.col }
+            : drone.scatterTarget;
         }
       }
 
-      function getBestDirection(ghost, target) {
+      function getBestDirection(drone, target) {
         const dirs = [
           { x: 1, y: 0 },
           { x: -1, y: 0 },
@@ -2416,12 +2536,12 @@
           { x: 0, y: -1 },
         ];
 
-        let bestDir = ghost.dir;
+        let bestDir = drone.dir;
         let bestDist = Infinity;
 
         for (const dir of dirs) {
-          const newRow = ghost.row + dir.y;
-          const newCol = ghost.col + dir.x;
+          const newRow = drone.row + dir.y;
+          const newCol = drone.col + dir.x;
 
           if (canMoveTo(newRow, newCol)) {
             const dist =
@@ -2436,51 +2556,51 @@
         return bestDir;
       }
 
-      function updateGhost(ghost, delta) {
+      function updateDrone(drone, delta) {
         if (paused || gameOver) return;
 
-        if (pacman.freeze) {
+        if (mani.freeze) {
           return;
         }
 
-        ghost.stepTimer += delta/2.;
-        const delay = pacman.powered ? ghostStepDelay * 1.5 : ghostStepDelay;
+        drone.stepTimer += delta/2.;
+        const delay = mani.powered ? droneStepDelay * 1.5 : droneStepDelay;
 
-        if (ghost.stepTimer >= delay) {
-          ghost.stepTimer = 0;
+        if (drone.stepTimer >= delay) {
+          drone.stepTimer = 0;
 
           let target;
-          if (pacman.powered) {
+          if (mani.powered) {
             target = {
-              row: ghost.row - (pacman.row - ghost.row),
-              col: ghost.col - (pacman.col - ghost.col),
+              row: drone.row - (mani.row - drone.row),
+              col: drone.col - (mani.col - drone.col),
             };
           } else {
-            target = getChaseTarget(ghost);
+            target = getChaseTarget(drone);
           }
 
-          ghost.dir = getBestDirection(ghost, target);
+          drone.dir = getBestDirection(drone, target);
 
-          const newRow = ghost.row + ghost.dir.y;
-          const newCol = ghost.col + ghost.dir.x;
+          const newRow = drone.row + drone.dir.y;
+          const newCol = drone.col + drone.dir.x;
 
           if (canMoveTo(newRow, newCol)) {
-            ghost.row = newRow;
-            ghost.col = newCol;
+            drone.row = newRow;
+            drone.col = newCol;
           }
         }
 
-        if (!gameOver && ghost.row === pacman.row && ghost.col === pacman.col) {
-          if (pacman.powered) {
-            ghostsEaten++;
-            playerStats.totalGhosts++;
-            sounds.eatGhost(ghostsEaten);
-            ghost.row = 5;
-            ghost.col = 7;
-            ghost.color = ghost.baseColor;
+        if (!gameOver && drone.row === mani.row && drone.col === mani.col) {
+          if (mani.powered) {
+            dronesEaten++;
+            playerStats.totalDrones++;
+            sounds.eatGhost(dronesEaten);
+            drone.row = 5;
+            drone.col = 7;
+            drone.color = drone.baseColor;
 
             // Vérifier le succès combo
-            if (ghostsEaten >= 4) {
+            if (dronesEaten >= 4) {
               const comboAchievement = gameData.achievements.find(
                 (a) => a.id === "combo4",
               );
@@ -2489,13 +2609,13 @@
                 comboAchievement.unlocked = true;
                 showNotification(
                   "🔥 Combo Master",
-                  "Tous les fantômes mangés !",
+                  "Tous les drones mangés !",
                 );
               }
             }
-          } else if (pacman.shield) {
-            ghost.row = ghost.row - ghost.dir.y;
-            ghost.col = ghost.col - ghost.dir.x;
+          } else if (mani.shield) {
+            drone.row = drone.row - drone.dir.y;
+            drone.col = drone.col - drone.dir.x;
             messageEl.textContent = "🛡️ Bouclier activé !";
             setTimeout(() => (messageEl.textContent = ""), 1000);
           } else {
@@ -2521,15 +2641,15 @@
               syncStatsToSupabase();
             } else {
               sounds.death();
-              pacman.row = 5;
-              pacman.col = 7;
-              pacman.dir = { x: 0, y: 0 };
-              pacman.nextDir = { x: 0, y: 0 };
-              pacman.powered = false;
-              pacman.speed = pacmanSpeed.normal;
-              pacman.shield = false;
-              pacman.freeze = false;
-              pacman.powerTimer = 0;
+              mani.row = 5;
+              mani.col = 7;
+              mani.dir = { x: 0, y: 0 };
+              mani.nextDir = { x: 0, y: 0 };
+              mani.powered = false;
+              mani.speed = maniSpeed.normal;
+              mani.shield = false;
+              mani.freeze = false;
+              mani.powerTimer = 0;
 
               const startPositions = [
                 { row: 1, col: 1 },
@@ -2537,7 +2657,7 @@
                 { row: 9, col: 1 },
                 { row: 9, col: 12 },
               ];
-              ghosts.forEach((g, i) => {
+              drones.forEach((g, i) => {
                 g.row = startPositions[i].row;
                 g.col = startPositions[i].col;
                 g.stepTimer = 0;
@@ -2548,41 +2668,62 @@
         }
       }
 
-      function drawGhost(ghost) {
-        const x = ghost.col * tileSize + tileSize / 2;
-        const y = ghost.row * tileSize + tileSize / 2;
+      function drawDrone(drone) {
+        const x = drone.col * tileSize + tileSize / 2;
+        const y = drone.row * tileSize + tileSize / 2;
         const r = tileSize / 2 - 4;
 
-        if (pacman.freeze) {
+        if (mani.freeze) {
           ctx.shadowBlur = 15;
           ctx.shadowColor = "#a855f7";
           ctx.globalAlpha = 0.7;
         }
 
-        ctx.fillStyle = ghost.color;
-        if (pacman.powered && !pacman.freeze) {
+        ctx.fillStyle = drone.color;
+        if (mani.powered && !mani.freeze) {
           ctx.shadowBlur = 10;
           ctx.shadowColor = "#3b82f6";
         }
 
+        // Corps du Drone (Octogone ou forme Tech)
         ctx.beginPath();
-        ctx.arc(x, y - 4, r, Math.PI, 0);
-        ctx.lineTo(x + r, y + r - 4);
-
-        const waves = 3;
-        for (let i = 0; i < waves; i++) {
-          const waveX = x + r - (2 * r * (i + 1)) / (waves + 1);
-          const waveY = y + r - 4 + (i % 2 === 0 ? 4 : -4);
-          ctx.lineTo(waveX, waveY);
+        for (let i = 0; i < 8; i++) {
+          const angle = (Math.PI * 2 * i) / 8;
+          const dx = Math.cos(angle) * r;
+          const dy = Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(x + dx, y + dy);
+          else ctx.lineTo(x + dx, y + dy);
         }
-
-        ctx.lineTo(x - r, y + r - 4);
         ctx.closePath();
         ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.globalAlpha = 1;
 
-        if (pacman.freeze) {
+        // Bras/Antennes
+        ctx.strokeStyle = drone.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x - r, y);
+        ctx.lineTo(x - r - 4, y - 4);
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + r + 4, y - 4);
+        ctx.stroke();
+
+        // Scanner / Oeil central
+        ctx.fillStyle = "#fff";
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = "#fff";
+        ctx.beginPath();
+        ctx.arc(x, y, r/3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Pupille rouge scanner
+        ctx.fillStyle = "#ff0000";
+        const scanX = Math.sin(Date.now() / 200) * (r/6);
+        ctx.beginPath();
+        ctx.arc(x + scanX, y, r/8, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (mani.freeze) {
           ctx.fillStyle = "#a855f7";
           ctx.font = "16px Arial";
           ctx.textAlign = "center";
@@ -2590,35 +2731,6 @@
           ctx.shadowColor = "#a855f7";
           ctx.fillText("❄️", x, y - r - 8);
           ctx.shadowBlur = 0;
-        }
-
-        if ((!pacman.powered || pacman.powerTimer > 2000) && !pacman.freeze) {
-          ctx.fillStyle = "#ffffff";
-          ctx.beginPath();
-          ctx.arc(x - 6, y - 6, 5, 0, Math.PI * 2);
-          ctx.arc(x + 6, y - 6, 5, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.fillStyle = "#0f172a";
-          ctx.beginPath();
-          ctx.arc(x - 6, y - 6, 3, 0, Math.PI * 2);
-          ctx.arc(x + 6, y - 6, 3, 0, Math.PI * 2);
-          ctx.fill();
-        } else {
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(x - 8, y - 8);
-          ctx.lineTo(x - 4, y - 4);
-          ctx.moveTo(x - 4, y - 8);
-          ctx.lineTo(x - 8, y - 4);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(x + 4, y - 8);
-          ctx.lineTo(x + 8, y - 4);
-          ctx.moveTo(x + 8, y - 8);
-          ctx.lineTo(x + 4, y - 4);
-          ctx.stroke();
         }
       }
 
@@ -2628,110 +2740,153 @@
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawMap();
-        updatePacman(delta);
-        ghosts.forEach((ghost) => updateGhost(ghost, delta));
-        drawPacman();
-        ghosts.forEach((ghost) => drawGhost(ghost));
+        updateMani(delta);
+        drones.forEach((drone) => updateDrone(drone, delta));
+        drawUserPath();
+        drawMani();
+        drones.forEach((drone) => drawDrone(drone));
 
         requestAnimationFrame(loop);
       }
 
-      // Joystick virtuel
-      const joystickContainer = document.getElementById("joystick-container");
-      const joystickStick = document.getElementById("joystick-stick");
-      const joystickBase = document.getElementById("joystick-base");
+      // === LE TRACEUR DE CIRCUIT (Option 1) ===
+      let userPath = [];
+      let isDrawing = false;
 
-      let joystickActive = false;
-      let joystickCenterX = 0;
-      let joystickCenterY = 0;
-      const maxDistance = 60; // Distance maximale du stick depuis le centre
+      function getGridCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
 
-      function initJoystick() {
-        const rect = joystickBase.getBoundingClientRect();
-        joystickCenterX = rect.left + rect.width / 2;
-        joystickCenterY = rect.top + rect.height / 2;
+        let clientX, clientY;
+        if (e.touches && e.touches.length > 0) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        } else if (e.changedTouches && e.changedTouches.length > 0) {
+          clientX = e.changedTouches[0].clientX;
+          clientY = e.changedTouches[0].clientY;
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+
+        const x = (clientX - rect.left) * scaleX;
+        const y = (clientY - rect.top) * scaleY;
+        
+        return {
+          col: Math.floor(x / tileSize),
+          row: Math.floor(y / tileSize)
+        };
       }
 
-      function handleJoystickStart(e) {
+      function startDrawing(e) {
+        if (paused || gameOver) return;
         e.preventDefault();
-        joystickActive = true;
-        initJoystick();
-        updateJoystick(e);
-        if (gameOver) {
-          lives = 3;
-          init();
+        
+        const { row, col } = getGridCoords(e);
+
+        if (col >= 0 && col < cols && row >= 0 && row < rows && currentMap[row][col] !== 1) {
+          userPath = getBFSPathNodes(mani.row, mani.col, row, col);
+          isDrawing = true;
         }
       }
 
-      function handleJoystickMove(e) {
-        if (!joystickActive) return;
+      function continueDrawing(e) {
+        if (!isDrawing || paused || gameOver) return;
         e.preventDefault();
-        updateJoystick(e);
-      }
 
-      function handleJoystickEnd(e) {
-        e.preventDefault();
-        joystickActive = false;
-        // Retour au centre avec animation
-        joystickStick.style.transition = "all 0.2s ease-out";
-        joystickStick.style.transform = "translate(-50%, -50%)";
-        setTimeout(() => {
-          joystickStick.style.transition = "";
-        }, 200);
-      }
-
-      function updateJoystick(e) {
-        const touch = e.touches ? e.touches[0] : e;
-        const deltaX = touch.clientX - joystickCenterX;
-        const deltaY = touch.clientY - joystickCenterY;
-
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        const angle = Math.atan2(deltaY, deltaX);
-
-        // Limiter la distance
-        const limitedDistance = Math.min(distance, maxDistance);
-        const x = Math.cos(angle) * limitedDistance;
-        const y = Math.sin(angle) * limitedDistance;
-
-        // Déplacer le stick
-        joystickStick.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-
-        // Déterminer la direction (avec zone morte)
-        if (distance > 20) {
-          const degrees = angle * (180 / Math.PI);
-
-          // Droite: -45° à 45°
-          if (degrees >= -45 && degrees < 45) {
-            pacman.nextDir = { x: 1, y: 0 };
-          }
-          // Bas: 45° à 135°
-          else if (degrees >= 45 && degrees < 135) {
-            pacman.nextDir = { x: 0, y: 1 };
-          }
-          // Gauche: 135° à -135°
-          else if (degrees >= 135 || degrees < -135) {
-            pacman.nextDir = { x: -1, y: 0 };
-          }
-          // Haut: -135° à -45°
-          else {
-            pacman.nextDir = { x: 0, y: -1 };
+        const { row, col } = getGridCoords(e);
+        
+        if (col >= 0 && col < cols && row >= 0 && row < rows && currentMap[row][col] !== 1) {
+          const lastNode = userPath.length > 0 ? userPath[userPath.length - 1] : { row: mani.row, col: mani.col };
+          
+          if (row !== lastNode.row || col !== lastNode.col) {
+            const newSegments = getBFSPathNodes(lastNode.row, lastNode.col, row, col);
+            userPath.push(...newSegments);
           }
         }
       }
 
-      // Events tactiles pour le joystick
-      joystickStick.addEventListener("touchstart", handleJoystickStart);
-      joystickStick.addEventListener("touchmove", handleJoystickMove);
-      joystickStick.addEventListener("touchend", handleJoystickEnd);
+      function stopDrawing(e) {
+        isDrawing = false;
+      }
 
-      // Events souris pour le joystick (desktop)
-      joystickStick.addEventListener("mousedown", handleJoystickStart);
-      document.addEventListener("mousemove", handleJoystickMove);
-      document.addEventListener("mouseup", handleJoystickEnd);
+      function drawUserPath() {
+        if (!userPath || userPath.length === 0 || gameOver) return;
 
-      // Réinitialiser le centre du joystick lors du redimensionnement
-      window.addEventListener("resize", initJoystick);
-      initJoystick();
+        ctx.strokeStyle = "#00ffff"; // Néon cyan
+        ctx.lineWidth = 6;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#00ffff";
+        
+        ctx.beginPath();
+        const startX = mani.col * tileSize + tileSize / 2;
+        const startY = mani.row * tileSize + tileSize / 2;
+        ctx.moveTo(startX, startY);
+
+        for (let i = 0; i < userPath.length; i++) {
+          const n = userPath[i];
+          ctx.lineTo(n.col * tileSize + tileSize / 2, n.row * tileSize + tileSize / 2);
+        }
+        ctx.stroke();
+
+        // Pastille lumineuse d'arrivée
+        const last = userPath[userPath.length - 1];
+        ctx.fillStyle = "#00ffff";
+        ctx.beginPath();
+        ctx.arc(last.col * tileSize + tileSize / 2, last.row * tileSize + tileSize / 2, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+      }
+
+      canvas.addEventListener("mousedown", startDrawing);
+      canvas.addEventListener("mousemove", continueDrawing);
+      window.addEventListener("mouseup", stopDrawing);
+      
+      canvas.addEventListener("touchstart", startDrawing, { passive: false });
+      canvas.addEventListener("touchmove", continueDrawing, { passive: false });
+      window.addEventListener("touchend", stopDrawing);
+      
+      // BFS Pathfinding retournant la liste complète du trajet par points
+      function getBFSPathNodes(startRow, startCol, endRow, endCol) {
+        if (startRow === endRow && startCol === endCol) return [];
+
+        const queue = [{ r: startRow, c: startCol, path: [] }];
+        const visited = new Set();
+        visited.add(`${startRow},${startCol}`);
+
+        const dirs = [
+          { x: 0, y: -1 }, // Up
+          { x: 1, y: 0 },  // Right
+          { x: 0, y: 1 },  // Down
+          { x: -1, y: 0 }  // Left
+        ];
+
+        while (queue.length > 0) {
+          const { r, c, path } = queue.shift();
+
+          if (r === endRow && c === endCol) {
+            return path;
+          }
+
+          for (const d of dirs) {
+            const nr = r + d.y;
+            const nc = c + d.x;
+
+            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && currentMap[nr][nc] !== 1) {
+              const key = `${nr},${nc}`;
+              if (!visited.has(key)) {
+                visited.add(key);
+                queue.push({ r: nr, c: nc, path: [...path, {row: nr, col: nc}] });
+              }
+            }
+          }
+        }
+        return [];
+      }
 
       // Boutons Pause et Restart
       const pauseBtnNew = document.getElementById("pause-btn-new");
@@ -2751,14 +2906,14 @@
       restartBtn.addEventListener("touchstart", (e) => {
         e.preventDefault();
         score = 0;
-        level = 1;
+        level = playerStats.highestLevel || 1;
         lives = 3;
         init();
       });
       restartBtn.addEventListener("click", (e) => {
         e.preventDefault();
         score = 0;
-        level = 1;
+        level = playerStats.highestLevel || 1;
         lives = 3;
         init();
       });
@@ -2823,16 +2978,16 @@
 
         if (e.key === "ArrowLeft") {
           e.preventDefault();
-          pacman.nextDir = { x: -1, y: 0 };
+          mani.nextDir = { x: -1, y: 0 };
         } else if (e.key === "ArrowRight") {
           e.preventDefault();
-          pacman.nextDir = { x: 1, y: 0 };
+          mani.nextDir = { x: 1, y: 0 };
         } else if (e.key === "ArrowUp") {
           e.preventDefault();
-          pacman.nextDir = { x: 0, y: -1 };
+          mani.nextDir = { x: 0, y: -1 };
         } else if (e.key === "ArrowDown") {
           e.preventDefault();
-          pacman.nextDir = { x: 0, y: 1 };
+          mani.nextDir = { x: 0, y: 1 };
         }
       });
 

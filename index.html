@@ -327,19 +327,18 @@
 
       <section class="games-grid">
         <!-- Tir à 2 joueurs -->
-        <article class="game-card" onclick="launchGame('tir2')">
-          <span class="game-pill">2 joueurs</span>
+        <article class="game-card" onclick="launchGame('pingpong')">
+          <span class="game-pill">1 joueur</span>
           <div class="thumb">
             <img
-              src="games/images/tire_tire.png"
-              alt="Tir à 2 joueurs"
+              src="games/images/pingpong.png"
+              alt="Ping pong"
               class="thumb-img"
             />
           </div>
-          <h3 class="game-title">Tir à 2 joueurs</h3>
+          <h3 class="game-title">Ping pong</h3>
           <p class="game-desc">
-            Affronte ton ami dans un duel de tir local. Vise juste, esquive et
-            gagne la manche.
+          joue au ping pong contre l'ordinateur
           </p>
           <div class="game-meta">
             <span>Clavier partagé</span>
@@ -485,13 +484,13 @@
     <script>
       // À adapter: mets ici les vrais chemins de tes jeux
       const games = {
-        tir2: { url: "games/tiretire.html" },
-        mot: { url: "games/jeuDevinettes.html" },
-        vagues: { url: "games/jeu_arcade_combat_epique_ultimate-PCtour.html" },
-        bombes: { url: "games/bomberman_prototype.html" },
-        fruits: { url: "games/memoryFruits.html" },
-        course: { url: "games/runner.html" },
-        code: { url: "games/secret.html" }
+        pingpong: { url: "games/pingpong.html" },
+        // mot: { url: "games/jeuDevinettes.html" },
+        // vagues: { url: "games/jeu_arcade_combat_epique_ultimate-PCtour.html" },
+        // bombes: { url: "games/bomberman_prototype.html" },
+        // fruits: { url: "games/memoryFruits.html" },
+        // course: { url: "games/runner.html" },
+        // code: { url: "games/secret.html" }
       };
 
       function launchGame(id) {

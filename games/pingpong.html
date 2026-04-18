@@ -1,168 +1,225 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
+  <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>3D Ping Pong Smash</title>
     <style>
-        :root {
-            --bg: #050505;
-            --fg: #00f2ff;
-            --accent: #ff00ea;
-            --panel-bg: rgba(20, 20, 25, 0.8);
-        }
+      :root {
+        --bg: #050505;
+        --fg: #00f2ff;
+        --accent: #ff00ea;
+        --panel-bg: rgba(20, 20, 25, 0.8);
+      }
 
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
+      * {
+        box-sizing: border-box;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
 
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: var(--bg);
-            color: var(--fg);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
+      body {
+        margin: 0;
+        overflow: hidden;
+        background-color: var(--bg);
+        color: var(--fg);
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
 
-        #ui-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 20px;
-            z-index: 10;
-        }
+      #ui-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 20px;
+        z-index: 10;
+      }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            pointer-events: auto;
-        }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        pointer-events: auto;
+      }
 
-        h1 {
-            font-size: 1.2rem;
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px var(--fg);
-        }
+      h1 {
+        font-size: 1.2rem;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 0 0 10px var(--fg);
+      }
 
-        .score-panel {
-            background: var(--panel-bg);
-            padding: 10px 20px;
-            border-radius: 30px;
-            border: 1px solid var(--fg);
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
-            pointer-events: auto;
-        }
+      .score-panel {
+        background: var(--panel-bg);
+        padding: 10px 20px;
+        border-radius: 30px;
+        border: 1px solid var(--fg);
+        font-size: 24px;
+        font-weight: bold;
+        box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+        pointer-events: auto;
+      }
 
-        .controls-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 30px;
-            border-radius: 20px;
-            border: 2px solid var(--accent);
-            pointer-events: auto;
-            transition: opacity 0.3s;
-        }
+      .controls-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 30px;
+        border-radius: 20px;
+        border: 2px solid var(--accent);
+        pointer-events: auto;
+        transition: opacity 0.3s;
+        z-index: 20;
+      }
 
-        .hidden {
-            display: none;
-            opacity: 0;
-        }
+      .hidden {
+        display: none;
+        opacity: 0;
+      }
 
-        .btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            margin: 10px;
-            text-transform: uppercase;
-            box-shadow: 0 4px 0 #b300a3;
-            transition: all 0.1s;
-        }
+      .profile-setup {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+      }
 
-        .btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 #b300a3;
-        }
+      .avatar-preview {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #222;
+        border: 2px solid var(--fg);
+        margin-bottom: 5px;
+        object-fit: cover;
+        box-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+        transition: transform 0.2s;
+        cursor: pointer;
+      }
+      .avatar-preview:hover {
+        transform: scale(1.1);
+      }
+      .avatar-hint {
+        font-size: 10px;
+        color: var(--fg);
+        margin-bottom: 15px;
+        opacity: 0.7;
+      }
 
-        .btn-camera {
-            background: #222;
-            border: 1px solid #444;
-            box-shadow: 0 4px 0 #111;
-        }
+      .pseudo-input {
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid var(--accent);
+        background: rgba(0,0,0,0.5);
+        color: white;
+        font-size: 16px;
+        text-align: center;
+        font-family: inherit;
+        outline: none;
+        width: 80%;
+        max-width: 200px;
+      }
 
-        .bottom-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            pointer-events: auto;
-        }
+      .pseudo-input:focus {
+        box-shadow: 0 0 10px var(--accent);
+      }
 
-        .touch-zone {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 5;
-            touch-action: none;
-        }
+      .btn {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        margin: 10px;
+        text-transform: uppercase;
+        box-shadow: 0 4px 0 #b300a3;
+        transition: all 0.1s;
+      }
 
-        #debug {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            font-size: 10px;
-            color: #555;
-            pointer-events: none;
-        }
+      .btn:active {
+        transform: translateY(4px);
+        box-shadow: 0 0 0 #b300a3;
+      }
+
+      .btn-camera {
+        background: #222;
+        border: 1px solid #444;
+        box-shadow: 0 4px 0 #111;
+      }
+
+      .bottom-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        pointer-events: auto;
+      }
+
+      .touch-zone {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 5;
+        touch-action: none;
+      }
+
+      #debug {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        font-size: 10px;
+        color: #555;
+        pointer-events: none;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="ui-container">
-        <header>
-            <h1>🏓 3D Pong Smash</h1>
-            <div class="score-panel" id="score">0 — 0</div>
-        </header>
+      <header>
+        <h1>🏓 3D Pong Smash</h1>
+        <div class="score-panel" id="score">0 — 0</div>
+      </header>
 
-        <div class="bottom-bar">
-            <div>
-                <button class="btn btn-camera" id="btnCam">🎥 Caméra (C)</button>
-            </div>
-            <div>
-                <button class="btn" id="btnPause">Pause</button>
-                <button class="btn" id="btnRestart">Restart</button>
-            </div>
+      <div class="bottom-bar">
+        <div>
+          <button class="btn btn-camera" id="btnCam">🎥 Caméra (C)</button>
         </div>
+        <div>
+          <button class="btn" id="btnPause">Pause</button>
+          <button class="btn" id="btnRestart">Restart</button>
+        </div>
+      </div>
     </div>
 
     <div class="controls-overlay" id="overlay">
-        <h2 id="msg">PRÊT ?</h2>
-        <button class="btn" id="btnStart">JOUER</button>
-        <div style="font-size: 14px; margin-top: 15px; opacity: 0.8;">
-            Clavier: ↑/↓ ou Z/S · Caméra: C · Pause: Espace<br>
-            Tactile: Glissez sur l'écran pour bouger la raquette
-        </div>
+      <div id="profileSetup" class="profile-setup">
+        <img id="avatarPreview" class="avatar-preview" src="https://api.dicebear.com/7.x/bottts/svg?seed=Joueur" alt="Avatar" title="Cliquez pour changer d'image" />
+        <div class="avatar-hint">Cliquez sur l'image pour la changer</div>
+        <input type="file" id="avatarUpload" accept="image/*" style="display:none;" />
+        <input type="text" id="pseudoInput" class="pseudo-input" placeholder="Entrez votre pseudo" maxlength="15" />
+      </div>
+      <h2 id="msg">PRÊT ?</h2>
+      <button class="btn" id="btnStart">JOUER</button>
+      <div style="font-size: 14px; margin-top: 15px; opacity: 0.8">
+        Clavier: ↑/↓ ou Z/S · Caméra: C · Pause: Espace<br />
+        Tactile: Glissez sur l'écran pour bouger la raquette
+      </div>
     </div>
 
     <div class="touch-zone" id="touchZone"></div>
@@ -170,338 +227,485 @@
 
     <!-- Three.js from CDN -->
     <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
-            }
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
         }
+      }
     </script>
 
     <script type="module">
-        import * as THREE from 'three';
+      import * as THREE from "three";
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-        // --- CONSTANTS ---
-        const TABLE_WIDTH = 20;
-        const TABLE_HEIGHT = 1;
-        const TABLE_DEPTH = 12;
-        const PADDLE_WIDTH = 0.5;
-        const PADDLE_HEIGHT = 1.2;
-        const PADDLE_DEPTH = 2.5;
-        const BALL_RADIUS = 0.3;
-        const WIN_SCORE = 11;
-
-        // --- GAME STATE ---
-        const state = {
-            running: false,
-            gameOver: false,
-            scoreL: 0,
-            scoreR: 0,
-            ball: { x: 0, z: 0, vx: 0.15, vz: 0 },
-            paddleL: { x: -TABLE_WIDTH/2 + 1, z: 0, targetZ: 0 },
-            paddleR: { x: TABLE_WIDTH/2 - 1, z: 0, targetZ: 0 },
-            camIndex: 0,
-            touchActive: false
-        };
-
-        // --- THREE.JS SETUP ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050505);
-        scene.fog = new THREE.Fog(0x050505, 10, 50);
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
-        document.body.appendChild(renderer.domElement);
-
-        // --- CAMERAS ---
-        const cameras = [
-            // 0: Arcade View (Side-top)
-            new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000),
-            // 1: Immersive View (Behind P1)
-            new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000),
-            // 2: Top View (Classic)
-            new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000)
-        ];
-
-        cameras[0].position.set(0, 15, 10);
-        cameras[0].lookAt(0, 0, 0);
-
-        cameras[1].position.set(-15, 6, 0);
-        cameras[1].lookAt(5, 0, 0);
-
-        cameras[2].position.set(0, 20, 0);
-        cameras[2].lookAt(0, 0, 0);
-
-        let activeCamera = cameras[0];
-
-        // --- LIGHTS ---
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-        scene.add(ambientLight);
-
-        const mainLight = new THREE.PointLight(0x00f2ff, 1, 50);
-        mainLight.position.set(0, 10, 0);
-        mainLight.castShadow = true;
-        scene.add(mainLight);
-
-        const ballLight = new THREE.PointLight(0xff00ea, 2, 8);
-        scene.add(ballLight);
-
-        // --- OBJECTS ---
-        // Table
-        const tableGeo = new THREE.BoxGeometry(TABLE_WIDTH, TABLE_HEIGHT, TABLE_DEPTH);
-        const tableMat = new THREE.MeshStandardMaterial({ 
-            color: 0x111111, 
-            roughness: 0.2, 
-            metalness: 0.8,
-            emissive: 0x001122
-        });
-        const table = new THREE.Mesh(tableGeo, tableMat);
-        table.position.y = -TABLE_HEIGHT / 2;
-        table.receiveShadow = true;
-        scene.add(table);
-
-        // Grid/Lines
-        const grid = new THREE.GridHelper(20, 10, 0x00f2ff, 0x222222);
-        grid.position.y = 0.01;
-        scene.add(grid);
-
-        // Side Walls (Neon)
-        const wallGeo = new THREE.BoxGeometry(TABLE_WIDTH, 0.2, 0.2);
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0x00f2ff, emissive: 0x00f2ff, emissiveIntensity: 2 });
-        
-        const wallUp = new THREE.Mesh(wallGeo, wallMat);
-        wallUp.position.set(0, 0.1, -TABLE_DEPTH/2);
-        scene.add(wallUp);
-
-        const wallDown = new THREE.Mesh(wallGeo, wallMat);
-        wallDown.position.set(0, 0.1, TABLE_DEPTH/2);
-        scene.add(wallDown);
-
-        // Ball
-        const ballGeo = new THREE.SphereGeometry(BALL_RADIUS, 32, 32);
-        const ballMat = new THREE.MeshStandardMaterial({ 
-            color: 0xff00ea, 
-            emissive: 0xff00ea, 
-            emissiveIntensity: 2 
-        });
-        const ballMesh = new THREE.Mesh(ballGeo, ballMat);
-        ballMesh.castShadow = true;
-        scene.add(ballMesh);
-
-        // Paddles
-        const paddleGeo = new THREE.BoxGeometry(PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_DEPTH);
-        const paddleMatL = new THREE.MeshStandardMaterial({ color: 0x00f2ff, emissive: 0x00f2ff, emissiveIntensity: 1 });
-        const paddleMatR = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xaaaaaa, emissiveIntensity: 0.5 });
-        
-        const paddleL = new THREE.Mesh(paddleGeo, paddleMatL);
-        paddleL.position.set(state.paddleL.x, PADDLE_HEIGHT/2, 0);
-        paddleL.castShadow = true;
-        scene.add(paddleL);
-
-        const paddleR = new THREE.Mesh(paddleGeo, paddleMatR);
-        paddleR.position.set(state.paddleR.x, PADDLE_HEIGHT/2, 0);
-        paddleR.castShadow = true;
-        scene.add(paddleR);
-
-        // --- CONTROLS ---
-        const keys = {};
-        window.addEventListener('keydown', e => {
-            keys[e.key.toLowerCase()] = true;
-            if (e.code === 'Space') togglePause();
-            if (e.key.toLowerCase() === 'c') cycleCamera();
-            if (e.key.toLowerCase() === 'r') restart();
-        });
-        window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-
-        const touchZone = document.getElementById('touchZone');
-        touchZone.addEventListener('touchstart', handleTouch, { passive: false });
-        touchZone.addEventListener('touchmove', handleTouch, { passive: false });
-        touchZone.addEventListener('touchend', () => state.touchActive = false);
-
-        function handleTouch(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            state.touchActive = true;
-            // Map vertical screen position to table depth
-            const z = ((touch.clientY / window.innerHeight) * 2 - 1) * (TABLE_DEPTH / 2);
-            state.paddleL.targetZ = z;
+      // --- SUPABASE CONFIGURATION ---
+      // ⚠️ À REMPLACER PAR TES IDENTIFIANTS SUPABASE ⚠️
+      const SUPABASE_URL = "https://hedimvodzdzwnluekmtd.supabase.co";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlZGltdm9kemR6d25sdWVrbXRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NjM3NTMsImV4cCI6MjA4NjMzOTc1M30.OJe37omxb53GnD0uohQ6tfxZPM48daH_sO1YR4SPHCw";
+      
+      let supabase = null;
+      try {
+        if (SUPABASE_URL && SUPABASE_URL !== "TON_URL_SUPABASE") {
+          supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
         }
+      } catch(e) {
+        console.warn("Supabase non initialisé.");
+      }
 
-        // Mouse support for desktop
-        touchZone.addEventListener('mousemove', e => {
-            if (e.buttons > 0 || !state.touchActive) {
-                const z = ((e.clientY / window.innerHeight) * 2 - 1) * (TABLE_DEPTH / 2);
-                state.paddleL.targetZ = z;
-            }
-        });
+      // --- CONSTANTS ---
+      const TABLE_WIDTH = 20;
+      const TABLE_HEIGHT = 1;
+      const TABLE_DEPTH = 12;
+      const PADDLE_WIDTH = 0.5;
+      const PADDLE_HEIGHT = 1.2;
+      const PADDLE_DEPTH = 2.5;
+      const BALL_RADIUS = 0.3;
+    //   const WIN_SCORE = 1;
+      const WIN_SCORE = 11;
 
-        // --- UI ACTIONS ---
-        const scoreEl = document.getElementById('score');
-        const overlay = document.getElementById('overlay');
-        const msgEl = document.getElementById('msg');
-        const btnStart = document.getElementById('btnStart');
-        const btnPause = document.getElementById('btnPause');
-        const btnRestart = document.getElementById('btnRestart');
-        const btnCam = document.getElementById('btnCam');
+      // --- GAME STATE ---
+      const state = {
+        running: false,
+        gameOver: false,
+        scoreL: 0,
+        scoreR: 0,
+        ball: { x: 0, z: 0, vx: 0.15, vz: 0 },
+        paddleL: { x: -TABLE_WIDTH / 2 + 1, z: 0, targetZ: 0 },
+        paddleR: { x: TABLE_WIDTH / 2 - 1, z: 0, targetZ: 0 },
+        camIndex: 0,
+        touchActive: false,
+      };
 
-        btnStart.onclick = () => {
-            overlay.classList.add('hidden');
-            state.running = true;
-            if (state.gameOver) restart();
-        };
+      // --- THREE.JS SETUP ---
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x050505);
+      scene.fog = new THREE.Fog(0x050505, 10, 50);
 
-        btnPause.onclick = togglePause;
-        btnRestart.onclick = restart;
-        btnCam.onclick = cycleCamera;
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      document.body.appendChild(renderer.domElement);
 
-        function togglePause() {
-            state.running = !state.running;
-            btnPause.textContent = state.running ? 'Pause' : 'Reprendre';
-            if (!state.running) {
-                overlay.classList.remove('hidden');
-                msgEl.textContent = "PAUSE";
-            } else {
-                overlay.classList.add('hidden');
-            }
+      // --- CAMERAS ---
+      const cameras = [
+        // 0: Arcade View (Side-top)
+        new THREE.PerspectiveCamera(
+          50,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000,
+        ),
+        // 1: Immersive View (Behind P1)
+        new THREE.PerspectiveCamera(
+          60,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000,
+        ),
+        // 2: Top View (Classic)
+        new THREE.PerspectiveCamera(
+          45,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000,
+        ),
+      ];
+
+      cameras[0].position.set(0, 15, 10);
+      cameras[0].lookAt(0, 0, 0);
+
+      cameras[1].position.set(-15, 6, 0);
+      cameras[1].lookAt(5, 0, 0);
+
+      cameras[2].position.set(0, 20, 0);
+      cameras[2].lookAt(0, 0, 0);
+
+      let activeCamera = cameras[0];
+
+      // --- LIGHTS ---
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+      scene.add(ambientLight);
+
+      const mainLight = new THREE.PointLight(0x00f2ff, 1, 50);
+      mainLight.position.set(0, 10, 0);
+      mainLight.castShadow = true;
+      scene.add(mainLight);
+
+      const ballLight = new THREE.PointLight(0xff00ea, 2, 8);
+      scene.add(ballLight);
+
+      // --- OBJECTS ---
+      // Table
+      const tableGeo = new THREE.BoxGeometry(
+        TABLE_WIDTH,
+        TABLE_HEIGHT,
+        TABLE_DEPTH,
+      );
+      const tableMat = new THREE.MeshStandardMaterial({
+        color: 0x111111,
+        roughness: 0.2,
+        metalness: 0.8,
+        emissive: 0x001122,
+      });
+      const table = new THREE.Mesh(tableGeo, tableMat);
+      table.position.y = -TABLE_HEIGHT / 2;
+      table.receiveShadow = true;
+      scene.add(table);
+
+      // Grid/Lines
+      const grid = new THREE.GridHelper(20, 10, 0x00f2ff, 0x222222);
+      grid.position.y = 0.01;
+      scene.add(grid);
+
+      // Side Walls (Neon)
+      const wallGeo = new THREE.BoxGeometry(TABLE_WIDTH, 0.2, 0.2);
+      const wallMat = new THREE.MeshStandardMaterial({
+        color: 0x00f2ff,
+        emissive: 0x00f2ff,
+        emissiveIntensity: 2,
+      });
+
+      const wallUp = new THREE.Mesh(wallGeo, wallMat);
+      wallUp.position.set(0, 0.1, -TABLE_DEPTH / 2);
+      scene.add(wallUp);
+
+      const wallDown = new THREE.Mesh(wallGeo, wallMat);
+      wallDown.position.set(0, 0.1, TABLE_DEPTH / 2);
+      scene.add(wallDown);
+
+      // Ball
+      const ballGeo = new THREE.SphereGeometry(BALL_RADIUS, 32, 32);
+      const ballMat = new THREE.MeshStandardMaterial({
+        color: 0xff00ea,
+        emissive: 0xff00ea,
+        emissiveIntensity: 2,
+      });
+      const ballMesh = new THREE.Mesh(ballGeo, ballMat);
+      ballMesh.castShadow = true;
+      scene.add(ballMesh);
+
+      // Paddles
+      const paddleGeo = new THREE.BoxGeometry(
+        PADDLE_WIDTH,
+        PADDLE_HEIGHT,
+        PADDLE_DEPTH,
+      );
+      const paddleMatL = new THREE.MeshStandardMaterial({
+        color: 0x00f2ff,
+        emissive: 0x00f2ff,
+        emissiveIntensity: 1,
+      });
+      const paddleMatR = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0xaaaaaa,
+        emissiveIntensity: 0.5,
+      });
+
+      const paddleL = new THREE.Mesh(paddleGeo, paddleMatL);
+      paddleL.position.set(state.paddleL.x, PADDLE_HEIGHT / 2, 0);
+      paddleL.castShadow = true;
+      scene.add(paddleL);
+
+      const paddleR = new THREE.Mesh(paddleGeo, paddleMatR);
+      paddleR.position.set(state.paddleR.x, PADDLE_HEIGHT / 2, 0);
+      paddleR.castShadow = true;
+      scene.add(paddleR);
+
+      // --- CONTROLS ---
+      const keys = {};
+      window.addEventListener("keydown", (e) => {
+        keys[e.key.toLowerCase()] = true;
+        if (e.code === "Space") togglePause();
+        if (e.key.toLowerCase() === "c") cycleCamera();
+        if (e.key.toLowerCase() === "r") restart();
+      });
+      window.addEventListener(
+        "keyup",
+        (e) => (keys[e.key.toLowerCase()] = false),
+      );
+
+      const touchZone = document.getElementById("touchZone");
+      touchZone.addEventListener("touchstart", handleTouch, { passive: false });
+      touchZone.addEventListener("touchmove", handleTouch, { passive: false });
+      touchZone.addEventListener("touchend", () => (state.touchActive = false));
+
+      function handleTouch(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        state.touchActive = true;
+        // Map vertical screen position to table depth
+        const z =
+          ((touch.clientY / window.innerHeight) * 2 - 1) * (TABLE_DEPTH / 2);
+        state.paddleL.targetZ = z;
+      }
+
+      // Mouse support for desktop
+      touchZone.addEventListener("mousemove", (e) => {
+        if (e.buttons > 0 || !state.touchActive) {
+          const z =
+            ((e.clientY / window.innerHeight) * 2 - 1) * (TABLE_DEPTH / 2);
+          state.paddleL.targetZ = z;
         }
+      });
 
-        function restart() {
-            state.scoreL = 0; state.scoreR = 0;
-            updateScore();
-            resetBall(1);
-            state.gameOver = false;
-            state.running = true;
-            overlay.classList.add('hidden');
-            msgEl.textContent = "C'EST PARTI !";
+      // --- UI ACTIONS ---
+      const scoreEl = document.getElementById("score");
+      const overlay = document.getElementById("overlay");
+      const msgEl = document.getElementById("msg");
+      const btnStart = document.getElementById("btnStart");
+      const btnPause = document.getElementById("btnPause");
+      const btnRestart = document.getElementById("btnRestart");
+      const btnCam = document.getElementById("btnCam");
+      
+      const pseudoInput = document.getElementById("pseudoInput");
+      const avatarPreview = document.getElementById("avatarPreview");
+      const profileSetup = document.getElementById("profileSetup");
+      const avatarUpload = document.getElementById("avatarUpload");
+      
+      let currentPseudo = localStorage.getItem("pingpong_pseudo") || "Joueur";
+      let customAvatar = localStorage.getItem("pingpong_custom_avatar") || null;
+      
+      pseudoInput.value = currentPseudo;
+      updateAvatarDisplay();
+
+      pseudoInput.addEventListener("input", (e) => {
+        currentPseudo = e.target.value.trim() || "Joueur";
+        updateAvatarDisplay();
+      });
+
+      function updateAvatarDisplay() {
+        if (customAvatar) {
+          avatarPreview.src = customAvatar;
+        } else {
+          avatarPreview.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(currentPseudo)}`;
         }
+      }
 
-        function cycleCamera() {
-            state.camIndex = (state.camIndex + 1) % cameras.length;
-            activeCamera = cameras[state.camIndex];
+      // Permettre le choix d'un avatar personalisé
+      avatarPreview.addEventListener("click", () => {
+        avatarUpload.click();
+      });
+
+      avatarUpload.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+              // Redimensionner l'image pour ne pas saturer le stockage
+              const canvas = document.createElement("canvas");
+              const ctx = canvas.getContext("2d");
+              canvas.width = 100;
+              canvas.height = 100;
+              // Remplir avec du noir pour les PNG transparents
+              ctx.fillStyle = "#050505";
+              ctx.fillRect(0, 0, 100, 100);
+              ctx.drawImage(img, 0, 0, 100, 100);
+              
+              customAvatar = canvas.toDataURL("image/jpeg", 0.9);
+              localStorage.setItem("pingpong_custom_avatar", customAvatar);
+              updateAvatarDisplay();
+            };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
         }
+      });
 
-        function updateScore() {
-            scoreEl.textContent = `${state.scoreL} — ${state.scoreR}`;
+      btnStart.onclick = () => {
+        localStorage.setItem("pingpong_pseudo", currentPseudo);
+        profileSetup.style.display = "none";
+        overlay.classList.add("hidden");
+        state.running = true;
+        if (state.gameOver) restart();
+      };
+
+      btnPause.onclick = togglePause;
+      btnRestart.onclick = restart;
+      btnCam.onclick = cycleCamera;
+
+      function togglePause() {
+        state.running = !state.running;
+        btnPause.textContent = state.running ? "Pause" : "Reprendre";
+        if (!state.running) {
+          profileSetup.style.display = "none";
+          overlay.classList.remove("hidden");
+          msgEl.textContent = "PAUSE";
+        } else {
+          overlay.classList.add("hidden");
         }
+      }
 
-        function resetBall(dir) {
-            state.ball.x = 0;
-            state.ball.z = 0;
-            state.ball.vx = 0.15 * dir;
-            state.ball.vz = (Math.random() - 0.5) * 0.2;
-        }
-
-        // --- GAME LOGIC ---
-        function update() {
-            if (!state.running || state.gameOver) return;
-
-            // Player movement (L)
-            const speed = 0.25;
-            if (keys['arrowup'] || keys['z']) state.paddleL.targetZ -= speed;
-            if (keys['arrowdown'] || keys['s']) state.paddleL.targetZ += speed;
-            
-            // Apply smoothing to paddle
-            state.paddleL.z += (state.paddleL.targetZ - state.paddleL.z) * 0.2;
-            state.paddleL.z = Math.max(-TABLE_DEPTH/2 + PADDLE_DEPTH/2, Math.min(TABLE_DEPTH/2 - PADDLE_DEPTH/2, state.paddleL.z));
-            paddleL.position.z = state.paddleL.z;
-
-            // AI movement (R)
-            const aiSpeed = 0.12;
-            const targetZ = state.ball.z;
-            if (targetZ < state.paddleR.z - 0.5) state.paddleR.z -= aiSpeed;
-            else if (targetZ > state.paddleR.z + 0.5) state.paddleR.z += aiSpeed;
-            state.paddleR.z = Math.max(-TABLE_DEPTH/2 + PADDLE_DEPTH/2, Math.min(TABLE_DEPTH/2 - PADDLE_DEPTH/2, state.paddleR.z));
-            paddleR.position.z = state.paddleR.z;
-
-            // Ball movement
-            state.ball.x += state.ball.vx;
-            state.ball.z += state.ball.vz;
-
-            // Wall collisions
-            if (Math.abs(state.ball.z) > TABLE_DEPTH/2 - BALL_RADIUS) {
-                state.ball.vz *= -1;
-                state.ball.z = Math.sign(state.ball.z) * (TABLE_DEPTH/2 - BALL_RADIUS);
-            }
-
-            // Paddle collisions
-            // Left
-            if (state.ball.vx < 0 && 
-                state.ball.x < state.paddleL.x + PADDLE_WIDTH/2 + BALL_RADIUS && 
-                state.ball.x > state.paddleL.x - PADDLE_WIDTH/2 &&
-                Math.abs(state.ball.z - state.paddleL.z) < PADDLE_DEPTH/2 + BALL_RADIUS) {
-                
-                state.ball.vx *= -1.1; // accelerate
-                state.ball.vz += (state.ball.z - state.paddleL.z) * 0.2;
-                state.ball.x = state.paddleL.x + PADDLE_WIDTH/2 + BALL_RADIUS;
-            }
-
-            // Right
-            if (state.ball.vx > 0 && 
-                state.ball.x > state.paddleR.x - PADDLE_WIDTH/2 - BALL_RADIUS && 
-                state.ball.x < state.paddleR.x + PADDLE_WIDTH/2 &&
-                Math.abs(state.ball.z - state.paddleR.z) < PADDLE_DEPTH/2 + BALL_RADIUS) {
-                
-                state.ball.vx *= -1.1;
-                state.ball.vz += (state.ball.z - state.paddleR.z) * 0.2;
-                state.ball.x = state.paddleR.x - PADDLE_WIDTH/2 - BALL_RADIUS;
-            }
-
-            // Scoring
-            if (state.ball.x < -TABLE_WIDTH/2) {
-                state.scoreR++;
-                checkWin();
-                if (!state.gameOver) resetBall(1);
-            } else if (state.ball.x > TABLE_WIDTH/2) {
-                state.scoreL++;
-                checkWin();
-                if (!state.gameOver) resetBall(-1);
-            }
-
-            // Clamp max speed
-            const maxSpeed = 0.4;
-            if (Math.abs(state.ball.vx) > maxSpeed) state.ball.vx = Math.sign(state.ball.vx) * maxSpeed;
-
-            // Sync Meshes
-            ballMesh.position.set(state.ball.x, BALL_RADIUS, state.ball.z);
-            ballLight.position.set(state.ball.x, BALL_RADIUS + 0.5, state.ball.z);
-        }
-
-        function checkWin() {
-            updateScore();
-            if (state.scoreL >= WIN_SCORE || state.scoreR >= WIN_SCORE) {
-                state.gameOver = true;
-                state.running = false;
-                overlay.classList.remove('hidden');
-                msgEl.textContent = state.scoreL >= WIN_SCORE ? "VICTOIRE !" : "DÉFAITE...";
-            }
-        }
-
-        // --- RENDER LOOP ---
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            update();
-
-            // Camera follow logic for perspective 1 (Immersive)
-            if (state.camIndex === 1) {
-                cameras[1].position.z += (state.paddleL.z - cameras[1].position.z) * 0.05;
-                cameras[1].lookAt(10, 0, 0);
-            }
-
-            renderer.render(scene, activeCamera);
-        }
-
-        window.addEventListener('resize', () => {
-            cameras.forEach(cam => {
-                cam.aspect = window.innerWidth / window.innerHeight;
-                cam.updateProjectionMatrix();
-            });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        animate();
+      function restart() {
+        state.scoreL = 0;
+        state.scoreR = 0;
         updateScore();
+        resetBall(1);
+        state.gameOver = false;
+        state.running = true;
+        profileSetup.style.display = "none";
+        overlay.classList.add("hidden");
+        msgEl.textContent = "C'EST PARTI !";
+      }
+
+      function cycleCamera() {
+        state.camIndex = (state.camIndex + 1) % cameras.length;
+        activeCamera = cameras[state.camIndex];
+      }
+
+      function updateScore() {
+        scoreEl.textContent = `${state.scoreL} — ${state.scoreR}`;
+      }
+
+      function resetBall(dir) {
+        state.ball.x = 0;
+        state.ball.z = 0;
+        state.ball.vx = 0.15 * dir;
+        state.ball.vz = (Math.random() - 0.5) * 0.2;
+      }
+
+      // --- GAME LOGIC ---
+      function update() {
+        if (!state.running || state.gameOver) return;
+
+        // Player movement (L)
+        const speed = 0.25;
+        if (keys["arrowup"] || keys["z"]) state.paddleL.targetZ -= speed;
+        if (keys["arrowdown"] || keys["s"]) state.paddleL.targetZ += speed;
+
+        // Apply smoothing to paddle
+        state.paddleL.z += (state.paddleL.targetZ - state.paddleL.z) * 0.2;
+        state.paddleL.z = Math.max(
+          -TABLE_DEPTH / 2 + PADDLE_DEPTH / 2,
+          Math.min(TABLE_DEPTH / 2 - PADDLE_DEPTH / 2, state.paddleL.z),
+        );
+        paddleL.position.z = state.paddleL.z;
+
+        // AI movement (R)
+        const aiSpeed = 0.12;
+        const targetZ = state.ball.z;
+        if (targetZ < state.paddleR.z - 0.5) state.paddleR.z -= aiSpeed;
+        else if (targetZ > state.paddleR.z + 0.5) state.paddleR.z += aiSpeed;
+        state.paddleR.z = Math.max(
+          -TABLE_DEPTH / 2 + PADDLE_DEPTH / 2,
+          Math.min(TABLE_DEPTH / 2 - PADDLE_DEPTH / 2, state.paddleR.z),
+        );
+        paddleR.position.z = state.paddleR.z;
+
+        // Ball movement
+        state.ball.x += state.ball.vx;
+        state.ball.z += state.ball.vz;
+
+        // Wall collisions
+        if (Math.abs(state.ball.z) > TABLE_DEPTH / 2 - BALL_RADIUS) {
+          state.ball.vz *= -1;
+          state.ball.z =
+            Math.sign(state.ball.z) * (TABLE_DEPTH / 2 - BALL_RADIUS);
+        }
+
+        // Paddle collisions
+        // Left
+        if (
+          state.ball.vx < 0 &&
+          state.ball.x < state.paddleL.x + PADDLE_WIDTH / 2 + BALL_RADIUS &&
+          state.ball.x > state.paddleL.x - PADDLE_WIDTH / 2 &&
+          Math.abs(state.ball.z - state.paddleL.z) <
+            PADDLE_DEPTH / 2 + BALL_RADIUS
+        ) {
+          state.ball.vx *= -1.1; // accelerate
+          state.ball.vz += (state.ball.z - state.paddleL.z) * 0.2;
+          state.ball.x = state.paddleL.x + PADDLE_WIDTH / 2 + BALL_RADIUS;
+        }
+
+        // Right
+        if (
+          state.ball.vx > 0 &&
+          state.ball.x > state.paddleR.x - PADDLE_WIDTH / 2 - BALL_RADIUS &&
+          state.ball.x < state.paddleR.x + PADDLE_WIDTH / 2 &&
+          Math.abs(state.ball.z - state.paddleR.z) <
+            PADDLE_DEPTH / 2 + BALL_RADIUS
+        ) {
+          state.ball.vx *= -1.1;
+          state.ball.vz += (state.ball.z - state.paddleR.z) * 0.2;
+          state.ball.x = state.paddleR.x - PADDLE_WIDTH / 2 - BALL_RADIUS;
+        }
+
+        // Scoring
+        if (state.ball.x < -TABLE_WIDTH / 2) {
+          state.scoreR++;
+          checkWin();
+          if (!state.gameOver) resetBall(1);
+        } else if (state.ball.x > TABLE_WIDTH / 2) {
+          state.scoreL++;
+          checkWin();
+          if (!state.gameOver) resetBall(-1);
+        }
+
+        // Clamp max speed
+        const maxSpeed = 0.4;
+        if (Math.abs(state.ball.vx) > maxSpeed)
+          state.ball.vx = Math.sign(state.ball.vx) * maxSpeed;
+
+        // Sync Meshes
+        ballMesh.position.set(state.ball.x, BALL_RADIUS, state.ball.z);
+        ballLight.position.set(state.ball.x, BALL_RADIUS + 0.5, state.ball.z);
+      }
+
+      function checkWin() {
+        updateScore();
+        if (state.scoreL >= WIN_SCORE || state.scoreR >= WIN_SCORE) {
+          state.gameOver = true;
+          state.running = false;
+          
+          const isWin = state.scoreL >= WIN_SCORE;
+          msgEl.textContent = isWin ? "VICTOIRE !" : "DÉFAITE...";
+          
+          profileSetup.style.display = "flex";
+          overlay.classList.remove("hidden");
+          
+          // Sauvegarde dans Supabase
+          if (supabase) {
+            supabase.from("championnat_pingpong").insert([{
+              pseudo: currentPseudo,
+              score_joueur: state.scoreL,
+              score_ia: state.scoreR,
+              resultat: isWin ? "victoire" : "defaite"
+            }]).then(({ error }) => {
+              if (error) console.error("Erreur d'enregistrement Supabase :", error);
+              else console.log("Résultat du championnat enregistré !");
+            });
+          }
+        }
+      }
+
+      // --- RENDER LOOP ---
+      function animate() {
+        requestAnimationFrame(animate);
+
+        update();
+
+        // Camera follow logic for perspective 1 (Immersive)
+        if (state.camIndex === 1) {
+          cameras[1].position.z +=
+            (state.paddleL.z - cameras[1].position.z) * 0.05;
+          cameras[1].lookAt(10, 0, 0);
+        }
+
+        renderer.render(scene, activeCamera);
+      }
+
+      window.addEventListener("resize", () => {
+        cameras.forEach((cam) => {
+          cam.aspect = window.innerWidth / window.innerHeight;
+          cam.updateProjectionMatrix();
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      animate();
+      updateScore();
     </script>
-</body>
+  </body>
 </html>

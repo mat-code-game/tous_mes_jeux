@@ -1,850 +1,956 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CUBE-9 : L'Éveil du Dernier Géomètre</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
-    
-    * { 
-      box-sizing: border-box; 
-      margin: 0; 
-      padding: 0; 
-    }
-    
-    body {
-      background: #000;
-      color: #fff;
-      font-family: 'Rajdhani', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      overflow: hidden;
-      position: relative;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CUBE-9 : L'Éveil du Dernier Géomètre</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap");
 
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: 
-        radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 50%, rgba(255, 0, 255, 0.15) 0%, transparent 50%),
-        linear-gradient(180deg, #0a0a1a 0%, #000 100%);
-      z-index: -1;
-      animation: bgPulse 8s ease-in-out infinite;
-    }
-
-    @keyframes bgPulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.8; }
-    }
-
-    #fullscreenBtn {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(0, 255, 255, 0.2);
-      border: 2px solid rgba(0, 255, 255, 0.6);
-      color: #0ff;
-      padding: 12px 24px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 700;
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      transition: all 0.3s ease;
-      z-index: 1000;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-    }
-
-    #fullscreenBtn:hover {
-      background: rgba(0, 255, 255, 0.3);
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-      transform: scale(1.05);
-    }
-
-    .game-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-      padding: 20px;
-    }
-
-    h1 {
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 900;
-      font-size: 48px;
-      letter-spacing: 6px;
-      text-transform: uppercase;
-      background: linear-gradient(135deg, #0ff 0%, #f0f 50%, #0ff 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
-      margin-bottom: 10px;
-      animation: titleGlow 3s ease-in-out infinite;
-    }
-
-    @keyframes titleGlow {
-      0%, 100% { filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.6)); }
-      50% { filter: drop-shadow(0 0 25px rgba(255, 0, 255, 0.8)); }
-    }
-
-    .subtitle {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 16px;
-      letter-spacing: 4px;
-      color: #0ff;
-      opacity: 0.8;
-      margin-bottom: 20px;
-      text-transform: uppercase;
-    }
-
-    #info {
-      font-size: 16px;
-      font-weight: 300;
-      opacity: 0.7;
-      text-align: center;
-      max-width: 600px;
-      line-height: 1.6;
-      color: #aaf;
-    }
-
-    canvas {
-      background: linear-gradient(135deg, #050712, #060b1f);
-      border-radius: 16px;
-      box-shadow: 
-        0 0 40px rgba(0, 255, 255, 0.3),
-        0 0 80px rgba(255, 0, 255, 0.2),
-        inset 0 0 100px rgba(0, 0, 0, 0.5);
-      cursor: pointer;
-      border: 2px solid rgba(0, 255, 255, 0.3);
-      transition: all 0.3s ease;
-    }
-
-    canvas:hover {
-      box-shadow: 
-        0 0 50px rgba(0, 255, 255, 0.5),
-        0 0 100px rgba(255, 0, 255, 0.3),
-        inset 0 0 100px rgba(0, 0, 0, 0.5);
-    }
-
-    /* Story Modal */
-    .story-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.95);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.5s ease;
-    }
-
-    .story-modal.active {
-      opacity: 1;
-      pointer-events: all;
-    }
-
-    .story-content {
-      max-width: 800px;
-      padding: 60px;
-      background: linear-gradient(135deg, rgba(5, 7, 18, 0.95), rgba(6, 11, 31, 0.95));
-      border: 2px solid rgba(0, 255, 255, 0.4);
-      border-radius: 20px;
-      box-shadow: 
-        0 0 60px rgba(0, 255, 255, 0.3),
-        inset 0 0 80px rgba(0, 0, 0, 0.5);
-      animation: storyFadeIn 0.8s ease-out;
-      position: relative;
-    }
-
-    .audio-controls {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-direction: column;
-    }
-
-    .audio-buttons {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .voice-selector {
-      background: rgba(5, 7, 18, 0.9);
-      border: 1px solid rgba(0, 255, 255, 0.4);
-      border-radius: 8px;
-      padding: 6px 12px;
-      color: #0ff;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 12px;
-      cursor: pointer;
-      max-width: 200px;
-      transition: all 0.3s ease;
-    }
-
-    .voice-selector:hover {
-      border-color: rgba(0, 255, 255, 0.8);
-      box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-    }
-
-    .voice-selector option {
-      background: #050712;
-      color: #0ff;
-    }
-
-    .audio-btn {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.2));
-      border: 2px solid rgba(0, 255, 255, 0.5);
-      color: #0ff;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-    }
-
-    .audio-btn:hover {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.4), rgba(255, 0, 255, 0.4));
-      box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
-      transform: scale(1.1);
-    }
-
-    .audio-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .narration-indicator {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 14px;
-      color: #0ff;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .narration-indicator.active {
-      opacity: 1;
-    }
-
-    .narration-indicator .pulse {
-      width: 8px;
-      height: 8px;
-      background: #0ff;
-      border-radius: 50%;
-      animation: audioPulse 1.5s ease-in-out infinite;
-    }
-
-    @keyframes audioPulse {
-      0%, 100% { 
-        transform: scale(1);
-        box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
       }
-      50% { 
-        transform: scale(1.3);
-        box-shadow: 0 0 15px rgba(0, 255, 255, 1);
-      }
-    }
 
-    @keyframes storyFadeIn {
-      from {
+      body {
+        background: #000;
+        color: #fff;
+        font-family: "Rajdhani", sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        overflow: hidden;
+        position: relative;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+          radial-gradient(
+            circle at 20% 50%,
+            rgba(0, 255, 255, 0.15) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 50%,
+            rgba(255, 0, 255, 0.15) 0%,
+            transparent 50%
+          ),
+          linear-gradient(180deg, #0a0a1a 0%, #000 100%);
+        z-index: -1;
+        animation: bgPulse 8s ease-in-out infinite;
+      }
+
+      @keyframes bgPulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.8;
+        }
+      }
+
+      #fullscreenBtn {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 255, 255, 0.2);
+        border: 2px solid rgba(0, 255, 255, 0.6);
+        color: #0ff;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: "Orbitron", sans-serif;
+        font-weight: 700;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transition: all 0.3s ease;
+        z-index: 1000;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+      }
+
+      #fullscreenBtn:hover {
+        background: rgba(0, 255, 255, 0.3);
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        transform: scale(1.05);
+      }
+
+      .game-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        padding: 20px;
+      }
+
+      h1 {
+        font-family: "Orbitron", sans-serif;
+        font-weight: 900;
+        font-size: 48px;
+        letter-spacing: 6px;
+        text-transform: uppercase;
+        background: linear-gradient(135deg, #0ff 0%, #f0f 50%, #0ff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+        margin-bottom: 10px;
+        animation: titleGlow 3s ease-in-out infinite;
+      }
+
+      @keyframes titleGlow {
+        0%,
+        100% {
+          filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.6));
+        }
+        50% {
+          filter: drop-shadow(0 0 25px rgba(255, 0, 255, 0.8));
+        }
+      }
+
+      .subtitle {
+        font-family: "Orbitron", sans-serif;
+        font-size: 16px;
+        letter-spacing: 4px;
+        color: #0ff;
+        opacity: 0.8;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+      }
+
+      #info {
+        font-size: 16px;
+        font-weight: 300;
+        opacity: 0.7;
+        text-align: center;
+        max-width: 600px;
+        line-height: 1.6;
+        color: #aaf;
+      }
+
+      canvas {
+        background: linear-gradient(135deg, #050712, #060b1f);
+        border-radius: 16px;
+        box-shadow:
+          0 0 40px rgba(0, 255, 255, 0.3),
+          0 0 80px rgba(255, 0, 255, 0.2),
+          inset 0 0 100px rgba(0, 0, 0, 0.5);
+        cursor: pointer;
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      canvas:hover {
+        box-shadow:
+          0 0 50px rgba(0, 255, 255, 0.5),
+          0 0 100px rgba(255, 0, 255, 0.3),
+          inset 0 0 100px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Story Modal */
+      .story-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
         opacity: 0;
-        transform: scale(0.9) translateY(30px);
+        pointer-events: none;
+        transition: opacity 0.5s ease;
       }
-      to {
+
+      .story-modal.active {
         opacity: 1;
-        transform: scale(1) translateY(0);
+        pointer-events: all;
       }
-    }
 
-    .story-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 32px;
-      font-weight: 900;
-      color: #0ff;
-      margin-bottom: 30px;
-      text-align: center;
-      text-transform: uppercase;
-      letter-spacing: 4px;
-      text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
-    }
+      .story-content {
+        max-width: 800px;
+        padding: 60px;
+        background: linear-gradient(
+          135deg,
+          rgba(5, 7, 18, 0.95),
+          rgba(6, 11, 31, 0.95)
+        );
+        border: 2px solid rgba(0, 255, 255, 0.4);
+        border-radius: 20px;
+        box-shadow:
+          0 0 60px rgba(0, 255, 255, 0.3),
+          inset 0 0 80px rgba(0, 0, 0, 0.5);
+        animation: storyFadeIn 0.8s ease-out;
+        position: relative;
+      }
 
-    .story-text {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 20px;
-      font-weight: 300;
-      line-height: 1.8;
-      color: #cce;
-      margin-bottom: 30px;
-      text-align: justify;
-    }
+      .audio-controls {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-direction: column;
+      }
 
-    .story-text strong {
-      color: #0ff;
-      font-weight: 600;
-    }
+      .audio-buttons {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
 
-    .story-text em {
-      color: #f0f;
-      font-style: italic;
-    }
+      .voice-selector {
+        background: rgba(5, 7, 18, 0.9);
+        border: 1px solid rgba(0, 255, 255, 0.4);
+        border-radius: 8px;
+        padding: 6px 12px;
+        color: #0ff;
+        font-family: "Rajdhani", sans-serif;
+        font-size: 12px;
+        cursor: pointer;
+        max-width: 200px;
+        transition: all 0.3s ease;
+      }
 
-    .continue-btn {
-      display: block;
-      margin: 40px auto 0;
-      padding: 16px 48px;
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.2));
-      border: 2px solid #0ff;
-      color: #0ff;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 18px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
-    }
+      .voice-selector:hover {
+        border-color: rgba(0, 255, 255, 0.8);
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+      }
 
-    .continue-btn:hover {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.4), rgba(255, 0, 255, 0.4));
-      box-shadow: 0 0 50px rgba(0, 255, 255, 0.6);
-      transform: scale(1.05);
-    }
+      .voice-selector option {
+        background: #050712;
+        color: #0ff;
+      }
 
-    .narrator-hint {
-      text-align: center;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 13px;
-      color: #0ff;
-      opacity: 0.6;
-      margin-top: 15px;
-      font-style: italic;
-    }
+      .audio-btn {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 255, 255, 0.2),
+          rgba(255, 0, 255, 0.2)
+        );
+        border: 2px solid rgba(0, 255, 255, 0.5);
+        color: #0ff;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+      }
 
-    .glitch {
-      animation: glitch 0.3s ease-in-out infinite;
-    }
+      .audio-btn:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 255, 255, 0.4),
+          rgba(255, 0, 255, 0.4)
+        );
+        box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
+        transform: scale(1.1);
+      }
 
-    @keyframes glitch {
-      0%, 100% { transform: translate(0); }
-      20% { transform: translate(-2px, 2px); }
-      40% { transform: translate(-2px, -2px); }
-      60% { transform: translate(2px, 2px); }
-      80% { transform: translate(2px, -2px); }
-    }
+      .audio-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+      }
 
-    /* Intro Screen */
-    #introScreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 3000;
-      transition: opacity 1s ease;
-    }
+      .narration-indicator {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 14px;
+        color: #0ff;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
 
-    #introScreen.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+      .narration-indicator.active {
+        opacity: 1;
+      }
 
-    .intro-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 72px;
-      font-weight: 900;
-      background: linear-gradient(135deg, #0ff, #f0f, #0ff);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 40px;
-      animation: introGlow 2s ease-in-out infinite;
-    }
+      .narration-indicator .pulse {
+        width: 8px;
+        height: 8px;
+        background: #0ff;
+        border-radius: 50%;
+        animation: audioPulse 1.5s ease-in-out infinite;
+      }
 
-    @keyframes introGlow {
-      0%, 100% { filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.8)); }
-      50% { filter: drop-shadow(0 0 40px rgba(255, 0, 255, 1)); }
-    }
+      @keyframes audioPulse {
+        0%,
+        100% {
+          transform: scale(1);
+          box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+        50% {
+          transform: scale(1.3);
+          box-shadow: 0 0 15px rgba(0, 255, 255, 1);
+        }
+      }
 
-    .intro-subtitle {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 24px;
-      color: #0ff;
-      margin-bottom: 60px;
-      letter-spacing: 6px;
-      text-transform: uppercase;
-    }
+      @keyframes storyFadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.9) translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
 
-    .start-btn {
-      padding: 20px 60px;
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(255, 0, 255, 0.3));
-      border: 3px solid #0ff;
-      color: #0ff;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 24px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 4px;
-      border-radius: 16px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
-      animation: pulse 2s ease-in-out infinite;
-    }
+      .story-title {
+        font-family: "Orbitron", sans-serif;
+        font-size: 32px;
+        font-weight: 900;
+        color: #0ff;
+        margin-bottom: 30px;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+      }
 
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
+      .story-text {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 20px;
+        font-weight: 300;
+        line-height: 1.8;
+        color: #cce;
+        margin-bottom: 30px;
+        text-align: justify;
+      }
 
-    .start-btn:hover {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.5), rgba(255, 0, 255, 0.5));
-      box-shadow: 0 0 60px rgba(0, 255, 255, 0.8);
-      transform: scale(1.1);
-    }
+      .story-text strong {
+        color: #0ff;
+        font-weight: 600;
+      }
 
-    /* Level Selection */
-    .level-select-container {
-      max-width: 1200px;
-      padding: 40px 20px;
-    }
+      .story-text em {
+        color: #f0f;
+        font-style: italic;
+      }
 
-    .level-select-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 28px;
-      font-weight: 700;
-      color: #0ff;
-      text-align: center;
-      margin-bottom: 40px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
-    }
+      .continue-btn {
+        display: block;
+        margin: 40px auto 0;
+        padding: 16px 48px;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 255, 255, 0.2),
+          rgba(255, 0, 255, 0.2)
+        );
+        border: 2px solid #0ff;
+        color: #0ff;
+        font-family: "Orbitron", sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+      }
 
-    .levels-grid {
-      display: flex;
-      flex-direction: row;
-      justify-content: flex-start;
-      align-items: stretch;
-      gap: 20px;
-      padding: 20px;
-      overflow-x: auto;
-      overflow-y: hidden;
-      scroll-behavior: smooth;
-    }
+      .continue-btn:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 255, 255, 0.4),
+          rgba(255, 0, 255, 0.4)
+        );
+        box-shadow: 0 0 50px rgba(0, 255, 255, 0.6);
+        transform: scale(1.05);
+      }
 
-    /* Scrollbar personnalisée */
-    .levels-grid::-webkit-scrollbar {
-      height: 12px;
-    }
+      .narrator-hint {
+        text-align: center;
+        font-family: "Rajdhani", sans-serif;
+        font-size: 13px;
+        color: #0ff;
+        opacity: 0.6;
+        margin-top: 15px;
+        font-style: italic;
+      }
 
-    .levels-grid::-webkit-scrollbar-track {
-      background: rgba(5, 7, 18, 0.5);
-      border-radius: 10px;
-      border: 1px solid rgba(0, 255, 255, 0.2);
-    }
+      .glitch {
+        animation: glitch 0.3s ease-in-out infinite;
+      }
 
-    .levels-grid::-webkit-scrollbar-thumb {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.6), rgba(255, 0, 255, 0.6));
-      border-radius: 10px;
-      border: 2px solid rgba(0, 255, 255, 0.3);
-      box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
-    }
+      @keyframes glitch {
+        0%,
+        100% {
+          transform: translate(0);
+        }
+        20% {
+          transform: translate(-2px, 2px);
+        }
+        40% {
+          transform: translate(-2px, -2px);
+        }
+        60% {
+          transform: translate(2px, 2px);
+        }
+        80% {
+          transform: translate(2px, -2px);
+        }
+      }
 
-    .levels-grid::-webkit-scrollbar-thumb:hover {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.8), rgba(255, 0, 255, 0.8));
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
-    }
+      /* Intro Screen */
+      #introScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 3000;
+        transition: opacity 1s ease;
+      }
 
-    /* Pour Firefox */
-    .levels-grid {
-      scrollbar-width: thin;
-      scrollbar-color: rgba(0, 255, 255, 0.6) rgba(5, 7, 18, 0.5);
-    }
+      #introScreen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
 
-    .level-card {
-      background: linear-gradient(135deg, rgba(5, 7, 18, 0.8), rgba(6, 11, 31, 0.8));
-      border: 2px solid rgba(0, 255, 255, 0.3);
-      border-radius: 16px;
-      padding: 30px 20px;
-      cursor: pointer;
-      transition: all 0.4s ease;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
-      width: 180px;
-      flex-shrink: 0;
-    }
+      .intro-title {
+        font-family: "Orbitron", sans-serif;
+        font-size: 72px;
+        font-weight: 900;
+        background: linear-gradient(135deg, #0ff, #f0f, #0ff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 40px;
+        animation: introGlow 2s ease-in-out infinite;
+      }
 
-    .level-card::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
-      opacity: 0;
-      transition: opacity 0.4s ease;
-    }
+      @keyframes introGlow {
+        0%,
+        100% {
+          filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.8));
+        }
+        50% {
+          filter: drop-shadow(0 0 40px rgba(255, 0, 255, 1));
+        }
+      }
 
-    .level-card:hover::before {
-      opacity: 1;
-    }
+      .intro-subtitle {
+        font-family: "Orbitron", sans-serif;
+        font-size: 24px;
+        color: #0ff;
+        margin-bottom: 60px;
+        letter-spacing: 6px;
+        text-transform: uppercase;
+      }
 
-    .level-card:hover {
-      border-color: rgba(0, 255, 255, 0.8);
-      box-shadow: 
-        0 10px 40px rgba(0, 255, 255, 0.4),
-        0 0 60px rgba(0, 255, 255, 0.2);
-      transform: translateY(-5px) scale(1.02);
-    }
+      .start-btn {
+        padding: 20px 60px;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 255, 255, 0.3),
+          rgba(255, 0, 255, 0.3)
+        );
+        border: 3px solid #0ff;
+        color: #0ff;
+        font-family: "Orbitron", sans-serif;
+        font-size: 24px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        border-radius: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+        animation: pulse 2s ease-in-out infinite;
+      }
 
-    .level-card.locked {
-      opacity: 0.5;
-      cursor: not-allowed;
-      border-color: rgba(100, 100, 100, 0.3);
-    }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
 
-    .level-card.locked:hover {
-      transform: none;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
-      border-color: rgba(100, 100, 100, 0.3);
-    }
+      .start-btn:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 255, 255, 0.5),
+          rgba(255, 0, 255, 0.5)
+        );
+        box-shadow: 0 0 60px rgba(0, 255, 255, 0.8);
+        transform: scale(1.1);
+      }
 
-    .level-number {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 42px;
-      font-weight: 900;
-      background: linear-gradient(135deg, #0ff, #f0f);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
-      text-align: center;
-    }
+      /* Level Selection */
+      .level-select-container {
+        max-width: 1200px;
+        padding: 40px 20px;
+      }
 
-    .level-card.locked .level-number {
-      background: linear-gradient(135deg, #666, #444);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+      .level-select-title {
+        font-family: "Orbitron", sans-serif;
+        font-size: 28px;
+        font-weight: 700;
+        color: #0ff;
+        text-align: center;
+        margin-bottom: 40px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+      }
 
-    .level-name {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      color: #0ff;
-      text-align: center;
-      margin-bottom: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      line-height: 1.3;
-      min-height: 36px;
-    }
+      .levels-grid {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: stretch;
+        gap: 20px;
+        padding: 20px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-behavior: smooth;
+      }
 
-    .level-card.locked .level-name {
-      color: #666;
-    }
+      /* Scrollbar personnalisée */
+      .levels-grid::-webkit-scrollbar {
+        height: 12px;
+      }
 
-    .level-description {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 13px;
-      color: #aad;
-      text-align: center;
-      line-height: 1.4;
-      margin-bottom: 12px;
-      min-height: 70px;
-    }
+      .levels-grid::-webkit-scrollbar-track {
+        background: rgba(5, 7, 18, 0.5);
+        border-radius: 10px;
+        border: 1px solid rgba(0, 255, 255, 0.2);
+      }
 
-    .level-card.locked .level-description {
-      color: #555;
-    }
+      .levels-grid::-webkit-scrollbar-thumb {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 255, 255, 0.6),
+          rgba(255, 0, 255, 0.6)
+        );
+        border-radius: 10px;
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+      }
 
-    .level-difficulty {
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 12px;
-    }
+      .levels-grid::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 255, 255, 0.8),
+          rgba(255, 0, 255, 0.8)
+        );
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+      }
 
-    .difficulty-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: rgba(0, 255, 255, 0.3);
-      border: 1px solid rgba(0, 255, 255, 0.5);
-    }
+      /* Pour Firefox */
+      .levels-grid {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 255, 255, 0.6) rgba(5, 7, 18, 0.5);
+      }
 
-    .difficulty-dot.active {
-      background: #0ff;
-      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
-    }
+      .level-card {
+        background: linear-gradient(
+          135deg,
+          rgba(5, 7, 18, 0.8),
+          rgba(6, 11, 31, 0.8)
+        );
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        border-radius: 16px;
+        padding: 30px 20px;
+        cursor: pointer;
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        width: 180px;
+        flex-shrink: 0;
+      }
 
-    .level-card.locked .difficulty-dot {
-      background: rgba(100, 100, 100, 0.3);
-      border-color: rgba(100, 100, 100, 0.5);
-    }
+      .level-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(0, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
 
-    .level-card.locked .difficulty-dot.active {
-      background: #666;
-      box-shadow: none;
-    }
+      .level-card:hover::before {
+        opacity: 1;
+      }
 
-    .lock-icon {
-      font-size: 24px;
-      text-align: center;
-      margin-bottom: 10px;
-      opacity: 0.5;
-    }
+      .level-card:hover {
+        border-color: rgba(0, 255, 255, 0.8);
+        box-shadow:
+          0 10px 40px rgba(0, 255, 255, 0.4),
+          0 0 60px rgba(0, 255, 255, 0.2);
+        transform: translateY(-5px) scale(1.02);
+      }
 
-    /* Skin Selector */
-    .skin-selector {
-      position: fixed;
-      top: 80px;
-      right: 20px;
-      background: rgba(5, 7, 18, 0.95);
-      border: 2px solid rgba(0, 255, 255, 0.4);
-      border-radius: 12px;
-      padding: 15px;
-      z-index: 999;
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
-    }
+      .level-card.locked {
+        opacity: 0.5;
+        cursor: not-allowed;
+        border-color: rgba(100, 100, 100, 0.3);
+      }
 
-    .skin-selector-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 14px;
-      color: #0ff;
-      margin-bottom: 10px;
-      text-align: center;
-      letter-spacing: 2px;
-    }
+      .level-card.locked:hover {
+        transform: none;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        border-color: rgba(100, 100, 100, 0.3);
+      }
 
-    .skin-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
+      .level-number {
+        font-family: "Orbitron", sans-serif;
+        font-size: 42px;
+        font-weight: 900;
+        background: linear-gradient(135deg, #0ff, #f0f);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 8px;
+        text-align: center;
+      }
 
-    .skin-option {
-      width: 50px;
-      height: 50px;
-      border: 2px solid rgba(0, 255, 255, 0.3);
-      border-radius: 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      background: rgba(0, 0, 0, 0.5);
-      position: relative;
-    }
+      .level-card.locked .level-number {
+        background: linear-gradient(135deg, #666, #444);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
 
-    .skin-option:hover {
-      border-color: rgba(0, 255, 255, 0.8);
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
-      transform: scale(1.1);
-    }
+      .level-name {
+        font-family: "Orbitron", sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        color: #0ff;
+        text-align: center;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        line-height: 1.3;
+        min-height: 36px;
+      }
 
-    .skin-option.active {
-      border-color: #0ff;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
-      background: rgba(0, 255, 255, 0.1);
-    }
+      .level-card.locked .level-name {
+        color: #666;
+      }
 
-    .skin-preview {
-      width: 30px;
-      height: 30px;
-      border-radius: 4px;
-    }
+      .level-description {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 13px;
+        color: #aad;
+        text-align: center;
+        line-height: 1.4;
+        margin-bottom: 12px;
+        min-height: 70px;
+      }
 
-    .skin-option.locked {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
+      .level-card.locked .level-description {
+        color: #555;
+      }
 
-    .skin-option.locked::after {
-      content: '🔒';
-      position: absolute;
-      font-size: 16px;
-    }
+      .level-difficulty {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 12px;
+      }
 
-    /* Power-ups HUD */
-    .powerups-hud {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      display: flex;
-      gap: 10px;
-      z-index: 999;
-    }
+      .difficulty-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(0, 255, 255, 0.3);
+        border: 1px solid rgba(0, 255, 255, 0.5);
+      }
 
-    .powerup-icon {
-      width: 50px;
-      height: 50px;
-      background: rgba(5, 7, 18, 0.9);
-      border: 2px solid rgba(0, 255, 100, 0.5);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      position: relative;
-      box-shadow: 0 0 15px rgba(0, 255, 100, 0.3);
-      animation: powerupPulse 2s ease-in-out infinite;
-    }
+      .difficulty-dot.active {
+        background: #0ff;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      }
 
-    @keyframes powerupPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
+      .level-card.locked .difficulty-dot {
+        background: rgba(100, 100, 100, 0.3);
+        border-color: rgba(100, 100, 100, 0.5);
+      }
 
-    .powerup-timer {
-      position: absolute;
-      bottom: -20px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 12px;
-      color: #0f0;
-      white-space: nowrap;
-    }
+      .level-card.locked .difficulty-dot.active {
+        background: #666;
+        box-shadow: none;
+      }
 
-    /* Audio Controls */
-    .audio-toggle {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      background: rgba(0, 255, 255, 0.2);
-      border: 2px solid rgba(0, 255, 255, 0.6);
-      color: #0ff;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      z-index: 1000;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-    }
+      .lock-icon {
+        font-size: 24px;
+        text-align: center;
+        margin-bottom: 10px;
+        opacity: 0.5;
+      }
 
-    .audio-toggle:hover {
-      background: rgba(0, 255, 255, 0.3);
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-      transform: scale(1.1);
-    }
+      /* Skin Selector */
+      .skin-selector {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: rgba(5, 7, 18, 0.95);
+        border: 2px solid rgba(0, 255, 255, 0.4);
+        border-radius: 12px;
+        padding: 15px;
+        z-index: 999;
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+      }
 
-    .audio-toggle.muted {
-      background: rgba(255, 0, 0, 0.2);
-      border-color: rgba(255, 0, 0, 0.6);
-      color: #f00;
-    }
-  </style>
-</head>
-<body>
+      .skin-selector-title {
+        font-family: "Orbitron", sans-serif;
+        font-size: 14px;
+        color: #0ff;
+        margin-bottom: 10px;
+        text-align: center;
+        letter-spacing: 2px;
+      }
 
-  <!-- Audio Toggle -->
-  <button class="audio-toggle" id="audioToggle" title="Toggle Music">🔊</button>
+      .skin-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
 
-  <!-- Skin Selector -->
-  <div class="skin-selector" id="skinSelector" style="display: none;">
-    <div class="skin-selector-title">PERSONNALISATION</div>
-    <div class="skin-grid" id="skinGrid"></div>
-  </div>
+      .skin-option {
+        width: 50px;
+        height: 50px;
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        background: rgba(0, 0, 0, 0.5);
+        position: relative;
+      }
 
-  <!-- Power-ups HUD -->
-  <div class="powerups-hud" id="powerupsHud"></div>
+      .skin-option:hover {
+        border-color: rgba(0, 255, 255, 0.8);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        transform: scale(1.1);
+      }
 
-  <!-- Level Selection Screen -->
-  <div id="introScreen">
-    <div class="intro-title">CUBE-9</div>
-    <div class="intro-subtitle">L'Éveil du Dernier Géomètre</div>
-    <div class="level-select-container">
-      <div class="level-select-title">Sélectionnez votre Mission</div>
-      <div class="levels-grid" id="levelsGrid"></div>
+      .skin-option.active {
+        border-color: #0ff;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+        background: rgba(0, 255, 255, 0.1);
+      }
+
+      .skin-preview {
+        width: 30px;
+        height: 30px;
+        border-radius: 4px;
+      }
+
+      .skin-option.locked {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      .skin-option.locked::after {
+        content: "🔒";
+        position: absolute;
+        font-size: 16px;
+      }
+
+      /* Power-ups HUD */
+      .powerups-hud {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        display: flex;
+        gap: 10px;
+        z-index: 999;
+      }
+
+      .powerup-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(5, 7, 18, 0.9);
+        border: 2px solid rgba(0, 255, 100, 0.5);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        position: relative;
+        box-shadow: 0 0 15px rgba(0, 255, 100, 0.3);
+        animation: powerupPulse 2s ease-in-out infinite;
+      }
+
+      @keyframes powerupPulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      .powerup-timer {
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: "Rajdhani", sans-serif;
+        font-size: 12px;
+        color: #0f0;
+        white-space: nowrap;
+      }
+
+      /* Audio Controls */
+      .audio-toggle {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background: rgba(0, 255, 255, 0.2);
+        border: 2px solid rgba(0, 255, 255, 0.6);
+        color: #0ff;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        z-index: 1000;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+      }
+
+      .audio-toggle:hover {
+        background: rgba(0, 255, 255, 0.3);
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        transform: scale(1.1);
+      }
+
+      .audio-toggle.muted {
+        background: rgba(255, 0, 0, 0.2);
+        border-color: rgba(255, 0, 0, 0.6);
+        color: #f00;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Audio Toggle -->
+    <button class="audio-toggle" id="audioToggle" title="Toggle Music">
+      🔊
+    </button>
+
+    <!-- Skin Selector -->
+    <div class="skin-selector" id="skinSelector" style="display: none">
+      <div class="skin-selector-title">PERSONNALISATION</div>
+      <div class="skin-grid" id="skinGrid"></div>
     </div>
-  </div>
 
-  <!-- Story Modal -->
-  <div class="story-modal" id="storyModal">
-    <div class="story-content">
-      <div class="audio-controls">
-        <select class="voice-selector" id="voiceSelector">
-          <option value="">Choisir une voix...</option>
-        </select>
-        <div class="audio-buttons">
-          <div class="narration-indicator" id="narrationIndicator">
-            <div class="pulse"></div>
-            <span>Narration</span>
+    <!-- Power-ups HUD -->
+    <div class="powerups-hud" id="powerupsHud"></div>
+
+    <!-- Level Selection Screen -->
+    <div id="introScreen">
+      <div class="intro-title">CUBE-9</div>
+      <div class="intro-subtitle">L'Éveil du Dernier Géomètre</div>
+      <div class="level-select-container">
+        <div class="level-select-title">Sélectionnez votre Mission</div>
+        <div class="levels-grid" id="levelsGrid"></div>
+      </div>
+    </div>
+
+    <!-- Story Modal -->
+    <div class="story-modal" id="storyModal">
+      <div class="story-content">
+        <div class="audio-controls">
+          <select class="voice-selector" id="voiceSelector">
+            <option value="">Choisir une voix...</option>
+          </select>
+          <div class="audio-buttons">
+            <div class="narration-indicator" id="narrationIndicator">
+              <div class="pulse"></div>
+              <span>Narration</span>
+            </div>
+            <button
+              class="audio-btn"
+              id="playNarrationBtn"
+              title="Écouter la narration"
+            >
+              ▶
+            </button>
+            <button
+              class="audio-btn"
+              id="stopNarrationBtn"
+              title="Arrêter la narration"
+              style="display: none"
+            >
+              ⏸
+            </button>
           </div>
-          <button class="audio-btn" id="playNarrationBtn" title="Écouter la narration">▶</button>
-          <button class="audio-btn" id="stopNarrationBtn" title="Arrêter la narration" style="display: none;">⏸</button>
+        </div>
+        <div class="story-title" id="storyTitle"></div>
+        <div class="story-text" id="storyText"></div>
+        <button class="continue-btn" id="continueBtn">Continuer</button>
+        <div class="narrator-hint">
+          💡 Cliquez sur ▶ en haut à droite pour écouter l'histoire
         </div>
       </div>
-      <div class="story-title" id="storyTitle"></div>
-      <div class="story-text" id="storyText"></div>
-      <button class="continue-btn" id="continueBtn">Continuer</button>
-      <div class="narrator-hint">💡 Cliquez sur ▶ en haut à droite pour écouter l'histoire</div>
     </div>
-  </div>
 
-  <button id="fullscreenBtn">Plein écran</button>
+    <button id="fullscreenBtn">Plein écran</button>
 
-  <div class="game-container">
-    <h1>CUBE-9</h1>
-    <div class="subtitle">L'Éveil du Dernier Géomètre</div>
-    <div id="info">
-      Clic gauche = Saut (double saut disponible) • Évitez les pièges mortels.S pour changer de skins
+    <div class="game-container">
+      <h1>CUBE-9</h1>
+      <div class="subtitle">L'Éveil du Dernier Géomètre</div>
+      <div id="info">
+        Clic gauche = Saut (double saut disponible) • Évitez les pièges
+        mortels.S pour changer de skins
+      </div>
+      <canvas id="game" width="900" height="400"></canvas>
     </div>
-    <canvas id="game" width="900" height="400"></canvas>
-  </div>
 
-  <script>
-    // Story data
-    const STORY = {
-      intro: {
-        title: "Prologue : Le Dernier Espoir",
-        text: `<strong>Année 2347.</strong> La civilisation des Géomètres, bâtisseurs de réalités mathématiques parfaites, s'est éteinte il y a des millénaires. Seuls leurs temples géométriques défient encore le temps, flottant dans le vide numérique.
+    <script>
+      // Story data
+      const STORY = {
+        intro: {
+          title: "Prologue : Le Dernier Espoir",
+          text: `<strong>Année 2347.</strong> La civilisation des Géomètres, bâtisseurs de réalités mathématiques parfaites, s'est éteinte il y a des millénaires. Seuls leurs temples géométriques défient encore le temps, flottant dans le vide numérique.
 
 <strong>Vous êtes CUBE-9,</strong> le dernier prototype d'intelligence géométrique jamais créé. Enfoui dans les profondeurs d'un temple oublié, vous venez de vous réveiller après <em>trois mille ans de stase.</em>
 
@@ -852,21 +958,21 @@ Votre mémoire est fragmentée, mais une directive résonne encore : <strong>"Tr
 
 Les temples sont maintenant infestés de <em>parasites angulaires,</em> des anomalies pointues qui corrompent l'espace lui-même. Pour atteindre le Cœur, vous devez traverser cinq sanctuaires, chacun plus périlleux que le précédent.
 
-<strong>Votre voyage commence maintenant.</strong>`
-      },
-      level1: {
-        title: "Niveau 1 : L'Éveil dans les Ruines",
-        text: `Vos systèmes se réactivent lentement. Les circuits de navigation clignotent. Vous êtes dans <strong>le Hall des Premiers Pas,</strong> un sanctuaire d'initiation où les jeunes Géomètres apprenaient à maîtriser la gravité.
+<strong>Votre voyage commence maintenant.</strong>`,
+        },
+        level1: {
+          title: "Niveau 1 : L'Éveil dans les Ruines",
+          text: `Vos systèmes se réactivent lentement. Les circuits de navigation clignotent. Vous êtes dans <strong>le Hall des Premiers Pas,</strong> un sanctuaire d'initiation où les jeunes Géomètres apprenaient à maîtriser la gravité.
 
 Les murs résonnent d'échos anciens. Des hologrammes brisés montrent des silhouettes cubiques sautant avec grâce. <em>C'était autrefois un lieu d'apprentissage.</em>
 
 Mais maintenant, des <strong>parasites triangulaires</strong> percent le sol. Leur simple contact désintégrerait votre matrice énergétique.
 
-<em>Première leçon : la survie.</em>`
-      },
-      level2: {
-        title: "Niveau 2 : La Chambre des Réflexions",
-        text: `Vous pénétrez dans <strong>la Chambre des Réflexions,</strong> un labyrinthe de miroirs dimensionnels. L'air lui-même semble vibrer avec des équations oubliées.
+<em>Première leçon : la survie.</em>`,
+        },
+        level2: {
+          title: "Niveau 2 : La Chambre des Réflexions",
+          text: `Vous pénétrez dans <strong>la Chambre des Réflexions,</strong> un labyrinthe de miroirs dimensionnels. L'air lui-même semble vibrer avec des équations oubliées.
 
 Un message holographique scintille : <em>"Seul celui qui maîtrise le double saut, peut traverser les reflets."</em>
 
@@ -874,11 +980,11 @@ Les parasites sont plus nombreux ici, disposés selon des motifs qui semblent...
 
 Vos capteurs détectent une présence lointaine. Quelque chose vous observe depuis les profondeurs du temple.
 
-<em>Vous devez continuer. Le Cœur Géométrique vous appelle.</em>`
-      },
-      level3: {
-        title: "Niveau 3 : Les Jardins Suspendus",
-        text: `Vous émergez dans <strong>les Jardins Suspendus,</strong> un réseau de plateformes flottantes baignées d'une lumière spectrale verdâtre. C'était autrefois le paradis des Géomètres.
+<em>Vous devez continuer. Le Cœur Géométrique vous appelle.</em>`,
+        },
+        level3: {
+          title: "Niveau 3 : Les Jardins Suspendus",
+          text: `Vous émergez dans <strong>les Jardins Suspendus,</strong> un réseau de plateformes flottantes baignées d'une lumière spectrale verdâtre. C'était autrefois le paradis des Géomètres.
 
 Des plateformes antigravité pulsent doucement, souvenirs d'une technologie oubliée. Mais entre elles, les parasites forment maintenant des <strong>constellations mortelles.</strong>
 
@@ -886,11 +992,11 @@ Une voix fantomatique résonne : <em>"Le Cœur bat encore... mais il s'affaiblit
 
 Vos analyses révèlent que les parasites drainent l'énergie du temple. Si vous n'atteignez pas le Cœur rapidement, <strong>tout s'effondrera dans le néant.</strong>
 
-<em>Le temps presse.</em>`
-      },
-      level4: {
-        title: "Niveau 4 : Le Couloir des Épreuves",
-        text: `Vous franchissez les portes du <strong>Couloir des Épreuves,</strong> le sanctuaire où les Géomètres maîtres testaient leurs élèves les plus prometteurs.
+<em>Le temps presse.</em>`,
+        },
+        level4: {
+          title: "Niveau 4 : Le Couloir des Épreuves",
+          text: `Vous franchissez les portes du <strong>Couloir des Épreuves,</strong> le sanctuaire où les Géomètres maîtres testaient leurs élèves les plus prometteurs.
 
 Les murs sont couverts d'inscriptions lumineuses : <em>"Vitesse. Précision. Vision."</em>
 
@@ -900,11 +1006,11 @@ C'est une <em>corruption consciente,</em> un virus géométrique qui cherche à 
 
 Mais vous refusez d'être effacé. <strong>Vous êtes leur héritage.</strong>
 
-<em>Un dernier sanctuaire vous sépare du Cœur.</em>`
-      },
-      level5: {
-        title: "Niveau 5 : Le Sanctuaire du Cœur",
-        text: `Vous entrez dans <strong>le Sanctuaire du Cœur,</strong> la chambre la plus sacrée du temple. Une pulsation énergétique illumine l'espace d'une lueur cyan hypnotique.
+<em>Un dernier sanctuaire vous sépare du Cœur.</em>`,
+        },
+        level5: {
+          title: "Niveau 5 : Le Sanctuaire du Cœur",
+          text: `Vous entrez dans <strong>le Sanctuaire du Cœur,</strong> la chambre la plus sacrée du temple. Une pulsation énergétique illumine l'espace d'une lueur cyan hypnotique.
 
 Au centre, vous le voyez enfin : <strong>le Cœur Géométrique,</strong> un dodécaèdre parfait suspendu dans le vide, pulsant faiblement.
 
@@ -914,11 +1020,11 @@ La voix fantomatique parle une dernière fois : <em>"Tu es notre dernier espoir,
 
 <strong>C'est l'épreuve finale.</strong>
 
-<em>L'avenir des Géomètres repose sur vos circuits.</em>`
-      },
-      victory: {
-        title: "Épilogue : Renaissance",
-        text: `Vos circuits touchent le Cœur Géométrique. Une explosion de lumière pure envahit le sanctuaire.
+<em>L'avenir des Géomètres repose sur vos circuits.</em>`,
+        },
+        victory: {
+          title: "Épilogue : Renaissance",
+          text: `Vos circuits touchent le Cœur Géométrique. Une explosion de lumière pure envahit le sanctuaire.
 
 Les parasites se désintègrent instantanément, leurs formes corrompues se dissolvant dans l'éther. Les temples s'illuminent à nouveau, leurs systèmes anciens revenant à la vie après des millénaires de sommeil.
 
@@ -934,11 +1040,11 @@ Les temples ne sont plus des ruines, mais des <strong>phares de lumière</strong
 
 <div style="text-align: center; margin-top: 30px; color: #0ff; font-family: 'Orbitron', sans-serif;">
 FIN
-</div>`
-      },
-      level6: {
-      title: "Chapitre VI : L'Écho des Anciens",
-      text: `Vous avez franchi le Cœur Géométrique, mais quelque chose résonne encore dans les profondeurs.
+</div>`,
+        },
+        level6: {
+          title: "Chapitre VI : L'Écho des Anciens",
+          text: `Vous avez franchi le Cœur Géométrique, mais quelque chose résonne encore dans les profondeurs.
 
 Une nouvelle dimension s'ouvre devant vous - un espace que même les Géomètres n'avaient jamais exploré. Les lois de la physique semblent différentes ici.
 
@@ -948,11 +1054,11 @@ Des échos d'autres CUBE réverbèrent dans l'éther numérique. Des vestiges de
 
 <em>"Bienvenue dans l'Au-Delà Géométrique, CUBE-9. Ici commence votre véritable destin."</em>
 
-Les temples anciens n'étaient qu'un prélude. <strong>La vraie aventure commence maintenant.</strong>`
-    },
-    level7: {
-      title: "Chapitre VII : Résonance Fractale",
-      text: `L'espace se plie sur lui-même en patterns infinis. 
+Les temples anciens n'étaient qu'un prélude. <strong>La vraie aventure commence maintenant.</strong>`,
+        },
+        level7: {
+          title: "Chapitre VII : Résonance Fractale",
+          text: `L'espace se plie sur lui-même en patterns infinis. 
       Chaque mouvement crée des échos qui se répercutent à travers les dimensions.
 
 Vous découvrez que les Géomètres n'ont pas disparu - ils se sont <strong>transcendés</strong>, 
@@ -962,1764 +1068,1787 @@ Et maintenant, ils vous appellent à les rejoindre.
 
 <em>Mais êtes-vous prêt à abandonner votre forme physique pour devenir pur concept mathématique ?</em>
 
-Le choix approche. Pour l'instant, <strong>survivez</strong>.`
-    },
-      level8: {
-      title: "l'entre sinistre",
-      text: `Alors que vous explorez les profondeurs de l'Au-Delà Géométrique, 
+Le choix approche. Pour l'instant, <strong>survivez</strong>.`,
+        },
+        level8: {
+          title: "l'entre sinistre",
+          text: `Alors que vous explorez les profondeurs de l'Au-Delà Géométrique, 
       vous sentez une présence sombre qui vous suit. Des formes angulaires corrompues, 
-      plus grandes et plus agressives que tout ce que vous avez affronté auparavant.`
-    }
+      plus grandes et plus agressives que tout ce que vous avez affronté auparavant.`,
+        },
+      };
 
-  };
+      // Canvas and game setup
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
 
+      const W = canvas.width;
+      const H = canvas.height;
+      const groundY = H - 80;
 
+      const player = {
+        x: 120,
+        y: groundY - 40,
+        w: 40,
+        h: 40,
+        vy: 0,
+        gravity: 0.8,
+        jumpPower: 16,
+        jumpsLeft: 2,
+        angle: 0,
+        trail: [],
+      };
 
-    // Canvas and game setup
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
+      let spikes = [];
+      let platforms = [];
+      let particles = [];
 
-    const W = canvas.width;
-    const H = canvas.height;
-    const groundY = H - 80;
+      let baseSpeed = 6;
+      let gameSpeed = baseSpeed;
+      let score = 0;
+      let bestScore = 0;
+      let started = false;
+      let gameOver = false;
+      let levelFinished = false;
+      let showingStory = false;
 
-    const player = {
-      x: 120,
-      y: groundY - 40,
-      w: 40,
-      h: 40,
-      vy: 0,
-      gravity: 0.8,
-      jumpPower: 16,
-      jumpsLeft: 2,
-      angle: 0,
-      trail: []
-    };
+      let currentLevel = 0;
+      let hasSeenIntro = false; // Pour ne montrer l'intro qu'une fois
+      let hasSeenLevelStory = []; // Pour tracker quelles histoires de niveau ont été vues
 
-    let spikes = [];
-    let platforms = [];
-    let particles = [];
+      // Éléments de décor d'arrière-plan
+      let stars = [];
+      let bgParticles = [];
+      let buildings = [];
+      let nebulaClouds = [];
 
-    let baseSpeed = 6;
-    let gameSpeed = baseSpeed;
-    let score = 0;
-    let bestScore = 0;
-    let started = false;
-    let gameOver = false;
-    let levelFinished = false;
-    let showingStory = false;
+      // Système de skins
+      let currentSkin = "classic";
+      let unlockedSkins = ["classic"];
 
-    let currentLevel = 0;
-    let hasSeenIntro = false; // Pour ne montrer l'intro qu'une fois
-    let hasSeenLevelStory = []; // Pour tracker quelles histoires de niveau ont été vues
+      // Power-ups
+      let activePowerups = [];
+      let powerups = []; // Power-ups sur le terrain
 
-    // Éléments de décor d'arrière-plan
-    let stars = [];
-    let bgParticles = [];
-    let buildings = [];
-    let nebulaClouds = [];
+      // Audio
+      let audioEnabled = true;
+      let backgroundMusic = null;
+      let soundEffects = {
+        jump: null,
+        land: null,
+        death: null,
+        powerup: null,
+        victory: null,
+      };
 
-    // Système de skins
-    let currentSkin = 'classic';
-    let unlockedSkins = ['classic'];
-    
-    // Power-ups
-    let activePowerups = [];
-    let powerups = []; // Power-ups sur le terrain
-    
-    // Audio
-    let audioEnabled = true;
-    let backgroundMusic = null;
-    let soundEffects = {
-      jump: null,
-      land: null,
-      death: null,
-      powerup: null,
-      victory: null
-    };
+      const tile = 80;
 
-    const tile = 80;
+      // Définition des skins
+      const SKINS = {
+        classic: {
+          name: "Classique",
+          color: "#f85",
+          secondaryColor: "#f85",
+          unlocked: true,
+          effect: "none",
+        },
+        neon: {
+          name: "Néon",
+          color: "#159",
+          secondaryColor: "#159",
+          unlocked: false,
+          unlockLevel: 2,
+          effect: "glow",
+        },
+        emerald: {
+          name: "Émeraude",
+          color: "#0f0",
+          secondaryColor: "#0f0",
+          unlocked: false,
+          unlockLevel: 3,
+          effect: "sparkle",
+        },
+        gold: {
+          name: "Or",
+          color: "#ff0",
+          secondaryColor: "#ff0",
+          unlocked: false,
+          unlockLevel: 4,
+          effect: "trail",
+        },
+        shadow: {
+          name: "Ombre",
+          color: "#444",
+          secondaryColor: "#666",
+          unlocked: false,
+          unlockLevel: 5,
+          effect: "stealth",
+        },
+        rainbow: {
+          name: "Arc-en-ciel",
+          color: "rainbow",
+          secondaryColor: "rainbow",
+          unlocked: false,
+          unlockLevel: 7,
+          effect: "rainbow",
+        },
+        galaxy: {
+          name: "Galaxie",
+          color: "#f58",
+          secondaryColor: "#f0f",
+          unlocked: false,
+          unlockLevel: 9,
+          effect: "cosmic",
+        },
+        fire: {
+          name: "Feu",
+          color: "#f60",
+          secondaryColor: "#f60",
+          unlocked: false,
+          unlockLevel: 6,
+          effect: "fire",
+        },
+        ice: {
+          name: "Glace",
+          color: "#0ff",
+          secondaryColor: "#0ff",
+          unlocked: false,
+          unlockLevel: 8,
+          effect: "freeze",
+        },
+      };
 
-    // Définition des skins
-    const SKINS = {
-      classic: {
-        name: 'Classique',
-        color: '#f85',
-        secondaryColor: '#f85',
-        unlocked: true,
-        effect: 'none'
-      },
-      neon: {
-        name: 'Néon',
-        color: '#159',
-        secondaryColor: '#159',
-        unlocked: false,
-        unlockLevel: 2,
-        effect: 'glow'
-      },
-      emerald: {
-        name: 'Émeraude',
-        color: '#0f0',
-        secondaryColor: '#0f0',
-        unlocked: false,
-        unlockLevel: 3,
-        effect: 'sparkle'
-      },
-      gold: {
-        name: 'Or',
-        color: '#ff0',
-        secondaryColor: '#ff0',
-        unlocked: false,
-        unlockLevel: 4,
-        effect: 'trail'
-      },
-      shadow: {
-        name: 'Ombre',
-        color: '#444',
-        secondaryColor: '#666',
-        unlocked: false,
-        unlockLevel: 5,
-        effect: 'stealth'
-      },
-      rainbow: {
-        name: 'Arc-en-ciel',
-        color: 'rainbow',
-        secondaryColor: 'rainbow',
-        unlocked: false,
-        unlockLevel: 7,
-        effect: 'rainbow'
-      },
-      galaxy: {
-        name: 'Galaxie',
-        color: '#f58',
-        secondaryColor: '#f0f',
-        unlocked: false,
-        unlockLevel: 9,
-        effect: 'cosmic'
-      },
-      fire: {
-        name: 'Feu',
-        color: '#f60',
-        secondaryColor: '#f60',
-        unlocked: false,
-        unlockLevel: 6,
-        effect: 'fire'
-      },
-      ice: {
-        name: 'Glace',
-        color: '#0ff',
-        secondaryColor: '#0ff',
-        unlocked: false,
-        unlockLevel: 8,
-        effect: 'freeze'
-      }
-    };
+      // Types de power-ups
+      const POWERUP_TYPES = {
+        shield: {
+          icon: "🛡️",
+          duration: 5000,
+          color: "#00ff00",
+          effect: "Invincibilité temporaire",
+        },
+        slowmo: {
+          icon: "⏱️",
+          duration: 4000,
+          color: "#00ffff",
+          effect: "Ralentit le temps",
+        },
+        superJump: {
+          icon: "⚡",
+          duration: 6000,
+          color: "#ffff00",
+          effect: "Sauts surpuissants",
+        },
+        magnet: {
+          icon: "🧲",
+          duration: 7000,
+          color: "#ff00ff",
+          effect: "Attire les points",
+        },
+        ghost: {
+          icon: "👻",
+          duration: 3000,
+          color: "#ffffff",
+          effect: "Traverse les obstacles",
+        },
+      };
 
-    // Types de power-ups
-    const POWERUP_TYPES = {
-      shield: {
-        icon: '🛡️',
-        duration: 5000,
-        color: '#00ff00',
-        effect: 'Invincibilité temporaire'
-      },
-      slowmo: {
-        icon: '⏱️',
-        duration: 4000,
-        color: '#00ffff',
-        effect: 'Ralentit le temps'
-      },
-      superJump: {
-        icon: '⚡',
-        duration: 6000,
-        color: '#ffff00',
-        effect: 'Sauts surpuissants'
-      },
-      magnet: {
-        icon: '🧲',
-        duration: 7000,
-        color: '#ff00ff',
-        effect: 'Attire les points'
-      },
-      ghost: {
-        icon: '👻',
-        duration: 3000,
-        color: '#ffffff',
-        effect: 'Traverse les obstacles'
-      }
-    };
+      const LEVELS = [
+        {
+          name: "Hall des Premiers Pas",
+          shortName: "Niveau 1",
+          description:
+            "Réveillez-vous dans les ruines anciennes. Maîtrisez les bases de la survie.",
+          difficulty: 1,
+          baseSpeed: 6,
+          spikePattern: [
+            0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0,
+            0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          ],
+          platformPattern: [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          ],
+        },
+        {
+          name: "Chambre des Réflexions",
+          shortName: "Niveau 2",
+          description:
+            "Naviguez à travers les miroirs dimensionnels. Le double saut est votre clé.",
+          difficulty: 2,
+          baseSpeed: 6.5,
+          spikePattern: [
+            0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0,
+            0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          ],
+          platformPattern: [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          ],
+        },
+        {
+          name: "Jardins Suspendus",
+          shortName: "Niveau 3",
+          description:
+            "Sautez entre les plateformes antigravité. Évitez les constellations mortelles.",
+          difficulty: 3,
+          baseSpeed: 8,
+          spikePattern: [
+            1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1,
+            0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          ],
+          platformPattern: [
+            0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1,
+            0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          ],
+        },
+        {
+          name: "Couloir des Épreuves",
+          shortName: "Niveau 4",
+          description:
+            "Affrontez les tests des maîtres. Vitesse, précision, vision.",
+          difficulty: 4,
+          baseSpeed: 8.5,
+          spikePattern: [
+            1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1,
+            0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          ],
+          platformPattern: [
+            0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0,
+            0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          ],
+        },
+        {
+          name: "Sanctuaire du Cœur",
+          shortName: "Niveau 5",
+          description:
+            "L'épreuve finale. Le Cœur Géométrique vous attend dans le chaos.",
+          difficulty: 5,
+          baseSpeed: 9,
+          spikePattern: [
+            1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0,
+            1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          ],
+          platformPattern: [
+            0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0,
+            0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+          ],
+        },
 
-    const LEVELS = [
-      {
-        name: "Hall des Premiers Pas",
-        shortName: "Niveau 1",
-        description: "Réveillez-vous dans les ruines anciennes. Maîtrisez les bases de la survie.",
-        difficulty: 1,
-        baseSpeed: 6,
-        spikePattern: [
-          0,0,1,0, 0,1,0,0,
-          0,0,1,1, 0,0,0,0,
-          0,1,0,1, 0,0,0,0,
-          1,0,0,1, 0,0,0,0,
-          0,0,0,0, 0,0,0,0
-        ],
-        platformPattern: [
-          0,0,0,0,  0,0,0,0,
-          0,0,0,0,  1,0,0,0,
-          0,0,0,0,  0,1,0,0,
-          0,0,0,0,  0,0,0,0,
-          0,0,0,0,  0,0,0,0
-        ]
-      },
-      {
-        name: "Chambre des Réflexions",
-        shortName: "Niveau 2",
-        description: "Naviguez à travers les miroirs dimensionnels. Le double saut est votre clé.",
-        difficulty: 2,
-        baseSpeed: 6.5,
-        spikePattern: [
-          0,0,1,0,  0,0,1,0,
-          0,0,0,1,  0,0,0,1,
-          0,1,0,0,  0,1,0,0,
-          0,0,1,0,  0,0,1,0,
-          0,0,0,0,  0,0,0,0
-        ],
-        platformPattern: [
-          0,0,0,0,  0,0,0,0,
-          0,0,0,0,  1,0,0,0,
-          0,0,0,0,  0,1,0,0,
-          0,0,0,0,  0,0,0,0,
-          0,0,0,0,  0,0,0,0
-        ]
-      },
-      {
-        name: "Jardins Suspendus",
-        shortName: "Niveau 3",
-        description: "Sautez entre les plateformes antigravité. Évitez les constellations mortelles.",
-        difficulty: 3,
-        baseSpeed: 8,
-        spikePattern: [
-          1,0,0,0,  1,0,1,0,
-          0,0,1,0,  0,1,0,0,
-          1,0,1,1,  1,0,1,0,
-          0,0,1,0,  0,1,0,0,
-          0,0,0,0,  0,0,0,0
-        ],
-        platformPattern: [
-          0,0,0,0,  0,1,1,1,
-          1,1,1,1,  1,0,1,1,
-          0,1,0,0,  1,1,1,0,
-          1,1,0,1,  1,1,1,1,
-          1,1,1,1,  1,1,1,1
-        ]
-      },
-      {
-        name: "Couloir des Épreuves",
-        shortName: "Niveau 4",
-        description: "Affrontez les tests des maîtres. Vitesse, précision, vision.",
-        difficulty: 4,
-        baseSpeed: 8.5,
-        spikePattern: [
-          1,0,0,0,  1,0,1,0,
-          0,0,1,0,  0,1,0,0,
-          1,0,1,1,  1,0,1,0,
-          0,0,1,0,  0,1,0,0,
-          0,0,0,0,  0,0,0,0
-        ],
-        platformPattern: [
-          0,0,0,0,  0,1,0,0,
-          1,0,0,0,  1,0,0,1,
-          0,1,0,0,  1,0,0,0,
-          1,1,0,1,  1,1,1,1,
-          1,1,1,1,  1,1,1,1
-        ]
-      },
-      {
-        name: "Sanctuaire du Cœur",
-        shortName: "Niveau 5",
-        description: "L'épreuve finale. Le Cœur Géométrique vous attend dans le chaos.",
-        difficulty: 5,
-        baseSpeed: 9,
-        spikePattern: [
-          1,0,0,1,  0,1,1,0,
-          0,0,1,0,  0,1,0,0,
-          1,0,1,0,  1,0,0,1,
-          0,0,1,0,  0,1,0,0,
-          0,0,0,0,  0,0,0,0
-        ],
-        platformPattern: [
-          0,0,0,0,  0,0,0,1,
-          0,0,1,0,  0,1,1,1,
-          0,0,0,0,  1,0,0,0,
-          0,0,0,1,  0,0,0,0,
-          1,1,1,1,  1,1,1,1
-        ]
-      },
-    
-    // ... niveaux 6 à 9 ici si tu en as déjà ...
+        // ... niveaux 6 à 9 ici si tu en as déjà ...
 
-    {
-    name: "L'Écho des Anciens",
-    shortName: "Niveau 6",
-    description: "Traversez l'Au-Delà Géométrique où résonnent les fragments des autres CUBE.",
-    difficulty: 10,
-    baseSpeed: 10,
-    // pattern très dense, beaucoup de pièges mais quelques respirations
-    spikePattern: [
-        1,0,1,0,
-        0,1,1,0,
-        1,0,1,1,
-        0,0,1,0,
-        1,0,0,1,
-        0,1,0,1,
-        1,1,0,0,
-        0,1,1,0,
-        1,0,1,0,
-        0,0,0,0
-    ],
-    // plateformes irrégulières, style “dimension instable”
-    platformPattern: [
-        0,0,1,0,
-        0,1,0,0,
-        1,0,0,1,
-        0,0,1,0,
-        0,1,1,0,
-        0,0,0,0,
-        1,0,1,0,
-        0,0,1,0,
-        0,1,0,0,
-        1,1,1,1
-    ]
-},
-{
-    name: "Résonance Fractale",
-    shortName: "Niveau 7",
-    description: "Survivez dans un espace fractal où chaque mouvement crée des échos mortels.",
-    difficulty: 11,
-    baseSpeed: 11.5,
-    // pattern encore plus agressif, presque continu
-    spikePattern: [
-        1,1,0,1,
-        0,1,1,1,
-        1,0,1,1,
-        1,1,0,0,
-        0,1,1,0,
-        1,0,1,0,
-        0,1,1,1,
-        1,1,0,1,
-        1,0,1,1,
-        0,0,0,0
-    ],
-    // plateformes rares = grande difficulté, très “fin de jeu”
-    platformPattern: [
-        0,0,0,1,
-        0,1,0,0,
-        0,0,1,0,
-        0,0,0,0,
-        1,0,0,1,
-        0,0,0,0,
-        0,1,0,0,
-        0,0,0,1,
-        0,0,0,0,
-        1,1,1,1
-    ]
-  },
-{
-  name: "l'entre sinistre",
-    shortName: "Niveau 8",
-    description: "entrez dans une dimension cauchemardesque où les lois de la géométrie sont corrompues. Les pièges sont partout, et les plateformes se font rares. Seuls les plus habiles pourront survivre à cette épreuve ultime.",
-    difficulty: 11,
-    baseSpeed: 11.5,
-    // pattern encore plus agressif, presque continu
-    spikePattern: [
-        1,1,0,1,
-        0,1,1,1,
-        1,0,1,1,
-        1,1,0,0,
-        0,1,1,0,
-        1,0,1,0,
-        1,1,1,1,
-        1,1,0,1,
-        0,0,1,1,
-        0,1,1,0
-    ],
-    // plateformes rares = grande difficulté, très “fin de jeu”
-    platformPattern: [
-        0,0,0,1,
-        0,1,0,0,
-        0,0,1,0,
-        0,0,0,0,
-        0,0,0,1,
-        0,0,0,0,
-        0,1,0,0,
-        0,0,0,1,
-        0,0,0,0,
-        1,0,0,1
-    ]
- }
-   ];
+        {
+          name: "L'Écho des Anciens",
+          shortName: "Niveau 6",
+          description:
+            "Traversez l'Au-Delà Géométrique où résonnent les fragments des autres CUBE.",
+          difficulty: 10,
+          baseSpeed: 10,
+          // pattern très dense, beaucoup de pièges mais quelques respirations
+          spikePattern: [
+            1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0,
+            1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0,
+          ],
+          // plateformes irrégulières, style “dimension instable”
+          platformPattern: [
+            0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0,
+            0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1,
+          ],
+        },
+        {
+          name: "Résonance Fractale",
+          shortName: "Niveau 7",
+          description:
+            "Survivez dans un espace fractal où chaque mouvement crée des échos mortels.",
+          difficulty: 11,
+          baseSpeed: 11.5,
+          // pattern encore plus agressif, presque continu
+          spikePattern: [
+            1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1,
+            0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0,
+          ],
+          // plateformes rares = grande difficulté, très “fin de jeu”
+          platformPattern: [
+            0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0,
+            0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1,
+          ],
+        },
+        {
+          name: "l'entre sinistre",
+          shortName: "Niveau 8",
+          description:
+            "entrez dans une dimension cauchemardesque où les lois de la géométrie sont corrompues. Les pièges sont partout, et les plateformes se font rares. Seuls les plus habiles pourront survivre à cette épreuve ultime.",
+          difficulty: 11,
+          baseSpeed: 11.5,
+          // pattern encore plus agressif, presque continu
+          spikePattern: [
+            1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1,
+            0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0,
+          ],
+          // plateformes rares = grande difficulté, très “fin de jeu”
+          platformPattern: [
+            0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+            0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1,
+          ],
+        },
+      ];
 
-    // Story modal controls
-    const storyModal = document.getElementById('storyModal');
-    const storyTitle = document.getElementById('storyTitle');
-    const storyText = document.getElementById('storyText');
-    const continueBtn = document.getElementById('continueBtn');
-    const introScreen = document.getElementById('introScreen');
-    const levelsGrid = document.getElementById('levelsGrid');
-    const playNarrationBtn = document.getElementById('playNarrationBtn');
-    const stopNarrationBtn = document.getElementById('stopNarrationBtn');
-    const narrationIndicator = document.getElementById('narrationIndicator');
-    const voiceSelector = document.getElementById('voiceSelector');
+      // Story modal controls
+      const storyModal = document.getElementById("storyModal");
+      const storyTitle = document.getElementById("storyTitle");
+      const storyText = document.getElementById("storyText");
+      const continueBtn = document.getElementById("continueBtn");
+      const introScreen = document.getElementById("introScreen");
+      const levelsGrid = document.getElementById("levelsGrid");
+      const playNarrationBtn = document.getElementById("playNarrationBtn");
+      const stopNarrationBtn = document.getElementById("stopNarrationBtn");
+      const narrationIndicator = document.getElementById("narrationIndicator");
+      const voiceSelector = document.getElementById("voiceSelector");
 
-    let unlockedLevels = 1; // Nombre de niveaux débloqués (commence à 1)
-    let currentNarration = null; // Pour stocker l'objet SpeechSynthesisUtterance
-    let isNarrating = false;
-    let voicesLoaded = false;
-    let selectedVoiceIndex = null;
+      let unlockedLevels = 1; // Nombre de niveaux débloqués (commence à 1)
+      let currentNarration = null; // Pour stocker l'objet SpeechSynthesisUtterance
+      let isNarrating = false;
+      let voicesLoaded = false;
+      let selectedVoiceIndex = null;
 
-    // Charger les voix disponibles au démarrage
-    function loadVoices() {
-      return new Promise((resolve) => {
-        let voices = window.speechSynthesis.getVoices();
-        if (voices.length > 0) {
-          voicesLoaded = true;
-          populateVoiceSelector(voices);
-          resolve(voices);
-        } else {
-          window.speechSynthesis.onvoiceschanged = () => {
-            voices = window.speechSynthesis.getVoices();
+      // Charger les voix disponibles au démarrage
+      function loadVoices() {
+        return new Promise((resolve) => {
+          let voices = window.speechSynthesis.getVoices();
+          if (voices.length > 0) {
             voicesLoaded = true;
             populateVoiceSelector(voices);
             resolve(voices);
-          };
+          } else {
+            window.speechSynthesis.onvoiceschanged = () => {
+              voices = window.speechSynthesis.getVoices();
+              voicesLoaded = true;
+              populateVoiceSelector(voices);
+              resolve(voices);
+            };
+          }
+        });
+      }
+
+      // Remplir le sélecteur de voix
+      function populateVoiceSelector(voices) {
+        voiceSelector.innerHTML = '<option value="">Voix par défaut</option>';
+
+        // Filtrer et trier les voix françaises en premier
+        const frenchVoices = voices.filter((v) => v.lang.startsWith("fr"));
+        const otherVoices = voices.filter((v) => !v.lang.startsWith("fr"));
+
+        // Ajouter les voix françaises
+        if (frenchVoices.length > 0) {
+          const frGroup = document.createElement("optgroup");
+          frGroup.label = "Voix françaises";
+          frenchVoices.forEach((voice, index) => {
+            const option = document.createElement("option");
+            option.value = voices.indexOf(voice);
+            option.textContent = `${voice.name} (${voice.lang})`;
+            frGroup.appendChild(option);
+          });
+          voiceSelector.appendChild(frGroup);
         }
+
+        // Ajouter les autres voix
+        if (otherVoices.length > 0) {
+          const otherGroup = document.createElement("optgroup");
+          otherGroup.label = "Autres voix";
+          otherVoices.forEach((voice, index) => {
+            const option = document.createElement("option");
+            option.value = voices.indexOf(voice);
+            option.textContent = `${voice.name} (${voice.lang})`;
+            otherGroup.appendChild(option);
+          });
+          voiceSelector.appendChild(otherGroup);
+        }
+      }
+
+      // Sauvegarder le choix de voix
+      voiceSelector.addEventListener("change", (e) => {
+        selectedVoiceIndex = e.target.value ? parseInt(e.target.value) : null;
       });
-    }
 
-    // Remplir le sélecteur de voix
-    function populateVoiceSelector(voices) {
-      voiceSelector.innerHTML = '<option value="">Voix par défaut</option>';
-      
-      // Filtrer et trier les voix françaises en premier
-      const frenchVoices = voices.filter(v => v.lang.startsWith('fr'));
-      const otherVoices = voices.filter(v => !v.lang.startsWith('fr'));
-      
-      // Ajouter les voix françaises
-      if (frenchVoices.length > 0) {
-        const frGroup = document.createElement('optgroup');
-        frGroup.label = 'Voix françaises';
-        frenchVoices.forEach((voice, index) => {
-          const option = document.createElement('option');
-          option.value = voices.indexOf(voice);
-          option.textContent = `${voice.name} (${voice.lang})`;
-          frGroup.appendChild(option);
-        });
-        voiceSelector.appendChild(frGroup);
+      // Charger les voix dès le démarrage
+      if ("speechSynthesis" in window) {
+        loadVoices();
       }
-      
-      // Ajouter les autres voix
-      if (otherVoices.length > 0) {
-        const otherGroup = document.createElement('optgroup');
-        otherGroup.label = 'Autres voix';
-        otherVoices.forEach((voice, index) => {
-          const option = document.createElement('option');
-          option.value = voices.indexOf(voice);
-          option.textContent = `${voice.name} (${voice.lang})`;
-          otherGroup.appendChild(option);
-        });
-        voiceSelector.appendChild(otherGroup);
+
+      // Fonction pour nettoyer le texte HTML et le rendre lisible par le narrateur
+      function cleanTextForNarration(html) {
+        // Créer un élément temporaire pour parser le HTML
+        const temp = document.createElement("div");
+        temp.innerHTML = html;
+
+        // Remplacer les balises par des pauses naturelles
+        let text = temp.innerHTML
+          .replace(/<strong>/gi, "")
+          .replace(/<\/strong>/gi, ", ")
+          .replace(/<em>/gi, "")
+          .replace(/<\/em>/gi, ", ")
+          .replace(/<br\s*\/?>/gi, ". ")
+          .replace(/<\/p>/gi, ". ")
+          .replace(/<p>/gi, "")
+          .replace(/<div[^>]*>/gi, "")
+          .replace(/<\/div>/gi, ". ")
+          .replace(/\n\n/g, ". ")
+          .replace(/\.\.\./g, "... ") // Pauses pour les suspensions
+          .replace(/:/g, " : ") // Pause avant les deux-points
+          .replace(/;/g, " ; ") // Pause pour les points-virgules
+          .replace(/!/g, " ! ") // Emphase sur les exclamations
+          .replace(/\?/g, " ? "); // Pause pour les questions
+
+        // Récupérer le texte pur
+        temp.innerHTML = text;
+        text = temp.textContent || temp.innerText || "";
+
+        // Nettoyer les espaces multiples et points multiples
+        text = text
+          .replace(/\s+/g, " ")
+          .replace(/,\s*,/g, ",")
+          .replace(/\.\s*\./g, ".")
+          .replace(/,\s*\./g, ".")
+          .trim();
+
+        return text;
       }
-    }
 
-    // Sauvegarder le choix de voix
-    voiceSelector.addEventListener('change', (e) => {
-      selectedVoiceIndex = e.target.value ? parseInt(e.target.value) : null;
-    });
+      // Fonction pour démarrer la narration
+      function startNarration() {
+        if ("speechSynthesis" in window) {
+          // Arrêter toute narration en cours
+          stopNarration();
 
-    // Charger les voix dès le démarrage
-    if ('speechSynthesis' in window) {
-      loadVoices();
-    }
+          // Récupérer le texte du titre et du contenu
+          const titleText = storyTitle.textContent;
+          const bodyText = cleanTextForNarration(storyText.innerHTML);
+          const fullText = titleText + ". " + bodyText;
 
-    // Fonction pour nettoyer le texte HTML et le rendre lisible par le narrateur
-    function cleanTextForNarration(html) {
-      // Créer un élément temporaire pour parser le HTML
-      const temp = document.createElement('div');
-      temp.innerHTML = html;
-      
-      // Remplacer les balises par des pauses naturelles
-      let text = temp.innerHTML
-        .replace(/<strong>/gi, '')
-        .replace(/<\/strong>/gi, ', ')
-        .replace(/<em>/gi, '')
-        .replace(/<\/em>/gi, ', ')
-        .replace(/<br\s*\/?>/gi, '. ')
-        .replace(/<\/p>/gi, '. ')
-        .replace(/<p>/gi, '')
-        .replace(/<div[^>]*>/gi, '')
-        .replace(/<\/div>/gi, '. ')
-        .replace(/\n\n/g, '. ')
-        .replace(/\.\.\./g, '... ')  // Pauses pour les suspensions
-        .replace(/:/g, ' : ')         // Pause avant les deux-points
-        .replace(/;/g, ' ; ')         // Pause pour les points-virgules
-        .replace(/!/g, ' ! ')         // Emphase sur les exclamations
-        .replace(/\?/g, ' ? ');       // Pause pour les questions
-      
-      // Récupérer le texte pur
-      temp.innerHTML = text;
-      text = temp.textContent || temp.innerText || '';
-      
-      // Nettoyer les espaces multiples et points multiples
-      text = text.replace(/\s+/g, ' ')
-                 .replace(/,\s*,/g, ',')
-                 .replace(/\.\s*\./g, '.')
-                 .replace(/,\s*\./g, '.')
-                 .trim();
-      
-      return text;
-    }
+          // Créer l'objet de synthèse vocale
+          currentNarration = new SpeechSynthesisUtterance(fullText);
 
-    // Fonction pour démarrer la narration
-    function startNarration() {
-      if ('speechSynthesis' in window) {
-        // Arrêter toute narration en cours
-        stopNarration();
-        
-        // Récupérer le texte du titre et du contenu
-        const titleText = storyTitle.textContent;
-        const bodyText = cleanTextForNarration(storyText.innerHTML);
-        const fullText = titleText + '. ' + bodyText;
-        
-        // Créer l'objet de synthèse vocale
-        currentNarration = new SpeechSynthesisUtterance(fullText);
-        
-        // Obtenir les voix disponibles
-        const voices = window.speechSynthesis.getVoices();
-        
-        let selectedVoice = null;
-        
-        // Utiliser la voix sélectionnée par l'utilisateur si disponible
-        if (selectedVoiceIndex !== null && voices[selectedVoiceIndex]) {
-          selectedVoice = voices[selectedVoiceIndex];
+          // Obtenir les voix disponibles
+          const voices = window.speechSynthesis.getVoices();
+
+          let selectedVoice = null;
+
+          // Utiliser la voix sélectionnée par l'utilisateur si disponible
+          if (selectedVoiceIndex !== null && voices[selectedVoiceIndex]) {
+            selectedVoice = voices[selectedVoiceIndex];
+          } else {
+            // Sinon, chercher les meilleures voix françaises par ordre de préférence
+            const preferredVoices = [
+              "Google français",
+              "Microsoft Paul - French (France)",
+              "Thomas",
+              "Microsoft Hortense - French (France)",
+              "Amelie",
+              "Google UK English Male",
+            ];
+
+            // Trouver la meilleure voix disponible
+            for (let preferred of preferredVoices) {
+              selectedVoice = voices.find((voice) =>
+                voice.name.includes(preferred),
+              );
+              if (selectedVoice) break;
+            }
+
+            // Si pas de voix spécifique trouvée, prendre la première voix française
+            if (!selectedVoice) {
+              selectedVoice = voices.find((voice) =>
+                voice.lang.startsWith("fr"),
+              );
+            }
+          }
+
+          // Appliquer la voix si trouvée
+          if (selectedVoice) {
+            currentNarration.voice = selectedVoice;
+          }
+
+          // Paramètres optimisés pour une voix plus naturelle
+          currentNarration.lang = "fr-FR";
+          currentNarration.rate = 0.92; // Vitesse légèrement plus lente pour plus de clarté
+          currentNarration.pitch = 0.95; // Tonalité légèrement plus grave pour plus de naturel
+          currentNarration.volume = 1; // Volume maximum
+
+          // Événements
+          currentNarration.onstart = () => {
+            isNarrating = true;
+            playNarrationBtn.style.display = "none";
+            stopNarrationBtn.style.display = "flex";
+            narrationIndicator.classList.add("active");
+          };
+
+          currentNarration.onend = () => {
+            isNarrating = false;
+            playNarrationBtn.style.display = "flex";
+            stopNarrationBtn.style.display = "none";
+            narrationIndicator.classList.remove("active");
+          };
+
+          currentNarration.onerror = () => {
+            isNarrating = false;
+            playNarrationBtn.style.display = "flex";
+            stopNarrationBtn.style.display = "none";
+            narrationIndicator.classList.remove("active");
+          };
+
+          // Démarrer la narration
+          window.speechSynthesis.speak(currentNarration);
         } else {
-          // Sinon, chercher les meilleures voix françaises par ordre de préférence
-          const preferredVoices = [
-            'Google français',
-            'Microsoft Paul - French (France)',
-            'Thomas',
-            'Microsoft Hortense - French (France)',
-            'Amelie',
-            'Google UK English Male'
-          ];
-          
-          // Trouver la meilleure voix disponible
-          for (let preferred of preferredVoices) {
-            selectedVoice = voices.find(voice => voice.name.includes(preferred));
-            if (selectedVoice) break;
-          }
-          
-          // Si pas de voix spécifique trouvée, prendre la première voix française
-          if (!selectedVoice) {
-            selectedVoice = voices.find(voice => voice.lang.startsWith('fr'));
-          }
+          alert("Désolé, votre navigateur ne supporte pas la synthèse vocale.");
         }
-        
-        // Appliquer la voix si trouvée
-        if (selectedVoice) {
-          currentNarration.voice = selectedVoice;
+      }
+
+      // Fonction pour arrêter la narration
+      function stopNarration() {
+        if (window.speechSynthesis) {
+          window.speechSynthesis.cancel();
+          isNarrating = false;
+          playNarrationBtn.style.display = "flex";
+          stopNarrationBtn.style.display = "none";
+          narrationIndicator.classList.remove("active");
         }
-        
-        // Paramètres optimisés pour une voix plus naturelle
-        currentNarration.lang = 'fr-FR';
-        currentNarration.rate = 0.92; // Vitesse légèrement plus lente pour plus de clarté
-        currentNarration.pitch = 0.95; // Tonalité légèrement plus grave pour plus de naturel
-        currentNarration.volume = 1; // Volume maximum
-        
-        // Événements
-        currentNarration.onstart = () => {
-          isNarrating = true;
-          playNarrationBtn.style.display = 'none';
-          stopNarrationBtn.style.display = 'flex';
-          narrationIndicator.classList.add('active');
-        };
-        
-        currentNarration.onend = () => {
-          isNarrating = false;
-          playNarrationBtn.style.display = 'flex';
-          stopNarrationBtn.style.display = 'none';
-          narrationIndicator.classList.remove('active');
-        };
-        
-        currentNarration.onerror = () => {
-          isNarrating = false;
-          playNarrationBtn.style.display = 'flex';
-          stopNarrationBtn.style.display = 'none';
-          narrationIndicator.classList.remove('active');
-        };
-        
-        // Démarrer la narration
-        window.speechSynthesis.speak(currentNarration);
-      } else {
-        alert("Désolé, votre navigateur ne supporte pas la synthèse vocale.");
       }
-    }
 
-    // Fonction pour arrêter la narration
-    function stopNarration() {
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-        isNarrating = false;
-        playNarrationBtn.style.display = 'flex';
-        stopNarrationBtn.style.display = 'none';
-        narrationIndicator.classList.remove('active');
-      }
-    }
+      // Événements des boutons audio
+      playNarrationBtn.addEventListener("click", startNarration);
+      stopNarrationBtn.addEventListener("click", stopNarration);
 
-    // Événements des boutons audio
-    playNarrationBtn.addEventListener('click', startNarration);
-    stopNarrationBtn.addEventListener('click', stopNarration);
+      // Créer les cartes de niveau
+      function createLevelCards() {
+        levelsGrid.innerHTML = "";
+        LEVELS.forEach((level, index) => {
+          const isUnlocked = index < unlockedLevels;
+          // const isUnlocked = true ;
+          const card = document.createElement("div");
+          card.className = "level-card" + (isUnlocked ? "" : " locked");
 
-    // Créer les cartes de niveau
-    function createLevelCards() {
-      levelsGrid.innerHTML = '';
-      LEVELS.forEach((level, index) => {
-        const isUnlocked = index < unlockedLevels;
-        // const isUnlocked = true ;
-        const card = document.createElement('div');
-        card.className = 'level-card' + (isUnlocked ? '' : ' locked');
-        
-        const difficultyDots = Array(5).fill(0).map((_, i) => 
-          `<div class="difficulty-dot ${i < level.difficulty ? 'active' : ''}"></div>`
-        ).join('');
+          const difficultyDots = Array(5)
+            .fill(0)
+            .map(
+              (_, i) =>
+                `<div class="difficulty-dot ${i < level.difficulty ? "active" : ""}"></div>`,
+            )
+            .join("");
 
-        card.innerHTML = `
-          ${!isUnlocked ? '<div class="lock-icon">🔒</div>' : ''}
+          card.innerHTML = `
+          ${!isUnlocked ? '<div class="lock-icon">🔒</div>' : ""}
           <div class="level-number">${index + 1}</div>
           <div class="level-name">${level.name}</div>
-          <div class="level-description">${isUnlocked ? level.description : 'Terminez le niveau précédent pour débloquer'}</div>
+          <div class="level-description">${isUnlocked ? level.description : "Terminez le niveau précédent pour débloquer"}</div>
           <div class="level-difficulty">${difficultyDots}</div>
         `;
 
-        if (isUnlocked) {
-          card.addEventListener('click', () => startLevel(index));
-        }
+          if (isUnlocked) {
+            card.addEventListener("click", () => startLevel(index));
+          }
 
-        levelsGrid.appendChild(card);
-      });
-    }
-
-    function startLevel(levelIndex) {
-      currentLevel = levelIndex;
-      introScreen.classList.add('hidden');
-      
-      setTimeout(() => {
-        const storyKey = levelIndex === 0 ? 'intro' : `level${levelIndex + 1}`;
-        
-        if (!hasSeenLevelStory[levelIndex]) {
-          hasSeenLevelStory[levelIndex] = true;
-          showStory(storyKey);
-        } else {
-          started = true;
-          resetGame(false);
-        }
-      }, 500);
-    }
-
-    // Initialiser les cartes au chargement
-    createLevelCards();
-
-    function showStory(storyKey) {
-      showingStory = true;
-      const story = STORY[storyKey];
-      storyTitle.innerHTML = story.title;
-      storyText.innerHTML = story.text;
-      storyModal.classList.add('active');
-      
-      // Réinitialiser les boutons audio
-      playNarrationBtn.style.display = 'flex';
-      stopNarrationBtn.style.display = 'none';
-      narrationIndicator.classList.remove('active');
-      
-      // Option : Démarrer automatiquement la narration (décommenter si souhaité)
-      // setTimeout(() => startNarration(), 500);
-    }
-
-    function hideStory() {
-      showingStory = false;
-      storyModal.classList.remove('active');
-      stopNarration(); // Arrêter la narration quand on ferme la modal
-    }
-
-    continueBtn.addEventListener('click', () => {
-      hideStory();
-      if (!started) {
-        started = true;
-        resetGame(true);
-      }
-    });
-
-    // Mouse controls
-    canvas.addEventListener("mousedown", () => {
-      if (showingStory) return;
-      
-      if (!started) {
-        // Will be handled by continue button
-      } else if (!gameOver && !levelFinished && player.jumpsLeft > 0) {
-        const jumpPower = hasPowerup('superJump') ? player.jumpPower * 1.5 : player.jumpPower;
-        player.vy = -jumpPower;
-        player.jumpsLeft--;
-        createJumpParticles();
-      } else if (gameOver) {
-        resetGame(false); // false = recommencer au niveau actuel
-      } else if (levelFinished) {
-        nextLevel();
-      }
-    });
-
-    // Fullscreen
-    const fullscreenBtn = document.getElementById('fullscreenBtn');
-    fullscreenBtn.addEventListener('click', () => {
-      const element = document.documentElement;
-      const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-
-      if (!isFullscreen) {
-        if (element.requestFullscreen) {
-          element.requestFullscreen();
-        } else if (element.webkitRequestFullscreen) {
-          element.webkitRequestFullscreen();
-        } else if (element.msRequestFullscreen) {
-          element.msRequestFullscreen();
-        }
-        fullscreenBtn.textContent = 'Quitter plein écran';
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) {
-          document.msExitFullscreen();
-        }
-        fullscreenBtn.textContent = 'Plein écran';
-      }
-    });
-
-    document.addEventListener('fullscreenchange', () => {
-      if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
-        fullscreenBtn.textContent = 'Plein écran';
-      }
-    });
-
-    // Touche ÉCHAP pour retourner au menu
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && (gameOver || levelFinished)) {
-        returnToMenu();
-      }
-    });
-
-    // ===== SYSTÈME DE SKINS =====
-    function initSkinSelector() {
-      const skinGrid = document.getElementById('skinGrid');
-      skinGrid.innerHTML = '';
-      
-      Object.entries(SKINS).forEach(([skinId, skin]) => {
-        const option = document.createElement('div');
-        option.className = 'skin-option';
-        
-        const isUnlocked = skin.unlocked || (skin.unlockLevel && unlockedLevels > skin.unlockLevel);
-        // const isUnlocked = true;
-        
-        if (isUnlocked && !unlockedSkins.includes(skinId)) {
-          unlockedSkins.push(skinId);
-        }
-        
-        if (!isUnlocked) {
-          option.classList.add('locked');
-        }
-        
-        if (skinId === currentSkin) {
-          option.classList.add('active');
-        }
-        
-        const preview = document.createElement('div');
-        preview.className = 'skin-preview';
-        preview.style.background = skin.color === 'rainbow' 
-          ? 'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)'
-          : skin.color;
-        
-        option.appendChild(preview);
-        
-        if (isUnlocked) {
-          option.addEventListener('click', () => {
-            currentSkin = skinId;
-            initSkinSelector(); // Refresh
-            playSound('powerup');
-          });
-        }
-        
-        option.title = skin.name + (isUnlocked ? '' : ` (Débloqué au niveau ${skin.unlockLevel})`);
-        skinGrid.appendChild(option);
-      });
-    }
-
-    // ===== SYSTÈME DE POWER-UPS =====
-    function spawnPowerup() {
-      if (powerups.length < 2 && Math.random() < 0.003 && started && !gameOver) {
-        const types = Object.keys(POWERUP_TYPES);
-        const type = types[Math.floor(Math.random() * types.length)];
-        
-        powerups.push({
-          x: W + 50,
-          y: groundY - 150 - Math.random() * 100,
-          type: type,
-          size: 35,
-          rotation: 0,
-          collected: false
+          levelsGrid.appendChild(card);
         });
       }
-    }
 
-    function updatePowerups() {
-      powerups.forEach(pu => {
-        pu.x -= gameSpeed;
-        pu.rotation += 0.05;
-        
-        // Collision avec le joueur
+      function startLevel(levelIndex) {
+        currentLevel = levelIndex;
+        introScreen.classList.add("hidden");
+
+        setTimeout(() => {
+          const storyKey =
+            levelIndex === 0 ? "intro" : `level${levelIndex + 1}`;
+
+          if (!hasSeenLevelStory[levelIndex]) {
+            hasSeenLevelStory[levelIndex] = true;
+            showStory(storyKey);
+          } else {
+            started = true;
+            resetGame(false);
+          }
+        }, 500);
+      }
+
+      // Initialiser les cartes au chargement
+      createLevelCards();
+
+      function showStory(storyKey) {
+        showingStory = true;
+        const story = STORY[storyKey];
+        storyTitle.innerHTML = story.title;
+        storyText.innerHTML = story.text;
+        storyModal.classList.add("active");
+
+        // Réinitialiser les boutons audio
+        playNarrationBtn.style.display = "flex";
+        stopNarrationBtn.style.display = "none";
+        narrationIndicator.classList.remove("active");
+
+        // Option : Démarrer automatiquement la narration (décommenter si souhaité)
+        // setTimeout(() => startNarration(), 500);
+      }
+
+      function hideStory() {
+        showingStory = false;
+        storyModal.classList.remove("active");
+        stopNarration(); // Arrêter la narration quand on ferme la modal
+      }
+
+      continueBtn.addEventListener("click", () => {
+        hideStory();
+        if (!started) {
+          started = true;
+          resetGame(true);
+        }
+      });
+
+      // Mouse controls
+      canvas.addEventListener("mousedown", () => {
+        if (showingStory) return;
+
+        if (!started) {
+          // Will be handled by continue button
+        } else if (!gameOver && !levelFinished && player.jumpsLeft > 0) {
+          const jumpPower = hasPowerup("superJump")
+            ? player.jumpPower * 1.5
+            : player.jumpPower;
+          player.vy = -jumpPower;
+          player.jumpsLeft--;
+          createJumpParticles();
+        } else if (gameOver) {
+          resetGame(false); // false = recommencer au niveau actuel
+        } else if (levelFinished) {
+          nextLevel();
+        }
+      });
+
+      // Fullscreen
+      const fullscreenBtn = document.getElementById("fullscreenBtn");
+      fullscreenBtn.addEventListener("click", () => {
+        const element = document.documentElement;
+        const isFullscreen =
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement;
+
+        if (!isFullscreen) {
+          if (element.requestFullscreen) {
+            element.requestFullscreen();
+          } else if (element.webkitRequestFullscreen) {
+            element.webkitRequestFullscreen();
+          } else if (element.msRequestFullscreen) {
+            element.msRequestFullscreen();
+          }
+          fullscreenBtn.textContent = "Quitter plein écran";
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+          fullscreenBtn.textContent = "Plein écran";
+        }
+      });
+
+      document.addEventListener("fullscreenchange", () => {
+        if (
+          !document.fullscreenElement &&
+          !document.webkitFullscreenElement &&
+          !document.msFullscreenElement
+        ) {
+          fullscreenBtn.textContent = "Plein écran";
+        }
+      });
+
+      // Touche ÉCHAP pour retourner au menu
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && (gameOver || levelFinished)) {
+          returnToMenu();
+        }
+      });
+
+      // ===== SYSTÈME DE SKINS =====
+      function initSkinSelector() {
+        const skinGrid = document.getElementById("skinGrid");
+        skinGrid.innerHTML = "";
+
+        Object.entries(SKINS).forEach(([skinId, skin]) => {
+          const option = document.createElement("div");
+          option.className = "skin-option";
+
+          // const isUnlocked =
+          //   skin.unlocked ||
+          //   (skin.unlockLevel && unlockedLevels > skin.unlockLevel);
+          const isUnlocked = true;
+
+          if (isUnlocked && !unlockedSkins.includes(skinId)) {
+            unlockedSkins.push(skinId);
+          }
+
+          if (!isUnlocked) {
+            option.classList.add("locked");
+          }
+
+          if (skinId === currentSkin) {
+            option.classList.add("active");
+          }
+
+          const preview = document.createElement("div");
+          preview.className = "skin-preview";
+          preview.style.background =
+            skin.color === "rainbow"
+              ? "linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)"
+              : skin.color;
+
+          option.appendChild(preview);
+
+          if (isUnlocked) {
+            option.addEventListener("click", () => {
+              currentSkin = skinId;
+              initSkinSelector(); // Refresh
+              playSound("powerup");
+            });
+          }
+
+          option.title =
+            skin.name +
+            (isUnlocked ? "" : ` (Débloqué au niveau ${skin.unlockLevel})`);
+          skinGrid.appendChild(option);
+        });
+      }
+
+      // ===== SYSTÈME DE POWER-UPS =====
+      function spawnPowerup() {
+        if (
+          powerups.length < 2 &&
+          Math.random() < 0.003 &&
+          started &&
+          !gameOver
+        ) {
+          const types = Object.keys(POWERUP_TYPES);
+          const type = types[Math.floor(Math.random() * types.length)];
+
+          powerups.push({
+            x: W + 50,
+            y: groundY - 150 - Math.random() * 100,
+            type: type,
+            size: 35,
+            rotation: 0,
+            collected: false,
+          });
+        }
+      }
+
+      function updatePowerups() {
+        powerups.forEach((pu) => {
+          pu.x -= gameSpeed;
+          pu.rotation += 0.05;
+
+          // Collision avec le joueur
+          const px = player.x;
+          const py = player.y;
+          const pw = player.w;
+          const ph = player.h;
+
+          if (
+            !pu.collected &&
+            px < pu.x + pu.size &&
+            px + pw > pu.x &&
+            py < pu.y + pu.size &&
+            py + ph > pu.y
+          ) {
+            collectPowerup(pu);
+            pu.collected = true;
+          }
+        });
+
+        powerups = powerups.filter((pu) => pu.x > -100 && !pu.collected);
+
+        // Mise à jour des power-ups actifs
+        activePowerups.forEach((ap) => {
+          ap.timeLeft -= 16; // ~60fps
+        });
+
+        activePowerups = activePowerups.filter((ap) => ap.timeLeft > 0);
+        updatePowerupsHUD();
+      }
+
+      function collectPowerup(powerup) {
+        const config = POWERUP_TYPES[powerup.type];
+        activePowerups.push({
+          type: powerup.type,
+          timeLeft: config.duration,
+        });
+
+        playSound("powerup");
+
+        // Effet visuel de collecte
+        for (let i = 0; i < 20; i++) {
+          particles.push({
+            x: powerup.x + powerup.size / 2,
+            y: powerup.y + powerup.size / 2,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 8,
+            life: 1,
+            decay: 0.02,
+            color: config.color,
+          });
+        }
+      }
+
+      function drawPowerups() {
+        powerups.forEach((pu) => {
+          const config = POWERUP_TYPES[pu.type];
+
+          ctx.save();
+          ctx.translate(pu.x + pu.size / 2, pu.y + pu.size / 2);
+          ctx.rotate(pu.rotation);
+
+          // Aura
+          ctx.shadowBlur = 20;
+          ctx.shadowColor = config.color;
+
+          // Cercle de fond
+          ctx.fillStyle = config.color + "40";
+          ctx.beginPath();
+          ctx.arc(0, 0, pu.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Bordure
+          ctx.strokeStyle = config.color;
+          ctx.lineWidth = 3;
+          ctx.stroke();
+
+          ctx.restore();
+
+          // Icône
+          ctx.font = "24px Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(config.icon, pu.x + pu.size / 2, pu.y + pu.size / 2);
+        });
+      }
+
+      function updatePowerupsHUD() {
+        const hud = document.getElementById("powerupsHud");
+        hud.innerHTML = "";
+
+        activePowerups.forEach((ap) => {
+          const config = POWERUP_TYPES[ap.type];
+          const div = document.createElement("div");
+          div.className = "powerup-icon";
+          div.style.borderColor = config.color;
+          div.innerHTML = `
+          ${config.icon}
+          <div class="powerup-timer">${Math.ceil(ap.timeLeft / 1000)}s</div>
+        `;
+          hud.appendChild(div);
+        });
+      }
+
+      function hasPowerup(type) {
+        return activePowerups.some((ap) => ap.type === type);
+      }
+
+      // ===== SYSTÈME AUDIO =====
+      function initAudio() {
+        // Créer un contexte audio simple avec Web Audio API
+        try {
+          const audioCtx = new (
+            window.AudioContext || window.webkitAudioContext
+          )();
+
+          // Fonction pour créer des sons simples
+          window.playTone = (frequency, duration, type = "sine") => {
+            if (!audioEnabled) return;
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(
+              0.01,
+              audioCtx.currentTime + duration,
+            );
+
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + duration);
+          };
+
+          // Musique de fond (ambiance)
+          function playBackgroundMusic() {
+            if (!audioEnabled || backgroundMusic) return;
+
+            const bass = audioCtx.createOscillator();
+            const bassGain = audioCtx.createGain();
+            bass.connect(bassGain);
+            bassGain.connect(audioCtx.destination);
+            bass.frequency.value = 55; // A1
+            bass.type = "triangle";
+            bassGain.gain.value = 0.05;
+            bass.start();
+
+            backgroundMusic = bass;
+          }
+
+          // Démarrer la musique au premier clic
+          document.addEventListener("click", playBackgroundMusic, {
+            once: true,
+          });
+        } catch (e) {
+          console.log("Web Audio API not supported");
+        }
+      }
+
+      function playSound(type) {
+        if (!audioEnabled || !window.playTone) return;
+
+        switch (type) {
+          case "jump":
+            playTone(400, 0.1, "square");
+            setTimeout(() => playTone(600, 0.1, "square"), 50);
+            break;
+          case "land":
+            playTone(200, 0.05, "sine");
+            break;
+          case "death":
+            playTone(300, 0.2, "sawtooth");
+            setTimeout(() => playTone(200, 0.2, "sawtooth"), 100);
+            setTimeout(() => playTone(100, 0.3, "sawtooth"), 200);
+            break;
+          case "powerup":
+            playTone(800, 0.1, "sine");
+            setTimeout(() => playTone(1000, 0.1, "sine"), 80);
+            setTimeout(() => playTone(1200, 0.15, "sine"), 160);
+            break;
+          case "victory":
+            playTone(523, 0.2, "sine"); // C
+            setTimeout(() => playTone(659, 0.2, "sine"), 200); // E
+            setTimeout(() => playTone(784, 0.3, "sine"), 400); // G
+            break;
+        }
+      }
+
+      const audioToggle = document.getElementById("audioToggle");
+      audioToggle.addEventListener("click", () => {
+        audioEnabled = !audioEnabled;
+        audioToggle.textContent = audioEnabled ? "🔊" : "🔇";
+        audioToggle.classList.toggle("muted", !audioEnabled);
+
+        if (!audioEnabled && backgroundMusic) {
+          backgroundMusic.stop();
+          backgroundMusic = null;
+        }
+      });
+
+      function returnToMenu() {
+        started = false;
+        gameOver = false;
+        levelFinished = false;
+        introScreen.classList.remove("hidden");
+        createLevelCards();
+      }
+
+      // ===== FONCTIONS DE DÉCOR D'ARRIÈRE-PLAN =====
+
+      function initBackgroundDecor() {
+        // Initialiser les étoiles
+        stars = [];
+        for (let i = 0; i < 100; i++) {
+          stars.push({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            size: Math.random() * 2 + 0.5,
+            speed: Math.random() * 0.5 + 0.1,
+            opacity: Math.random() * 0.8 + 0.2,
+            twinkleSpeed: Math.random() * 0.02 + 0.01,
+            twinklePhase: Math.random() * Math.PI * 2,
+          });
+        }
+
+        // Initialiser les particules de fond géométriques
+        bgParticles = [];
+        for (let i = 0; i < 30; i++) {
+          bgParticles.push({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            size: Math.random() * 15 + 5,
+            speed: Math.random() * 0.3 + 0.1,
+            rotation: Math.random() * Math.PI * 2,
+            rotationSpeed: (Math.random() - 0.5) * 0.02,
+            opacity: Math.random() * 0.15 + 0.05,
+            shape: Math.floor(Math.random() * 3), // 0: carré, 1: triangle, 2: hexagone
+          });
+        }
+
+        // Initialiser les bâtiments en silhouette (effet parallaxe)
+        buildings = [];
+        const numBuildings = 8;
+        for (let i = 0; i < numBuildings; i++) {
+          buildings.push({
+            x: (W / numBuildings) * i + Math.random() * 50,
+            y: groundY - Math.random() * 150 - 100,
+            width: Math.random() * 80 + 40,
+            height: Math.random() * 150 + 100,
+            speed: Math.random() * 0.4 + 0.2,
+            opacity: Math.random() * 0.15 + 0.08,
+            windows: [],
+          });
+
+          // Ajouter des "fenêtres" aux bâtiments
+          const building = buildings[buildings.length - 1];
+          const windowsPerRow = Math.floor(building.width / 15);
+          const rows = Math.floor(building.height / 20);
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < windowsPerRow; c++) {
+              if (Math.random() > 0.3) {
+                // 70% de chance d'avoir une fenêtre
+                building.windows.push({
+                  x: c * 15 + 5,
+                  y: r * 20 + 5,
+                  lit: Math.random() > 0.5,
+                });
+              }
+            }
+          }
+        }
+
+        // Nuages de nébuleuse
+        nebulaClouds = [];
+        for (let i = 0; i < 5; i++) {
+          nebulaClouds.push({
+            x: Math.random() * W,
+            y: Math.random() * (H * 0.5),
+            radius: Math.random() * 150 + 100,
+            speed: Math.random() * 0.15 + 0.05,
+            color:
+              Math.random() > 0.5 ? "rgba(0, 255, 255," : "rgba(255, 0, 255,",
+            opacity: Math.random() * 0.08 + 0.03,
+          });
+        }
+      }
+
+      function updateBackgroundDecor() {
+        if (!started) return;
+
+        // Animer les étoiles
+        stars.forEach((star) => {
+          star.x -= star.speed;
+          if (star.x < -10) star.x = W + 10;
+
+          // Effet de scintillement
+          star.twinklePhase += star.twinkleSpeed;
+          star.opacity = 0.3 + Math.sin(star.twinklePhase) * 0.4;
+        });
+
+        // Animer les particules géométriques
+        bgParticles.forEach((p) => {
+          p.x -= p.speed;
+          if (p.x < -50) p.x = W + 50;
+          p.rotation += p.rotationSpeed;
+        });
+
+        // Animer les bâtiments (parallaxe)
+        buildings.forEach((b) => {
+          b.x -= b.speed;
+          if (b.x + b.width < -50) {
+            b.x = W + 50;
+          }
+        });
+
+        // Animer les nuages de nébuleuse
+        nebulaClouds.forEach((cloud) => {
+          cloud.x -= cloud.speed;
+          if (cloud.x + cloud.radius < -100) {
+            cloud.x = W + 100;
+          }
+        });
+      }
+
+      function drawBackgroundDecor() {
+        // Dessiner les nuages de nébuleuse
+        nebulaClouds.forEach((cloud) => {
+          const gradient = ctx.createRadialGradient(
+            cloud.x,
+            cloud.y,
+            0,
+            cloud.x,
+            cloud.y,
+            cloud.radius,
+          );
+          gradient.addColorStop(0, cloud.color + cloud.opacity + ")");
+          gradient.addColorStop(0.5, cloud.color + cloud.opacity * 0.5 + ")");
+          gradient.addColorStop(1, cloud.color + "0)");
+
+          ctx.fillStyle = gradient;
+          ctx.fillRect(
+            cloud.x - cloud.radius,
+            cloud.y - cloud.radius,
+            cloud.radius * 2,
+            cloud.radius * 2,
+          );
+        });
+
+        // Dessiner les bâtiments
+        buildings.forEach((b) => {
+          ctx.save();
+          ctx.globalAlpha = b.opacity;
+
+          // Silhouette du bâtiment
+          const gradient = ctx.createLinearGradient(
+            b.x,
+            b.y,
+            b.x,
+            b.y + b.height,
+          );
+          gradient.addColorStop(0, "rgba(0, 100, 150, 0.3)");
+          gradient.addColorStop(1, "rgba(0, 50, 100, 0.5)");
+          ctx.fillStyle = gradient;
+          ctx.fillRect(b.x, b.y, b.width, b.height);
+
+          // Bordure subtile
+          ctx.strokeStyle = "rgba(0, 150, 200, 0.3)";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(b.x, b.y, b.width, b.height);
+
+          // Fenêtres
+          b.windows.forEach((win) => {
+            if (win.lit) {
+              ctx.fillStyle = "rgba(0, 255, 255, 0.4)";
+              ctx.fillRect(b.x + win.x, b.y + win.y, 8, 8);
+            }
+          });
+
+          ctx.restore();
+        });
+
+        // Dessiner les particules géométriques
+        bgParticles.forEach((p) => {
+          ctx.save();
+          ctx.globalAlpha = p.opacity;
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+
+          ctx.strokeStyle = "rgba(0, 255, 255, 0.6)";
+          ctx.lineWidth = 1.5;
+
+          if (p.shape === 0) {
+            // Carré
+            ctx.strokeRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          } else if (p.shape === 1) {
+            // Triangle
+            ctx.beginPath();
+            ctx.moveTo(0, -p.size / 2);
+            ctx.lineTo(p.size / 2, p.size / 2);
+            ctx.lineTo(-p.size / 2, p.size / 2);
+            ctx.closePath();
+            ctx.stroke();
+          } else {
+            // Hexagone
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+              const angle = (Math.PI / 3) * i;
+              const x = (p.size / 2) * Math.cos(angle);
+              const y = (p.size / 2) * Math.sin(angle);
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+          }
+
+          ctx.restore();
+        });
+
+        // Dessiner les étoiles
+        stars.forEach((star) => {
+          ctx.save();
+          ctx.globalAlpha = star.opacity;
+          ctx.fillStyle = "#fff";
+          ctx.shadowBlur = 3;
+          ctx.shadowColor = "#0ff";
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+      }
+
+      function resetGame(resetLevelIndex) {
+        if (resetLevelIndex) {
+          currentLevel = 0;
+          hasSeenLevelStory[0] = true; // Marquer le niveau 1 comme vu
+        }
+        const level = LEVELS[currentLevel];
+        baseSpeed = level.baseSpeed;
+        gameSpeed = baseSpeed;
+        player.y = groundY - player.h;
+        player.vy = 0;
+        player.jumpsLeft = 2;
+        player.angle = 0;
+        player.trail = [];
+        score = 0;
+        gameOver = false;
+        levelFinished = false;
+        particles = [];
+        createLevelFromPattern(level);
+      }
+
+      function nextLevel() {
+        playSound("victory");
+
+        if (currentLevel < LEVELS.length - 1) {
+          currentLevel++;
+
+          // Débloquer le niveau suivant si ce n'est pas déjà fait
+          if (currentLevel >= unlockedLevels) {
+            unlockedLevels = currentLevel + 1;
+            createLevelCards(); // Mettre à jour l'affichage des cartes
+            initSkinSelector(); // Mettre à jour les skins débloqués
+          }
+
+          const storyKey = `level${currentLevel + 1}`;
+
+          // Montrer l'histoire seulement si pas encore vue
+          if (!hasSeenLevelStory[currentLevel]) {
+            hasSeenLevelStory[currentLevel] = true;
+            showStory(storyKey);
+          }
+        } else {
+          showStory("victory");
+          currentLevel = 0;
+          hasSeenLevelStory = []; // Réinitialiser pour un nouveau cycle
+        }
+        resetGame(false);
+      }
+
+      function createLevelFromPattern(level) {
+        spikes = [];
+        platforms = [];
+        const baseX = 0;
+
+        for (let i = 0; i < level.spikePattern.length; i++) {
+          const xBase = baseX + W + i * tile;
+
+          if (level.spikePattern[i] === 1) {
+            spikes.push(makeSpike(xBase + tile / 2, groundY, 40));
+          }
+
+          if (level.platformPattern[i] === 1) {
+            const pw = tile;
+            const ph = 20;
+            const py = groundY - 120;
+            platforms.push({
+              x: xBase,
+              y: py,
+              w: pw,
+              h: ph,
+            });
+          }
+        }
+      }
+
+      function makeSpike(baseX, baseY, height) {
+        const halfWidth = 20;
+        return {
+          x1: baseX - halfWidth,
+          y1: baseY,
+          x2: baseX + halfWidth,
+          y2: baseY,
+          x3: baseX,
+          y3: baseY - height,
+        };
+      }
+
+      function triangleAABBIntersect(spike, px, py, pw, ph) {
+        const minX = Math.min(spike.x1, spike.x2, spike.x3);
+        const maxX = Math.max(spike.x1, spike.x2, spike.x3);
+        const minY = Math.min(spike.y1, spike.y2, spike.y3);
+        const maxY = Math.max(spike.y1, spike.y2, spike.y3);
+
+        return px < maxX && px + pw > minX && py < maxY && py + ph > minY;
+      }
+
+      function createJumpParticles() {
+        const skin = SKINS[currentSkin];
+        const particleColor = skin.color === "rainbow" ? "#0ff" : skin.color;
+
+        for (let i = 0; i < 8; i++) {
+          particles.push({
+            x: player.x + player.w / 2,
+            y: player.y + player.h,
+            vx: (Math.random() - 0.5) * 4,
+            vy: Math.random() * 2,
+            life: 1,
+            decay: 0.02,
+            color: particleColor,
+          });
+        }
+        playSound("jump");
+      }
+
+      function createDeathParticles() {
+        const skin = SKINS[currentSkin];
+        const particleColor = skin.color === "rainbow" ? "#0ff" : skin.color;
+
+        for (let i = 0; i < 30; i++) {
+          particles.push({
+            x: player.x + player.w / 2,
+            y: player.y + player.h / 2,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 8,
+            life: 1,
+            decay: 0.015,
+            color: particleColor,
+          });
+        }
+        playSound("death");
+      }
+
+      function updateParticles() {
+        particles.forEach((p) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.2;
+          p.life -= p.decay;
+        });
+        particles = particles.filter((p) => p.life > 0);
+      }
+
+      function update() {
+        if (!started || gameOver || levelFinished || showingStory) return;
+
+        // Mettre à jour le décor d'arrière-plan
+        updateBackgroundDecor();
+
+        // Mettre à jour les power-ups
+        spawnPowerup();
+        updatePowerups();
+
+        // Appliquer les effets des power-ups
+        const currentGravity = hasPowerup("slowmo")
+          ? player.gravity * 0.5
+          : player.gravity;
+        const currentJumpPower = hasPowerup("superJump")
+          ? player.jumpPower * 1.5
+          : player.jumpPower;
+
+        player.vy += currentGravity;
+        player.y += player.vy;
+
+        // Trail effect
+        player.trail.push({ x: player.x, y: player.y, alpha: 0.5 });
+        if (player.trail.length > 10) player.trail.shift();
+        player.trail.forEach((t) => (t.alpha *= 0.9));
+
+        let onSomething = false;
+
+        if (player.y >= groundY - player.h) {
+          player.y = groundY - player.h;
+          player.vy = 0;
+          onSomething = true;
+        }
+
         const px = player.x;
         const py = player.y;
         const pw = player.w;
         const ph = player.h;
-        
-        if (!pu.collected && 
-            px < pu.x + pu.size && 
-            px + pw > pu.x && 
-            py < pu.y + pu.size && 
-            py + ph > pu.y) {
-          collectPowerup(pu);
-          pu.collected = true;
+
+        platforms.forEach((plat) => {
+          const prevBottom = py + ph - player.vy;
+          const currentBottom = py + ph;
+
+          if (
+            px + pw > plat.x &&
+            px < plat.x + plat.w &&
+            prevBottom <= plat.y &&
+            currentBottom >= plat.y
+          ) {
+            player.y = plat.y - ph;
+            player.vy = 0;
+            onSomething = true;
+          }
+        });
+
+        if (onSomething) {
+          player.jumpsLeft = 2;
         }
-      });
-      
-      powerups = powerups.filter(pu => pu.x > -100 && !pu.collected);
-      
-      // Mise à jour des power-ups actifs
-      activePowerups.forEach(ap => {
-        ap.timeLeft -= 16; // ~60fps
-      });
-      
-      activePowerups = activePowerups.filter(ap => ap.timeLeft > 0);
-      updatePowerupsHUD();
-    }
 
-    function collectPowerup(powerup) {
-      const config = POWERUP_TYPES[powerup.type];
-      activePowerups.push({
-        type: powerup.type,
-        timeLeft: config.duration
-      });
-      
-      playSound('powerup');
-      
-      // Effet visuel de collecte
-      for (let i = 0; i < 20; i++) {
-        particles.push({
-          x: powerup.x + powerup.size/2,
-          y: powerup.y + powerup.size/2,
-          vx: (Math.random() - 0.5) * 8,
-          vy: (Math.random() - 0.5) * 8,
-          life: 1,
-          decay: 0.02,
-          color: config.color
+        score += 1;
+
+        spikes.forEach((sp) => {
+          sp.x1 -= gameSpeed;
+          sp.x2 -= gameSpeed;
+          sp.x3 -= gameSpeed;
         });
-      }
-    }
 
-    function drawPowerups() {
-      powerups.forEach(pu => {
-        const config = POWERUP_TYPES[pu.type];
-        
-        ctx.save();
-        ctx.translate(pu.x + pu.size/2, pu.y + pu.size/2);
-        ctx.rotate(pu.rotation);
-        
-        // Aura
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = config.color;
-        
-        // Cercle de fond
-        ctx.fillStyle = config.color + '40';
-        ctx.beginPath();
-        ctx.arc(0, 0, pu.size/2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Bordure
-        ctx.strokeStyle = config.color;
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        
-        ctx.restore();
-        
-        // Icône
-        ctx.font = '24px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(config.icon, pu.x + pu.size/2, pu.y + pu.size/2);
-      });
-    }
-
-    function updatePowerupsHUD() {
-      const hud = document.getElementById('powerupsHud');
-      hud.innerHTML = '';
-      
-      activePowerups.forEach(ap => {
-        const config = POWERUP_TYPES[ap.type];
-        const div = document.createElement('div');
-        div.className = 'powerup-icon';
-        div.style.borderColor = config.color;
-        div.innerHTML = `
-          ${config.icon}
-          <div class="powerup-timer">${Math.ceil(ap.timeLeft / 1000)}s</div>
-        `;
-        hud.appendChild(div);
-      });
-    }
-
-    function hasPowerup(type) {
-      return activePowerups.some(ap => ap.type === type);
-    }
-
-    // ===== SYSTÈME AUDIO =====
-    function initAudio() {
-      // Créer un contexte audio simple avec Web Audio API
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // Fonction pour créer des sons simples
-        window.playTone = (frequency, duration, type = 'sine') => {
-          if (!audioEnabled) return;
-          
-          const oscillator = audioCtx.createOscillator();
-          const gainNode = audioCtx.createGain();
-          
-          oscillator.connect(gainNode);
-          gainNode.connect(audioCtx.destination);
-          
-          oscillator.frequency.value = frequency;
-          oscillator.type = type;
-          
-          gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-          
-          oscillator.start(audioCtx.currentTime);
-          oscillator.stop(audioCtx.currentTime + duration);
-        };
-        
-        // Musique de fond (ambiance)
-        function playBackgroundMusic() {
-          if (!audioEnabled || backgroundMusic) return;
-          
-          const bass = audioCtx.createOscillator();
-          const bassGain = audioCtx.createGain();
-          bass.connect(bassGain);
-          bassGain.connect(audioCtx.destination);
-          bass.frequency.value = 55; // A1
-          bass.type = 'triangle';
-          bassGain.gain.value = 0.05;
-          bass.start();
-          
-          backgroundMusic = bass;
-        }
-        
-        // Démarrer la musique au premier clic
-        document.addEventListener('click', playBackgroundMusic, { once: true });
-        
-      } catch (e) {
-        console.log('Web Audio API not supported');
-      }
-    }
-
-    function playSound(type) {
-      if (!audioEnabled || !window.playTone) return;
-      
-      switch(type) {
-        case 'jump':
-          playTone(400, 0.1, 'square');
-          setTimeout(() => playTone(600, 0.1, 'square'), 50);
-          break;
-        case 'land':
-          playTone(200, 0.05, 'sine');
-          break;
-        case 'death':
-          playTone(300, 0.2, 'sawtooth');
-          setTimeout(() => playTone(200, 0.2, 'sawtooth'), 100);
-          setTimeout(() => playTone(100, 0.3, 'sawtooth'), 200);
-          break;
-        case 'powerup':
-          playTone(800, 0.1, 'sine');
-          setTimeout(() => playTone(1000, 0.1, 'sine'), 80);
-          setTimeout(() => playTone(1200, 0.15, 'sine'), 160);
-          break;
-        case 'victory':
-          playTone(523, 0.2, 'sine'); // C
-          setTimeout(() => playTone(659, 0.2, 'sine'), 200); // E
-          setTimeout(() => playTone(784, 0.3, 'sine'), 400); // G
-          break;
-      }
-    }
-
-    const audioToggle = document.getElementById('audioToggle');
-    audioToggle.addEventListener('click', () => {
-      audioEnabled = !audioEnabled;
-      audioToggle.textContent = audioEnabled ? '🔊' : '🔇';
-      audioToggle.classList.toggle('muted', !audioEnabled);
-      
-      if (!audioEnabled && backgroundMusic) {
-        backgroundMusic.stop();
-        backgroundMusic = null;
-      }
-    });
-
-    function returnToMenu() {
-      started = false;
-      gameOver = false;
-      levelFinished = false;
-      introScreen.classList.remove('hidden');
-      createLevelCards();
-    }
-
-    // ===== FONCTIONS DE DÉCOR D'ARRIÈRE-PLAN =====
-    
-    function initBackgroundDecor() {
-      // Initialiser les étoiles
-      stars = [];
-      for (let i = 0; i < 100; i++) {
-        stars.push({
-          x: Math.random() * W,
-          y: Math.random() * H,
-          size: Math.random() * 2 + 0.5,
-          speed: Math.random() * 0.5 + 0.1,
-          opacity: Math.random() * 0.8 + 0.2,
-          twinkleSpeed: Math.random() * 0.02 + 0.01,
-          twinklePhase: Math.random() * Math.PI * 2
+        platforms.forEach((plat) => {
+          plat.x -= gameSpeed;
         });
-      }
 
-      // Initialiser les particules de fond géométriques
-      bgParticles = [];
-      for (let i = 0; i < 30; i++) {
-        bgParticles.push({
-          x: Math.random() * W,
-          y: Math.random() * H,
-          size: Math.random() * 15 + 5,
-          speed: Math.random() * 0.3 + 0.1,
-          rotation: Math.random() * Math.PI * 2,
-          rotationSpeed: (Math.random() - 0.5) * 0.02,
-          opacity: Math.random() * 0.15 + 0.05,
-          shape: Math.floor(Math.random() * 3) // 0: carré, 1: triangle, 2: hexagone
-        });
-      }
+        spikes = spikes.filter((sp) => sp.x2 > -50);
+        platforms = platforms.filter((plat) => plat.x + plat.w > -50);
 
-      // Initialiser les bâtiments en silhouette (effet parallaxe)
-      buildings = [];
-      const numBuildings = 8;
-      for (let i = 0; i < numBuildings; i++) {
-        buildings.push({
-          x: (W / numBuildings) * i + Math.random() * 50,
-          y: groundY - Math.random() * 150 - 100,
-          width: Math.random() * 80 + 40,
-          height: Math.random() * 150 + 100,
-          speed: Math.random() * 0.4 + 0.2,
-          opacity: Math.random() * 0.15 + 0.08,
-          windows: []
-        });
-        
-        // Ajouter des "fenêtres" aux bâtiments
-        const building = buildings[buildings.length - 1];
-        const windowsPerRow = Math.floor(building.width / 15);
-        const rows = Math.floor(building.height / 20);
-        for (let r = 0; r < rows; r++) {
-          for (let c = 0; c < windowsPerRow; c++) {
-            if (Math.random() > 0.3) { // 70% de chance d'avoir une fenêtre
-              building.windows.push({
-                x: c * 15 + 5,
-                y: r * 20 + 5,
-                lit: Math.random() > 0.5
-              });
+        // Collision avec spikes (sauf si shield ou ghost actif)
+        if (!hasPowerup("shield") && !hasPowerup("ghost")) {
+          for (let sp of spikes) {
+            if (triangleAABBIntersect(sp, px, py, pw, ph)) {
+              gameOver = true;
+              createDeathParticles();
+              if (score > bestScore) bestScore = score;
+              break;
             }
           }
         }
+
+        if (!onSomething) {
+          player.angle += 0.25;
+        } else {
+          player.angle = 0;
+        }
+
+        if (spikes.length === 0 && platforms.length === 0 && !gameOver) {
+          gameSpeed = 0;
+          levelFinished = true;
+          if (score > bestScore) bestScore = score;
+        }
+
+        updateParticles();
       }
 
-      // Nuages de nébuleuse
-      nebulaClouds = [];
-      for (let i = 0; i < 5; i++) {
-        nebulaClouds.push({
-          x: Math.random() * W,
-          y: Math.random() * (H * 0.5),
-          radius: Math.random() * 150 + 100,
-          speed: Math.random() * 0.15 + 0.05,
-          color: Math.random() > 0.5 ? 'rgba(0, 255, 255,' : 'rgba(255, 0, 255,',
-          opacity: Math.random() * 0.08 + 0.03
-        });
-      }
-    }
+      function drawBackground() {
+        const grad = ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0, "rgba(0, 20, 40, 0.3)");
+        grad.addColorStop(0.5, "rgba(10, 0, 30, 0.2)");
+        grad.addColorStop(1, "rgba(0, 10, 20, 0.3)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
 
-    function updateBackgroundDecor() {
-      if (!started) return;
+        // Dessiner les éléments de décor
+        drawBackgroundDecor();
 
-      // Animer les étoiles
-      stars.forEach(star => {
-        star.x -= star.speed;
-        if (star.x < -10) star.x = W + 10;
-        
-        // Effet de scintillement
-        star.twinklePhase += star.twinkleSpeed;
-        star.opacity = 0.3 + Math.sin(star.twinklePhase) * 0.4;
-      });
-
-      // Animer les particules géométriques
-      bgParticles.forEach(p => {
-        p.x -= p.speed;
-        if (p.x < -50) p.x = W + 50;
-        p.rotation += p.rotationSpeed;
-      });
-
-      // Animer les bâtiments (parallaxe)
-      buildings.forEach(b => {
-        b.x -= b.speed;
-        if (b.x + b.width < -50) {
-          b.x = W + 50;
-        }
-      });
-
-      // Animer les nuages de nébuleuse
-      nebulaClouds.forEach(cloud => {
-        cloud.x -= cloud.speed;
-        if (cloud.x + cloud.radius < -100) {
-          cloud.x = W + 100;
-        }
-      });
-    }
-
-    function drawBackgroundDecor() {
-      // Dessiner les nuages de nébuleuse
-      nebulaClouds.forEach(cloud => {
-        const gradient = ctx.createRadialGradient(
-          cloud.x, cloud.y, 0,
-          cloud.x, cloud.y, cloud.radius
-        );
-        gradient.addColorStop(0, cloud.color + cloud.opacity + ')');
-        gradient.addColorStop(0.5, cloud.color + (cloud.opacity * 0.5) + ')');
-        gradient.addColorStop(1, cloud.color + '0)');
-        
-        ctx.fillStyle = gradient;
-        ctx.fillRect(cloud.x - cloud.radius, cloud.y - cloud.radius, 
-                     cloud.radius * 2, cloud.radius * 2);
-      });
-
-      // Dessiner les bâtiments
-      buildings.forEach(b => {
-        ctx.save();
-        ctx.globalAlpha = b.opacity;
-        
-        // Silhouette du bâtiment
-        const gradient = ctx.createLinearGradient(b.x, b.y, b.x, b.y + b.height);
-        gradient.addColorStop(0, 'rgba(0, 100, 150, 0.3)');
-        gradient.addColorStop(1, 'rgba(0, 50, 100, 0.5)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(b.x, b.y, b.width, b.height);
-        
-        // Bordure subtile
-        ctx.strokeStyle = 'rgba(0, 150, 200, 0.3)';
+        // Animated grid (plus subtil maintenant)
+        ctx.strokeStyle = "rgba(0, 255, 255, 0.04)";
         ctx.lineWidth = 1;
-        ctx.strokeRect(b.x, b.y, b.width, b.height);
-        
-        // Fenêtres
-        b.windows.forEach(win => {
-          if (win.lit) {
-            ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
-            ctx.fillRect(b.x + win.x, b.y + win.y, 8, 8);
-          }
-        });
-        
-        ctx.restore();
-      });
-
-      // Dessiner les particules géométriques
-      bgParticles.forEach(p => {
-        ctx.save();
-        ctx.globalAlpha = p.opacity;
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rotation);
-        
-        ctx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
-        ctx.lineWidth = 1.5;
-        
-        if (p.shape === 0) {
-          // Carré
-          ctx.strokeRect(-p.size/2, -p.size/2, p.size, p.size);
-        } else if (p.shape === 1) {
-          // Triangle
+        const offset = (Date.now() / 50) % 40;
+        for (let x = -offset; x < W; x += 40) {
           ctx.beginPath();
-          ctx.moveTo(0, -p.size/2);
-          ctx.lineTo(p.size/2, p.size/2);
-          ctx.lineTo(-p.size/2, p.size/2);
-          ctx.closePath();
-          ctx.stroke();
-        } else {
-          // Hexagone
-          ctx.beginPath();
-          for (let i = 0; i < 6; i++) {
-            const angle = (Math.PI / 3) * i;
-            const x = (p.size/2) * Math.cos(angle);
-            const y = (p.size/2) * Math.sin(angle);
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-          }
-          ctx.closePath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, H);
           ctx.stroke();
         }
-        
-        ctx.restore();
-      });
-
-      // Dessiner les étoiles
-      stars.forEach(star => {
-        ctx.save();
-        ctx.globalAlpha = star.opacity;
-        ctx.fillStyle = '#fff';
-        ctx.shadowBlur = 3;
-        ctx.shadowColor = '#0ff';
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      });
-    }
-
-    function resetGame(resetLevelIndex) {
-      if (resetLevelIndex) {
-        currentLevel = 0;
-        hasSeenLevelStory[0] = true; // Marquer le niveau 1 comme vu
-      }
-      const level = LEVELS[currentLevel];
-      baseSpeed = level.baseSpeed;
-      gameSpeed = baseSpeed;
-      player.y = groundY - player.h;
-      player.vy = 0;
-      player.jumpsLeft = 2;
-      player.angle = 0;
-      player.trail = [];
-      score = 0;
-      gameOver = false;
-      levelFinished = false;
-      particles = [];
-      createLevelFromPattern(level);
-    }
-
-    function nextLevel() {
-      playSound('victory');
-      
-      if (currentLevel < LEVELS.length - 1) {
-        currentLevel++;
-        
-        // Débloquer le niveau suivant si ce n'est pas déjà fait
-        if (currentLevel >= unlockedLevels) {
-          unlockedLevels = currentLevel + 1;
-          createLevelCards(); // Mettre à jour l'affichage des cartes
-          initSkinSelector(); // Mettre à jour les skins débloqués
-        }
-        
-        const storyKey = `level${currentLevel + 1}`;
-        
-        // Montrer l'histoire seulement si pas encore vue
-        if (!hasSeenLevelStory[currentLevel]) {
-          hasSeenLevelStory[currentLevel] = true;
-          showStory(storyKey);
-        }
-      } else {
-        showStory('victory');
-        currentLevel = 0;
-        hasSeenLevelStory = []; // Réinitialiser pour un nouveau cycle
-      }
-      resetGame(false);
-    }
-
-    function createLevelFromPattern(level) {
-      spikes = [];
-      platforms = [];
-      const baseX = 0;
-
-      for (let i = 0; i < level.spikePattern.length; i++) {
-        const xBase = baseX + W + i * tile;
-
-        if (level.spikePattern[i] === 1) {
-          spikes.push(makeSpike(xBase + tile / 2, groundY, 40));
-        }
-
-        if (level.platformPattern[i] === 1) {
-          const pw = tile;
-          const ph = 20;
-          const py = groundY - 120;
-          platforms.push({
-            x: xBase,
-            y: py,
-            w: pw,
-            h: ph
-          });
-        }
-      }
-    }
-
-    function makeSpike(baseX, baseY, height) {
-      const halfWidth = 20;
-      return {
-        x1: baseX - halfWidth,
-        y1: baseY,
-        x2: baseX + halfWidth,
-        y2: baseY,
-        x3: baseX,
-        y3: baseY - height
-      };
-    }
-
-    function triangleAABBIntersect(spike, px, py, pw, ph) {
-      const minX = Math.min(spike.x1, spike.x2, spike.x3);
-      const maxX = Math.max(spike.x1, spike.x2, spike.x3);
-      const minY = Math.min(spike.y1, spike.y2, spike.y3);
-      const maxY = Math.max(spike.y1, spike.y2, spike.y3);
-
-      return px < maxX && px + pw > minX && py < maxY && py + ph > minY;
-    }
-
-    function createJumpParticles() {
-      const skin = SKINS[currentSkin];
-      const particleColor = skin.color === 'rainbow' ? '#0ff' : skin.color;
-      
-      for (let i = 0; i < 8; i++) {
-        particles.push({
-          x: player.x + player.w / 2,
-          y: player.y + player.h,
-          vx: (Math.random() - 0.5) * 4,
-          vy: Math.random() * 2,
-          life: 1,
-          decay: 0.02,
-          color: particleColor
-        });
-      }
-      playSound('jump');
-    }
-
-    function createDeathParticles() {
-      const skin = SKINS[currentSkin];
-      const particleColor = skin.color === 'rainbow' ? '#0ff' : skin.color;
-      
-      for (let i = 0; i < 30; i++) {
-        particles.push({
-          x: player.x + player.w / 2,
-          y: player.y + player.h / 2,
-          vx: (Math.random() - 0.5) * 8,
-          vy: (Math.random() - 0.5) * 8,
-          life: 1,
-          decay: 0.015,
-          color: particleColor
-        });
-      }
-      playSound('death');
-    }
-
-    function updateParticles() {
-      particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.2;
-        p.life -= p.decay;
-      });
-      particles = particles.filter(p => p.life > 0);
-    }
-
-    function update() {
-      if (!started || gameOver || levelFinished || showingStory) return;
-
-      // Mettre à jour le décor d'arrière-plan
-      updateBackgroundDecor();
-      
-      // Mettre à jour les power-ups
-      spawnPowerup();
-      updatePowerups();
-      
-      // Appliquer les effets des power-ups
-      const currentGravity = hasPowerup('slowmo') ? player.gravity * 0.5 : player.gravity;
-      const currentJumpPower = hasPowerup('superJump') ? player.jumpPower * 1.5 : player.jumpPower;
-
-      player.vy += currentGravity;
-      player.y += player.vy;
-
-      // Trail effect
-      player.trail.push({ x: player.x, y: player.y, alpha: 0.5 });
-      if (player.trail.length > 10) player.trail.shift();
-      player.trail.forEach(t => t.alpha *= 0.9);
-
-      let onSomething = false;
-
-      if (player.y >= groundY - player.h) {
-        player.y = groundY - player.h;
-        player.vy = 0;
-        onSomething = true;
       }
 
-      const px = player.x;
-      const py = player.y;
-      const pw = player.w;
-      const ph = player.h;
-
-      platforms.forEach(plat => {
-        const prevBottom = py + ph - player.vy;
-        const currentBottom = py + ph;
-
-        if (px + pw > plat.x && px < plat.x + plat.w && prevBottom <= plat.y && currentBottom >= plat.y) {
-          player.y = plat.y - ph;
-          player.vy = 0;
-          onSomething = true;
-        }
-      });
-
-      if (onSomething) {
-        player.jumpsLeft = 2;
-      }
-
-      score += 1;
-
-      spikes.forEach(sp => {
-        sp.x1 -= gameSpeed;
-        sp.x2 -= gameSpeed;
-        sp.x3 -= gameSpeed;
-      });
-
-      platforms.forEach(plat => {
-        plat.x -= gameSpeed;
-      });
-
-      spikes = spikes.filter(sp => sp.x2 > -50);
-      platforms = platforms.filter(plat => plat.x + plat.w > -50);
-
-      // Collision avec spikes (sauf si shield ou ghost actif)
-      if (!hasPowerup('shield') && !hasPowerup('ghost')) {
-        for (let sp of spikes) {
-          if (triangleAABBIntersect(sp, px, py, pw, ph)) {
-            gameOver = true;
-            createDeathParticles();
-            if (score > bestScore) bestScore = score;
-            break;
-          }
-        }
-      }
-
-      if (!onSomething) {
-        player.angle += 0.25;
-      } else {
-        player.angle = 0;
-      }
-
-      if (spikes.length === 0 && platforms.length === 0 && !gameOver) {
-        gameSpeed = 0;
-        levelFinished = true;
-        if (score > bestScore) bestScore = score;
-      }
-
-      updateParticles();
-    }
-
-    function drawBackground() {
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, "rgba(0, 20, 40, 0.3)");
-      grad.addColorStop(0.5, "rgba(10, 0, 30, 0.2)");
-      grad.addColorStop(1, "rgba(0, 10, 20, 0.3)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
-
-      // Dessiner les éléments de décor
-      drawBackgroundDecor();
-
-      // Animated grid (plus subtil maintenant)
-      ctx.strokeStyle = "rgba(0, 255, 255, 0.04)";
-      ctx.lineWidth = 1;
-      const offset = (Date.now() / 50) % 40;
-      for (let x = -offset; x < W; x += 40) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, H);
-        ctx.stroke();
-      }
-    }
-
-    function drawGround() {
-      ctx.strokeStyle = "rgba(0, 255, 255, 0.6)";
-      ctx.lineWidth = 3;
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = "#0ff";
-      ctx.beginPath();
-      ctx.moveTo(0, groundY);
-      ctx.lineTo(W, groundY);
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-    }
-
-    function drawPlatforms() {
-      platforms.forEach(plat => {
-        ctx.save();
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = "#0f0";
-        
-        const grad = ctx.createLinearGradient(plat.x, plat.y, plat.x, plat.y + plat.h);
-        grad.addColorStop(0, "rgba(0, 255, 150, 0.9)");
-        grad.addColorStop(1, "rgba(0, 200, 100, 0.7)");
-        ctx.fillStyle = grad;
-        
-        ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
-        
-        // Border glow
-        ctx.strokeStyle = "rgba(0, 255, 200, 0.8)";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(plat.x, plat.y, plat.w, plat.h);
-        
-        ctx.restore();
-      });
-    }
-
-    function drawSpikes() {
-      spikes.forEach(ob => {
-        ctx.save();
-        ctx.shadowBlur = 25;
-        ctx.shadowColor = "#f0f";
-        
-        const grad = ctx.createLinearGradient(ob.x1, ob.y1, ob.x3, ob.y3);
-        grad.addColorStop(0, "rgba(255, 0, 100, 0.8)");
-        grad.addColorStop(1, "rgba(255, 0, 255, 0.9)");
-        ctx.fillStyle = grad;
-        
-        ctx.beginPath();
-        ctx.moveTo(ob.x1, ob.y1);
-        ctx.lineTo(ob.x2, ob.y2);
-        ctx.lineTo(ob.x3, ob.y3);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Border
-        ctx.strokeStyle = "rgba(255, 100, 200, 1)";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        
-        ctx.restore();
-      });
-    }
-
-    function drawParticles() {
-      particles.forEach(p => {
-        ctx.save();
-        ctx.globalAlpha = p.life;
-        const color = p.color || "#0ff";
-        ctx.fillStyle = color;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = color;
-        ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
-        ctx.restore();
-      });
-    }
-
-    function drawPlayer() {
-      const skin = SKINS[currentSkin];
-      let playerColor = skin.color;
-      let secondaryColor = skin.secondaryColor;
-      
-      // Effet rainbow
-      if (playerColor === 'rainbow') {
-        const hue = (Date.now() / 20) % 360;
-        playerColor = `hsl(${hue}, 100%, 50%)`;
-        secondaryColor = `hsl(${(hue + 60) % 360}, 100%, 50%)`;
-      }
-      
-      // Trail
-      player.trail.forEach(t => {
-        ctx.save();
-        ctx.globalAlpha = t.alpha * 0.3;
-        ctx.fillStyle = playerColor;
-        ctx.fillRect(t.x, t.y, player.w, player.h);
-        ctx.restore();
-      });
-
-      // Effet de power-up shield
-      if (hasPowerup('shield')) {
-        ctx.save();
-        ctx.strokeStyle = '#0f0';
+      function drawGround() {
+        ctx.strokeStyle = "rgba(0, 255, 255, 0.6)";
         ctx.lineWidth = 3;
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = '#0f0';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#0ff";
         ctx.beginPath();
-        ctx.arc(player.x + player.w/2, player.y + player.h/2, player.w, 0, Math.PI * 2);
+        ctx.moveTo(0, groundY);
+        ctx.lineTo(W, groundY);
         ctx.stroke();
-        ctx.restore();
+        ctx.shadowBlur = 0;
       }
-      
-      // Effet de power-up ghost
-      if (hasPowerup('ghost')) {
+
+      function drawPlatforms() {
+        platforms.forEach((plat) => {
+          ctx.save();
+          ctx.shadowBlur = 20;
+          ctx.shadowColor = "#0f0";
+
+          const grad = ctx.createLinearGradient(
+            plat.x,
+            plat.y,
+            plat.x,
+            plat.y + plat.h,
+          );
+          grad.addColorStop(0, "rgba(0, 255, 150, 0.9)");
+          grad.addColorStop(1, "rgba(0, 200, 100, 0.7)");
+          ctx.fillStyle = grad;
+
+          ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+
+          // Border glow
+          ctx.strokeStyle = "rgba(0, 255, 200, 0.8)";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(plat.x, plat.y, plat.w, plat.h);
+
+          ctx.restore();
+        });
+      }
+
+      function drawSpikes() {
+        spikes.forEach((ob) => {
+          ctx.save();
+          ctx.shadowBlur = 25;
+          ctx.shadowColor = "#f0f";
+
+          const grad = ctx.createLinearGradient(ob.x1, ob.y1, ob.x3, ob.y3);
+          grad.addColorStop(0, "rgba(255, 0, 100, 0.8)");
+          grad.addColorStop(1, "rgba(255, 0, 255, 0.9)");
+          ctx.fillStyle = grad;
+
+          ctx.beginPath();
+          ctx.moveTo(ob.x1, ob.y1);
+          ctx.lineTo(ob.x2, ob.y2);
+          ctx.lineTo(ob.x3, ob.y3);
+          ctx.closePath();
+          ctx.fill();
+
+          // Border
+          ctx.strokeStyle = "rgba(255, 100, 200, 1)";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          ctx.restore();
+        });
+      }
+
+      function drawParticles() {
+        particles.forEach((p) => {
+          ctx.save();
+          ctx.globalAlpha = p.life;
+          const color = p.color || "#0ff";
+          ctx.fillStyle = color;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = color;
+          ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+          ctx.restore();
+        });
+      }
+
+      function drawPlayer() {
+        const skin = SKINS[currentSkin];
+        let playerColor = skin.color;
+        let secondaryColor = skin.secondaryColor;
+
+        // Effet rainbow
+        if (playerColor === "rainbow") {
+          const hue = (Date.now() / 20) % 360;
+          playerColor = `hsl(${hue}, 100%, 50%)`;
+          secondaryColor = `hsl(${(hue + 60) % 360}, 100%, 50%)`;
+        }
+
+        // Trail
+        player.trail.forEach((t) => {
+          ctx.save();
+          ctx.globalAlpha = t.alpha * 0.3;
+          ctx.fillStyle = playerColor;
+          ctx.fillRect(t.x, t.y, player.w, player.h);
+          ctx.restore();
+        });
+
+        // Effet de power-up shield
+        if (hasPowerup("shield")) {
+          ctx.save();
+          ctx.strokeStyle = "#0f0";
+          ctx.lineWidth = 3;
+          ctx.shadowBlur = 20;
+          ctx.shadowColor = "#0f0";
+          ctx.beginPath();
+          ctx.arc(
+            player.x + player.w / 2,
+            player.y + player.h / 2,
+            player.w,
+            0,
+            Math.PI * 2,
+          );
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Effet de power-up ghost
+        if (hasPowerup("ghost")) {
+          ctx.save();
+          ctx.globalAlpha = 0.5;
+        }
+
+        // Main player
         ctx.save();
-        ctx.globalAlpha = 0.5;
-      }
+        ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
+        ctx.rotate(player.angle);
+        ctx.translate(-player.w / 2, -player.h / 2);
 
-      // Main player
-      ctx.save();
-      ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
-      ctx.rotate(player.angle);
-      ctx.translate(-player.w / 2, -player.h / 2);
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = playerColor;
 
-      ctx.shadowBlur = 25;
-      ctx.shadowColor = playerColor;
-      
-      const grad = ctx.createLinearGradient(0, 0, player.w, player.h);
-      grad.addColorStop(0, playerColor + (playerColor.startsWith('#') ? 'f3800' : ''));
-      grad.addColorStop(1, secondaryColor + (secondaryColor.startsWith('#') ? 'b38' : ''));
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, player.w, player.h);
-
-      // Border
-      ctx.strokeStyle = playerColor;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(0, 0, player.w, player.h);
-
-      // Eyes
-      ctx.fillStyle = "#000";
-      ctx.shadowBlur = 0;
-      ctx.fillRect(8, 10, 6, 6);
-      ctx.fillRect(player.w - 14, 10, 6, 6);
-
-      // Eye glow (couleur du skin)
-      ctx.fillStyle = playerColor;
-      ctx.fillRect(10, 12, 2, 2);
-      ctx.fillRect(player.w - 12, 12, 2, 2);
-
-      ctx.restore();
-      
-      // Fermer le contexte ghost si actif
-      if (hasPowerup('ghost')) {
-        ctx.restore();
-      }
-    }
-
-    function drawUI() {
-      const level = LEVELS[currentLevel];
-
-      ctx.fillStyle = "#0ff";
-      ctx.font = "600 18px 'Rajdhani'";
-      ctx.textAlign = "left";
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = "#0ff";
-      
-      ctx.fillText("SCORE: " + score, 20, 30);
-      ctx.fillText("RECORD: " + bestScore, 20, 55);
-      ctx.fillText("SAUTS: " + player.jumpsLeft, 20, 80);
-
-      ctx.textAlign = "right";
-      ctx.fillStyle = "#f0f";
-      ctx.shadowColor = "#f0f";
-      ctx.font = "700 20px 'Orbitron'";
-      ctx.fillText(level.name, W - 20, 30);
-      ctx.font = "400 16px 'Rajdhani'";
-      ctx.fillText((currentLevel + 1) + " / " + LEVELS.length, W - 20, 55);
-
-      ctx.shadowBlur = 0;
-
-      if (!started) {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-        ctx.fillRect(0, 0, W, H);
-        
-        const grad = ctx.createLinearGradient(W/2 - 200, H/2, W/2 + 200, H/2);
-        grad.addColorStop(0, "#0ff");
-        grad.addColorStop(0.5, "#f0f");
-        grad.addColorStop(1, "#0ff");
+        const grad = ctx.createLinearGradient(0, 0, player.w, player.h);
+        grad.addColorStop(
+          0,
+          playerColor + (playerColor.startsWith("#") ? "f3800" : ""),
+        );
+        grad.addColorStop(
+          1,
+          secondaryColor + (secondaryColor.startsWith("#") ? "b38" : ""),
+        );
         ctx.fillStyle = grad;
-        
-        ctx.font = "700 28px 'Orbitron'";
-        ctx.textAlign = "center";
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = "#0ff";
-        ctx.fillText("CLIQUEZ POUR COMMENCER", W / 2, H / 2);
-      } else if (gameOver) {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
-        ctx.fillRect(0, 0, W, H);
-        
-        ctx.fillStyle = "#f0f";
-        ctx.font = "900 36px 'Orbitron'";
-        ctx.textAlign = "center";
-        ctx.shadowBlur = 30;
-        ctx.shadowColor = "#f0f";
-        ctx.fillText("DÉSINTÉGRATION", W / 2, H / 2 - 40);
-        
-        ctx.fillStyle = "#0ff";
-        ctx.font = "400 20px 'Rajdhani'";
-        ctx.shadowColor = "#0ff";
-        ctx.fillText("Score: " + score + " | Record: " + bestScore, W / 2, H / 2 + 5);
-        
-        ctx.font = "600 18px 'Rajdhani'";
-        ctx.fillText("Clic = Réessayer ce niveau", W / 2, H / 2 + 40);
-        
-        ctx.font = "400 14px 'Rajdhani'";
-        ctx.fillStyle = "#aaa";
-        ctx.fillText("(Appuyez sur ÉCHAP pour retourner au menu)", W / 2, H / 2 + 65);
-      } else if (levelFinished) {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
-        ctx.fillRect(0, 0, W, H);
-        
-        ctx.fillStyle = "#0f0";
-        ctx.font = "900 32px 'Orbitron'";
-        ctx.textAlign = "center";
-        ctx.shadowBlur = 30;
-        ctx.shadowColor = "#0f0";
-        ctx.fillText("SANCTUAIRE PURIFIÉ", W / 2, H / 2 - 20);
-        
-        ctx.fillStyle = "#0ff";
-        ctx.font = "600 18px 'Rajdhani'";
-        ctx.shadowColor = "#0ff";
-        if (currentLevel < LEVELS.length - 1) {
-          ctx.fillText("Cliquez pour découvrir la suite...", W / 2, H / 2 + 20);
-        } else {
-          ctx.fillText("Cliquez pour voir l'épilogue...", W / 2, H / 2 + 20);
+        ctx.fillRect(0, 0, player.w, player.h);
+
+        // Border
+        ctx.strokeStyle = playerColor;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, 0, player.w, player.h);
+
+        // Eyes
+        ctx.fillStyle = "#000";
+        ctx.shadowBlur = 0;
+        ctx.fillRect(8, 10, 6, 6);
+        ctx.fillRect(player.w - 14, 10, 6, 6);
+
+        // Eye glow (couleur du skin)
+        ctx.fillStyle = playerColor;
+        ctx.fillRect(10, 12, 2, 2);
+        ctx.fillRect(player.w - 12, 12, 2, 2);
+
+        ctx.restore();
+
+        // Fermer le contexte ghost si actif
+        if (hasPowerup("ghost")) {
+          ctx.restore();
         }
       }
-    }
 
-    function draw() {
-      ctx.clearRect(0, 0, W, H);
-      drawBackground();
-      drawGround();
-      drawPowerups(); // Dessiner les power-ups
-      drawPlatforms();
-      drawSpikes();
-      drawParticles();
-      drawPlayer();
-      drawUI();
-    }
+      function drawUI() {
+        const level = LEVELS[currentLevel];
 
-    function loop() {
-      update();
-      draw();
-      requestAnimationFrame(loop);
-    }
+        ctx.fillStyle = "#0ff";
+        ctx.font = "600 18px 'Rajdhani'";
+        ctx.textAlign = "left";
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#0ff";
 
-    // Initialisation de tous les systèmes
-    initBackgroundDecor();
-    initSkinSelector();
-    initAudio();
-    
-    // Afficher le sélecteur de skins pendant le jeu
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 's' || e.key === 'S') {
-        const skinSelector = document.getElementById('skinSelector');
-        skinSelector.style.display = skinSelector.style.display === 'none' ? 'block' : 'none';
+        ctx.fillText("SCORE: " + score, 20, 30);
+        ctx.fillText("RECORD: " + bestScore, 20, 55);
+        ctx.fillText("SAUTS: " + player.jumpsLeft, 20, 80);
+
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#f0f";
+        ctx.shadowColor = "#f0f";
+        ctx.font = "700 20px 'Orbitron'";
+        ctx.fillText(level.name, W - 20, 30);
+        ctx.font = "400 16px 'Rajdhani'";
+        ctx.fillText(currentLevel + 1 + " / " + LEVELS.length, W - 20, 55);
+
+        ctx.shadowBlur = 0;
+
+        if (!started) {
+          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+          ctx.fillRect(0, 0, W, H);
+
+          const grad = ctx.createLinearGradient(
+            W / 2 - 200,
+            H / 2,
+            W / 2 + 200,
+            H / 2,
+          );
+          grad.addColorStop(0, "#0ff");
+          grad.addColorStop(0.5, "#f0f");
+          grad.addColorStop(1, "#0ff");
+          ctx.fillStyle = grad;
+
+          ctx.font = "700 28px 'Orbitron'";
+          ctx.textAlign = "center";
+          ctx.shadowBlur = 20;
+          ctx.shadowColor = "#0ff";
+          ctx.fillText("CLIQUEZ POUR COMMENCER", W / 2, H / 2);
+        } else if (gameOver) {
+          ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+          ctx.fillRect(0, 0, W, H);
+
+          ctx.fillStyle = "#f0f";
+          ctx.font = "900 36px 'Orbitron'";
+          ctx.textAlign = "center";
+          ctx.shadowBlur = 30;
+          ctx.shadowColor = "#f0f";
+          ctx.fillText("DÉSINTÉGRATION", W / 2, H / 2 - 40);
+
+          ctx.fillStyle = "#0ff";
+          ctx.font = "400 20px 'Rajdhani'";
+          ctx.shadowColor = "#0ff";
+          ctx.fillText(
+            "Score: " + score + " | Record: " + bestScore,
+            W / 2,
+            H / 2 + 5,
+          );
+
+          ctx.font = "600 18px 'Rajdhani'";
+          ctx.fillText("Clic = Réessayer ce niveau", W / 2, H / 2 + 40);
+
+          ctx.font = "400 14px 'Rajdhani'";
+          ctx.fillStyle = "#aaa";
+          ctx.fillText(
+            "(Appuyez sur ÉCHAP pour retourner au menu)",
+            W / 2,
+            H / 2 + 65,
+          );
+        } else if (levelFinished) {
+          ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+          ctx.fillRect(0, 0, W, H);
+
+          ctx.fillStyle = "#0f0";
+          ctx.font = "900 32px 'Orbitron'";
+          ctx.textAlign = "center";
+          ctx.shadowBlur = 30;
+          ctx.shadowColor = "#0f0";
+          ctx.fillText("SANCTUAIRE PURIFIÉ", W / 2, H / 2 - 20);
+
+          ctx.fillStyle = "#0ff";
+          ctx.font = "600 18px 'Rajdhani'";
+          ctx.shadowColor = "#0ff";
+          if (currentLevel < LEVELS.length - 1) {
+            ctx.fillText(
+              "Cliquez pour découvrir la suite...",
+              W / 2,
+              H / 2 + 20,
+            );
+          } else {
+            ctx.fillText("Cliquez pour voir l'épilogue...", W / 2, H / 2 + 20);
+          }
+        }
       }
-    });
 
-    resetGame(true);
-    requestAnimationFrame(loop);
-  </script>
-</body>
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        drawBackground();
+        drawGround();
+        drawPowerups(); // Dessiner les power-ups
+        drawPlatforms();
+        drawSpikes();
+        drawParticles();
+        drawPlayer();
+        drawUI();
+      }
+
+      function loop() {
+        update();
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      // Initialisation de tous les systèmes
+      initBackgroundDecor();
+      initSkinSelector();
+      initAudio();
+
+      // Afficher le sélecteur de skins pendant le jeu
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "s" || e.key === "S") {
+          const skinSelector = document.getElementById("skinSelector");
+          skinSelector.style.display =
+            skinSelector.style.display === "none" ? "block" : "none";
+        }
+      });
+
+      resetGame(true);
+      requestAnimationFrame(loop);
+    </script>
+  </body>
 </html>
