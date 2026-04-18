@@ -237,24 +237,26 @@
         top: 80px;
         left: 20px;
         display: flex;
-        flex-direction: column;
+        flex-direction: row; /* Horizontal */
         gap: 8px;
         pointer-events: auto;
         z-index: 100;
+        align-items: center;
       }
 
       #sidebarContent {
         display: flex;
-        flex-direction: column;
+        flex-direction: row; /* Horizontal */
         gap: 8px;
-        max-height: 0;
+        max-width: 0; /* Animation sur la largeur */
         overflow: hidden;
-        transition: max-height 0.4s ease-out, opacity 0.3s;
+        transition: max-width 0.4s ease-out, opacity 0.3s;
         opacity: 0;
+        white-space: nowrap;
       }
 
       #sidebarContent.open {
-        max-height: 500px;
+        max-width: 500px; /* Largeur suffisante pour tous les boutons */
         opacity: 1;
       }
 
@@ -433,6 +435,7 @@
           <!-- Les 20 avatars seront générés ici -->
         </div>
         <input type="text" id="pseudoInput" class="pseudo-input" placeholder="Entrez votre pseudo" maxlength="15" />
+        <div id="pseudoError" style="color: #ff4d4d; font-size: 11px; margin-top: -8px; margin-bottom: 10px; height: 14px; font-weight: bold;"></div>
         
         <div class="difficulty-selector">
           <button class="diff-btn" data-diff="0">Recrue</button>
@@ -878,7 +881,31 @@
         osc.stop(audioCtx.currentTime + duration);
       }
 
-      btnStart.onclick = () => {
+      btnStart.onclick = async () => {
+        const chosenPseudo = pseudoInput.value.trim() || "Joueur";
+        const pseudoError = document.getElementById("pseudoError");
+        pseudoError.textContent = "";
+
+        // -- VÉRIFICATION DOUBLON SUPABASE --
+        if (supabase && chosenPseudo !== localStorage.getItem("pingpong_pseudo")) {
+          btnStart.disabled = true;
+          btnStart.textContent = "Vérification...";
+          
+          const { data, error } = await supabase
+            .from("championnat_pingpong")
+            .select("pseudo")
+            .eq("pseudo", chosenPseudo)
+            .limit(1);
+
+          btnStart.disabled = false;
+          btnStart.textContent = "JOUER";
+
+          if (data && data.length > 0) {
+            pseudoError.textContent = "❌ Ce pseudo est déjà réservé !";
+            return; // Bloquer le démarrage
+          }
+        }
+
         // Tenter de passer en plein écran et verrouiller le paysage sur mobile
         if (window.innerWidth < 1000) {
           if (document.documentElement.requestFullscreen) {
@@ -889,6 +916,7 @@
           }
         }
         
+        currentPseudo = chosenPseudo;
         localStorage.setItem("pingpong_pseudo", currentPseudo);
         profileSetup.style.display = "none";
         overlay.classList.add("hidden");
