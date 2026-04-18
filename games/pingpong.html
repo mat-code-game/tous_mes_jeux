@@ -232,11 +232,30 @@
         box-shadow: 0 4px 0 #111;
       }
 
-      .bottom-bar {
+      .controls-sidebar {
+        position: absolute;
+        top: 80px; /* En dessous du header */
+        left: 20px;
         display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
+        flex-direction: column;
+        gap: 12px;
         pointer-events: auto;
+        z-index: 100;
+      }
+
+      .controls-sidebar .btn {
+        width: 50px;
+        height: 50px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin: 0;
+      }
+
+      .hidden-during-game {
+        display: none !important;
       }
 
       .touch-zone {
@@ -359,18 +378,14 @@
         <div class="score-panel" id="score">0 — 0</div>
       </header>
 
-      <div class="bottom-bar">
-        <div>
-          <button class="btn btn-camera" id="btnCam">🎥 Caméra (C)</button>
-          <button class="btn" id="btnToggleLeaderboard" style="background: #333; font-size: 14px;">🏆 ON/OFF</button>
-          <button class="btn" id="btnMute" style="background: #222; font-size: 14px;">🔊</button>
-        </div>
-        <div>
-          <button class="btn" id="btnPause">Pause</button>
-          <button class="btn" id="btnShare" style="background: #25d366; font-size: 14px;">📤 Partager</button>
-          <button class="btn" id="btnRestart">Restart</button>
-          <button class="btn" id="btnFullscreen" style="padding: 12px 18px; font-size: 14px; margin: 0;">⛶</button>
-        </div>
+      <div class="controls-sidebar">
+        <button class="btn btn-camera" id="btnCam" title="Caméra (C)">🎥</button>
+        <button class="btn" id="btnToggleLeaderboard" title="Division (L)" style="background: #333;">🏆</button>
+        <button class="btn" id="btnMute" title="Son (M)" style="background: #222;">🔊</button>
+        <button class="btn" id="btnPause" title="Pause (Espace)">⏸</button>
+        <button class="btn" id="btnFullscreen" title="Plein Écran (F)" style="background: #444;">⛶</button>
+        <button class="btn" id="btnShare" title="Partager" style="background: #25d366;">📤</button>
+        <button class="btn" id="btnRestart" title="Restart" style="background: #ff00ea;">🔄</button>
       </div>
     </div>
 
@@ -704,16 +719,32 @@
       // --- CONTROLS ---
       const keys = {};
       window.addEventListener("keydown", (e) => {
-        if (document.activeElement.tagName === "INPUT") return; // Désactiver les raccourcis si on tape un pseudo
-        keys[e.key.toLowerCase()] = true;
-        if (e.code === "Space") togglePause();
-        if (e.key.toLowerCase() === "c") cycleCamera();
-        if (e.key.toLowerCase() === "r") restart();
+        if (document.activeElement.tagName === "INPUT") return;
+        const key = e.key.toLowerCase();
+        
+        if (state.camIndex === 1) {
+            // Vue Immersive: Inversion et ajout Gauche/Droite
+            if (key === "arrowup" || key === "z" || key === "arrowleft") keys["arrowup"] = true;
+            if (key === "arrowdown" || key === "s" || key === "arrowright") keys["arrowdown"] = true;
+        } else {
+            // Vue Normale
+            keys[key] = true;
+        }
+        
+        if (key === " " || key === "escape") togglePause();
+        if (key === "c") cycleCamera();
+        if (key === "r") restart();
       });
-      window.addEventListener(
-        "keyup",
-        (e) => (keys[e.key.toLowerCase()] = false),
-      );
+
+      window.addEventListener("keyup", (e) => {
+        const key = e.key.toLowerCase();
+        if (state.camIndex === 1) {
+            if (key === "arrowup" || key === "z" || key === "arrowleft") keys["arrowup"] = false;
+            if (key === "arrowdown" || key === "s" || key === "arrowright") keys["arrowdown"] = false;
+        } else {
+            keys[key] = false;
+        }
+      });
 
       const touchZone = document.getElementById("touchZone");
       touchZone.addEventListener("touchstart", handleTouch, { passive: false });
@@ -721,23 +752,25 @@
       touchZone.addEventListener("touchend", () => (state.touchActive = false));
 
       function handleTouch(e) {
-        e.preventDefault();
+        if (!state.running || state.gameOver) return;
+        const rect = touchZone.getBoundingClientRect();
         const touch = e.touches[0];
-        state.touchActive = true;
-        // Map vertical screen position to table depth
-        const z =
-          ((touch.clientY / window.innerHeight) * 2 - 1) * (TABLE_DEPTH / 2);
-        state.paddleL.targetZ = z;
-      }
-
-      // Mouse support for desktop
-      touchZone.addEventListener("mousemove", (e) => {
-        if (e.buttons > 0 || !state.touchActive) {
-          const z =
-            ((e.clientY / window.innerHeight) * 2 - 1) * (TABLE_DEPTH / 2);
-          state.paddleL.targetZ = z;
+        
+        let val;
+        if (state.camIndex === 1) {
+            // Vue Immersive: Utiliser X (horizontal)
+            val = (touch.clientX - rect.left) / rect.width;
+        } else {
+            // Vue Normale: Utiliser Y (vertical)
+            val = (touch.clientY - rect.top) / rect.height;
         }
-      });
+        
+        state.paddleL.z = (val - 0.5) * TABLE_DEPTH;
+        state.paddleL.z = Math.max(
+          -TABLE_DEPTH / 2 + PADDLE_DEPTH / 2,
+          Math.min(TABLE_DEPTH / 2 - PADDLE_DEPTH / 2, state.paddleL.z),
+        );
+      }
 
       // --- UI ACTIONS ---
       const scoreEl = document.getElementById("score");
@@ -884,26 +917,25 @@
 
       function togglePause() {
         state.running = !state.running;
-        btnPause.textContent = state.running ? "Pause" : "Reprendre";
-        if (!state.running) {
-          profileSetup.style.display = "none";
-          overlay.classList.remove("hidden");
-          msgEl.textContent = "PAUSE";
-        } else {
-          overlay.classList.add("hidden");
-        }
+        btnPause.innerHTML = state.running ? "⏸" : "▶";
+        msgEl.textContent = state.running ? "" : "PAUSE";
+        overlay.classList.toggle("hidden", state.running);
       }
 
       function restart() {
+        state.gameOver = false;
         state.scoreL = 0;
         state.scoreR = 0;
         updateScore();
         resetBall(1);
-        state.gameOver = false;
-        state.running = true;
-        profileSetup.style.display = "none";
         overlay.classList.add("hidden");
+        state.running = true;
+        updateUIState();
+        profileSetup.style.display = "none";
         msgEl.textContent = "C'EST PARTI !";
+        
+        state.camIndex = 0;
+        activeCamera = cameras[state.camIndex];
       }
 
       function cycleCamera() {
@@ -911,8 +943,19 @@
         activeCamera = cameras[state.camIndex];
       }
 
+      function updateUIState() {
+        const pauseBtn = document.getElementById("btnPause");
+        // Le bouton Pause ne s'affiche qu'en cours de jeu (pas au Game Over)
+        if (state.gameOver) {
+            pauseBtn.classList.add("hidden-during-game");
+        } else {
+            pauseBtn.classList.remove("hidden-during-game");
+        }
+      }
+
       function updateScore() {
         scoreEl.textContent = `${state.scoreL} — ${state.scoreR}`;
+        updateUIState();
       }
 
       function resetBall(dir) {
