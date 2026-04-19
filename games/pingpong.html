@@ -84,7 +84,7 @@
       }
 
       .diff-btn {
-        background: rgba(255,255,255,0.1);
+        background: rgba(255, 255, 255, 0.1);
         border: 1px solid var(--fg);
         color: white;
         padding: 5px 10px;
@@ -106,8 +106,9 @@
         left: 50%;
         transform: translate(-50%, -50%);
         text-align: center;
-        background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.9)), 
-                    url('images/pingpong_serious.png');
+        background:
+          linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.9)),
+          url("images/pingpong_serious.png");
         background-size: cover;
         background-position: center;
         padding: 30px;
@@ -157,7 +158,7 @@
         padding: 10px;
         border-radius: 8px;
         border: 1px solid var(--accent);
-        background: rgba(0,0,0,0.5);
+        background: rgba(0, 0, 0, 0.5);
         color: white;
         font-size: 16px;
         text-align: center;
@@ -200,9 +201,9 @@
         max-height: 150px;
         overflow-y: auto;
         padding: 5px;
-        border: 1px solid rgba(255,255,255,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 8px;
-        background: rgba(0,0,0,0.3);
+        background: rgba(0, 0, 0, 0.3);
       }
 
       .avatar-option {
@@ -250,7 +251,9 @@
         gap: 8px;
         max-width: 0; /* Animation sur la largeur */
         overflow: hidden;
-        transition: max-width 0.4s ease-out, opacity 0.3s;
+        transition:
+          max-width 0.4s ease-out,
+          opacity 0.3s;
         opacity: 0;
         white-space: nowrap;
       }
@@ -272,12 +275,35 @@
       }
 
       @media (max-width: 768px) {
+        .controls-sidebar {
+          top: 15px; /* On remonte un peu pour laisser de la place */
+          left: 10px;
+          z-index: 1000; /* Priorité maximale */
+        }
         .controls-sidebar .btn {
           width: 42px;
           height: 42px;
           font-size: 18px;
         }
-        .controls-sidebar { top: 70px; left: 10px; }
+
+        .controls-overlay {
+          width: 90%;
+          min-width: unset;
+          padding: 15px;
+          max-height: 90vh; /* Pour ne pas dépasser l'écran */
+          overflow-y: auto; /* Défilement si besoin */
+          top: 55%; /* On descend un peu le centre pour éviter le header */
+        }
+        
+        .avatar-grid {
+          grid-template-columns: repeat(4, 1fr); /* Plus compact sur mobile */
+          max-height: 120px;
+        }
+
+        .difficulty-selector {
+          flex-wrap: wrap;
+          justify-content: center;
+        }
       }
 
       .hidden-during-game {
@@ -349,7 +375,9 @@
           right: 5px;
           padding: 8px;
         }
-        #side-leaderboard h3 { font-size: 12px; }
+        #side-leaderboard h3 {
+          font-size: 12px;
+        }
       }
 
       /* Overlay Rotation Mobile */
@@ -382,9 +410,15 @@
       }
 
       @keyframes rotate {
-        0% { transform: rotate(0deg); }
-        50% { transform: rotate(90deg); }
-        100% { transform: rotate(0deg); }
+        0% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(90deg);
+        }
+        100% {
+          transform: rotate(0deg);
+        }
       }
     </style>
   </head>
@@ -398,46 +432,112 @@
 
     <div id="ui-container">
       <header>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <h1>🏓 3D Pong Smash</h1>
+        <div style="display: flex; align-items: center; gap: 15px">
+          <h1>🏓 3D Pong Smash</h1>
         </div>
         <div class="score-panel" id="score">0 — 0</div>
       </header>
 
       <div class="controls-sidebar">
         <!-- Bouton Menu (Burger) -->
-        <button class="btn" id="btnMenu" style="background: var(--accent); color: black;" title="Menu">☰</button>
-        
+        <button
+          class="btn"
+          id="btnMenu"
+          style="background: var(--accent); color: black"
+          title="Menu"
+        >
+          ☰
+        </button>
+
         <!-- Contenu Rétractable -->
         <div id="sidebarContent">
-          <button class="btn btn-camera" id="btnCam" title="Caméra (C)">🎥</button>
-          <button class="btn" id="btnToggleLeaderboard" title="Division (L)" style="background: #333;">🏆</button>
-          <button class="btn" id="btnMute" title="Son (M)" style="background: #222;">🔊</button>
+          <button class="btn btn-camera" id="btnCam" title="Caméra (C)">
+            🎥
+          </button>
+          <button
+            class="btn"
+            id="btnToggleLeaderboard"
+            title="Division (L)"
+            style="background: #333"
+          >
+            🏆
+          </button>
+          <button
+            class="btn"
+            id="btnMute"
+            title="Son (M)"
+            style="background: #222"
+          >
+            🔊
+          </button>
           <button class="btn" id="btnPause" title="Pause (Espace)">⏸</button>
-          <button class="btn" id="btnFullscreen" title="Plein Écran (F)" style="background: #444;">⛶</button>
-          <button class="btn" id="btnShare" title="Partager" style="background: #25d366;">📤</button>
-          <button class="btn" id="btnRestart" title="Restart" style="background: #ff00ea;">🔄</button>
+          <button
+            class="btn"
+            id="btnFullscreen"
+            title="Plein Écran (F)"
+            style="background: #444"
+          >
+            ⛶
+          </button>
+          <button
+            class="btn"
+            id="btnShare"
+            title="Partager"
+            style="background: #25d366"
+          >
+            📤
+          </button>
+          <button
+            class="btn"
+            id="btnRestart"
+            title="Restart"
+            style="background: #ff00ea"
+          >
+            🔄
+          </button>
         </div>
       </div>
     </div>
 
     <div id="side-leaderboard">
       <h3 id="leaderboardTitle">🏆 TOP JOUEURS</h3>
-      <div id="leaderboardContent">
-        Chargement...
-      </div>
+      <div id="leaderboardContent">Chargement...</div>
     </div>
 
-      <div class="controls-overlay" id="overlay">
+    <div class="controls-overlay" id="overlay">
       <div id="profileSetup" class="profile-setup">
-        <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--fg);">Choisissez votre Avatar</h3>
+        <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--fg)">
+          Choisissez votre Avatar
+        </h3>
         <div id="avatarGallery" class="avatar-grid">
           <!-- Les 20 avatars seront générés ici -->
         </div>
-        <input type="text" id="pseudoInput" class="pseudo-input" placeholder="Entrez votre pseudo" maxlength="15" />
-        <input type="password" id="passwordInput" class="pseudo-input" style="margin-top: 10px;" placeholder="Mot de passe" maxlength="20" />
-        <div id="pseudoError" style="color: #ff4d4d; font-size: 11px; margin-top: 5px; height: 14px; font-weight: bold;"></div>
-        
+        <input
+          type="text"
+          id="pseudoInput"
+          class="pseudo-input"
+          placeholder="Entrez votre pseudo"
+          maxlength="15"
+        />
+        <input
+          type="password"
+          id="passwordInput"
+          class="pseudo-input"
+          style="margin-top: 10px"
+          placeholder="Mot de passe"
+          maxlength="20"
+        />
+        <div
+          id="pseudoError"
+          style="
+            color: #ff4d4d;
+            font-size: 11px;
+            margin-top: 5px;
+            height: 14px;
+            font-weight: bold;
+          "
+        ></div>
+
         <div class="difficulty-selector">
           <button class="diff-btn" data-diff="0">Recrue</button>
           <button class="diff-btn active" data-diff="1">Pro</button>
@@ -467,7 +567,10 @@
 
     <!-- AUDIO -->
     <audio id="bgMusic" loop preload="auto">
-      <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+      <source
+        src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+        type="audio/mpeg"
+      />
     </audio>
 
     <script type="module">
@@ -477,15 +580,29 @@
       // --- SUPABASE CONFIGURATION ---
       // ⚠️ À REMPLACER PAR TES IDENTIFIANTS SUPABASE ⚠️
       const SUPABASE_URL = "https://hedimvodzdzwnluekmtd.supabase.co";
-      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlZGltdm9kemR6d25sdWVrbXRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NjM3NTMsImV4cCI6MjA4NjMzOTc1M30.OJe37omxb53GnD0uohQ6tfxZPM48daH_sO1YR4SPHCw";
-      
+      const SUPABASE_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlZGltdm9kemR6d25sdWVrbXRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NjM3NTMsImV4cCI6MjA4NjMzOTc1M30.OJe37omxb53GnD0uohQ6tfxZPM48daH_sO1YR4SPHCw";
+
       let supabase = null;
       try {
         if (SUPABASE_URL && SUPABASE_URL !== "TON_URL_SUPABASE") {
           supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
         }
-      } catch(e) {
+      } catch (e) {
         console.warn("Supabase non initialisé.");
+      }
+
+      // --- UTILS ---
+      async function hashPassword(password, pseudo) {
+        if (!password) return "";
+        // Sel pour rendre le hachage unique à ce jeu et ce pseudo
+        const salt = "pingpong_smash_secure_v1_";
+        const msgUint8 = new TextEncoder().encode(
+          password + salt + pseudo.toLowerCase(),
+        );
+        const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
       }
 
       // --- CONSTANTS ---
@@ -496,9 +613,9 @@
       const PADDLE_HEIGHT = 1.2;
       const PADDLE_DEPTH = 2.5;
       const BALL_RADIUS = 0.3;
-    //   const WIN_SCORE = 1;
+      //   const WIN_SCORE = 1;
       const WIN_SCORE = 11;
-      
+
       // --- DIVISIONS CONFIG ---
       const DIVISIONS = [
         { name: "Cuir", min: -Infinity, max: 49, color: "#8B4513", icon: "🟫" },
@@ -506,11 +623,19 @@
         { name: "Fer", min: 150, max: 299, color: "#A9A9A9", icon: "⬜" },
         { name: "Or", min: 300, max: 599, color: "#FFD700", icon: "🟨" },
         { name: "Diamant", min: 600, max: 999, color: "#00BFFF", icon: "💎" },
-        { name: "Netherite", min: 1000, max: Infinity, color: "#4B0082", icon: "🟣" }
+        {
+          name: "Netherite",
+          min: 1000,
+          max: Infinity,
+          color: "#4B0082",
+          icon: "🟣",
+        },
       ];
 
       function getDivision(pts) {
-        return DIVISIONS.find(d => pts >= d.min && pts <= d.max) || DIVISIONS[0];
+        return (
+          DIVISIONS.find((d) => pts >= d.min && pts <= d.max) || DIVISIONS[0]
+        );
       }
 
       // --- GAME STATE ---
@@ -540,11 +665,36 @@
       scene.background = new THREE.Color(0x050505);
       scene.fog = new THREE.Fog(0x050505, 10, 50);
 
-      const renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.shadowMap.enabled = true;
-      document.body.appendChild(renderer.domElement);
+      // --- THREE.JS SETUP WITH ERROR HANDLING ---
+      let renderer;
+      try {
+        renderer = new THREE.WebGLRenderer({
+          antialias: false, // Plus compatible avec les vieux PC/Tablettes
+          powerPreference: "high-performance",
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+      } catch (e) {
+        console.error("WebGL Error:", e);
+        document.body.innerHTML = `
+            <div style="background:#000;color:#ff4d4d;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;font-family:sans-serif;">
+                <h1 style="font-size:50px;">🚫 Oups !</h1>
+                <p style="font-size:20px;max-width:600px;">
+                    Ton navigateur ou ton appareil ne semble pas supporter la 3D (WebGL). 
+                    <br><br>
+                    <b>Solutions possibles :</b><br>
+                    1. Vérifie que l'<b>accélération matérielle</b> est activée dans les paramètres de ton navigateur.<br>
+                    2. Assure-toi de ne pas avoir trop d'onglets de jeux ouverts.<br>
+                    3. Utilise un navigateur moderne comme Chrome, Edge ou Firefox.<br><br>
+                    <i>Détail technique : ${e.message}</i>
+                </p>
+                <button onclick="location.reload()" style="background:#ff4d4d;color:white;border:none;padding:15px 30px;border-radius:10px;font-size:18px;cursor:pointer;margin-top:20px;">Réessayer</button>
+            </div>
+        `;
+        throw new Error("WebGL failing.");
+      }
 
       // --- CAMERAS ---
       const cameras = [
@@ -598,7 +748,10 @@
       const particlesGeo = new THREE.BufferGeometry();
       const particlesCount = 50;
       const positions = new Float32Array(particlesCount * 3);
-      particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      particlesGeo.setAttribute(
+        "position",
+        new THREE.BufferAttribute(positions, 3),
+      );
       const particlesMat = new THREE.PointsMaterial({
         color: 0xff00ea,
         size: 0.1,
@@ -617,11 +770,11 @@
           positions[i * 3] = x;
           positions[i * 3 + 1] = BALL_RADIUS;
           positions[i * 3 + 2] = z;
-          
+
           particleVelocities.push({
             x: (Math.random() - 0.5) * 0.2,
-            y: (Math.random()) * 0.1,
-            z: (Math.random() - 0.5) * 0.2
+            y: Math.random() * 0.1,
+            z: (Math.random() - 0.5) * 0.2,
           });
         }
         particleSystem.geometry.attributes.position.needsUpdate = true;
@@ -649,7 +802,7 @@
         const mat = new THREE.MeshStandardMaterial({
           color: 0xff00ea,
           transparent: true,
-          opacity: (1 - (i / trailCount)) * 0.3,
+          opacity: (1 - i / trailCount) * 0.3,
           emissive: 0xff00ea,
           emissiveIntensity: 1,
         });
@@ -662,10 +815,14 @@
       function updateTrail() {
         ballHistory.unshift({ x: state.ball.x, z: state.ball.z });
         if (ballHistory.length > trailCount) ballHistory.pop();
-        
+
         for (let i = 0; i < trailMeshes.length; i++) {
           if (ballHistory[i]) {
-            trailMeshes[i].position.set(ballHistory[i].x, BALL_RADIUS, ballHistory[i].z);
+            trailMeshes[i].position.set(
+              ballHistory[i].x,
+              BALL_RADIUS,
+              ballHistory[i].z,
+            );
             trailMeshes[i].visible = state.running;
           } else {
             trailMeshes[i].visible = false;
@@ -755,16 +912,18 @@
       window.addEventListener("keydown", (e) => {
         if (document.activeElement.tagName === "INPUT") return;
         const key = e.key.toLowerCase();
-        
+
         if (state.camIndex === 1) {
-            // Vue Immersive: Inversion et ajout Gauche/Droite
-            if (key === "arrowup" || key === "z" || key === "arrowleft") keys["arrowup"] = true;
-            if (key === "arrowdown" || key === "s" || key === "arrowright") keys["arrowdown"] = true;
+          // Vue Immersive: Inversion et ajout Gauche/Droite
+          if (key === "arrowup" || key === "z" || key === "arrowleft")
+            keys["arrowup"] = true;
+          if (key === "arrowdown" || key === "s" || key === "arrowright")
+            keys["arrowdown"] = true;
         } else {
-            // Vue Normale
-            keys[key] = true;
+          // Vue Normale
+          keys[key] = true;
         }
-        
+
         if (key === " " || key === "escape") togglePause();
         if (key === "c") cycleCamera();
         if (key === "r") restart();
@@ -773,10 +932,12 @@
       window.addEventListener("keyup", (e) => {
         const key = e.key.toLowerCase();
         if (state.camIndex === 1) {
-            if (key === "arrowup" || key === "z" || key === "arrowleft") keys["arrowup"] = false;
-            if (key === "arrowdown" || key === "s" || key === "arrowright") keys["arrowdown"] = false;
+          if (key === "arrowup" || key === "z" || key === "arrowleft")
+            keys["arrowup"] = false;
+          if (key === "arrowdown" || key === "s" || key === "arrowright")
+            keys["arrowdown"] = false;
         } else {
-            keys[key] = false;
+          keys[key] = false;
         }
       });
 
@@ -789,16 +950,16 @@
         if (!state.running || state.gameOver) return;
         const rect = touchZone.getBoundingClientRect();
         const touch = e.touches[0];
-        
+
         let val;
         if (state.camIndex === 1) {
-            // Vue Immersive: Utiliser X (horizontal)
-            val = (touch.clientX - rect.left) / rect.width;
+          // Vue Immersive: Utiliser X (horizontal)
+          val = (touch.clientX - rect.left) / rect.width;
         } else {
-            // Vue Normale: Utiliser Y (vertical)
-            val = (touch.clientY - rect.top) / rect.height;
+          // Vue Normale: Utiliser Y (vertical)
+          val = (touch.clientY - rect.top) / rect.height;
         }
-        
+
         state.paddleL.z = (val - 0.5) * TABLE_DEPTH;
         state.paddleL.z = Math.max(
           -TABLE_DEPTH / 2 + PADDLE_DEPTH / 2,
@@ -820,17 +981,26 @@
       const btnMenu = document.getElementById("btnMenu");
       const sidebarContent = document.getElementById("sidebarContent");
       const bgMusic = document.getElementById("bgMusic");
-      
+
       const pseudoInput = document.getElementById("pseudoInput");
       const avatarGallery = document.getElementById("avatarGallery");
       const profileSetup = document.getElementById("profileSetup");
-      
+
       let currentPseudo = localStorage.getItem("pingpong_pseudo") || "Joueur";
-      let currentPassword = localStorage.getItem("pingpong_password") || "";
+      let currentPasswordHash =
+        localStorage.getItem("pingpong_password_hash") || "";
       let customAvatar = localStorage.getItem("pingpong_custom_avatar") || null;
-      
+
+      // Nettoyage de l'ancien mot de passe en clair s'il existe
+      if (localStorage.getItem("pingpong_password")) {
+        localStorage.removeItem("pingpong_password");
+      }
+
       pseudoInput.value = currentPseudo;
-      document.getElementById("passwordInput").value = currentPassword;
+      if (currentPasswordHash) {
+        document.getElementById("passwordInput").placeholder =
+          "•••••••• (Mémorisé)";
+      }
 
       // Générer les 20 avatars
       const AVATAR_COUNT = 20;
@@ -841,10 +1011,12 @@
         img.src = url;
         img.className = "avatar-option";
         if (customAvatar === url) img.classList.add("selected");
-        
+
         img.onclick = () => {
           // Désélectionner les autres
-          document.querySelectorAll(".avatar-option").forEach(opt => opt.classList.remove("selected"));
+          document
+            .querySelectorAll(".avatar-option")
+            .forEach((opt) => opt.classList.remove("selected"));
           // Sélectionner celui-ci
           img.classList.add("selected");
           customAvatar = url;
@@ -860,9 +1032,9 @@
 
       // Gestion Difficulté
       const diffBtns = document.querySelectorAll(".diff-btn");
-      diffBtns.forEach(btn => {
+      diffBtns.forEach((btn) => {
         btn.onclick = () => {
-          diffBtns.forEach(b => b.classList.remove("active"));
+          diffBtns.forEach((b) => b.classList.remove("active"));
           btn.classList.add("active");
           state.difficulty = parseInt(btn.dataset.diff);
         };
@@ -877,7 +1049,10 @@
         osc.type = type;
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        gain.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioCtx.currentTime + duration,
+        );
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start();
@@ -886,14 +1061,23 @@
 
       btnStart.onclick = async () => {
         const chosenPseudo = pseudoInput.value.trim() || "Joueur";
-        const chosenPassword = document.getElementById("passwordInput").value.trim();
+        const inputPassword = document
+          .getElementById("passwordInput")
+          .value.trim();
         const pseudoError = document.getElementById("pseudoError");
         pseudoError.textContent = "";
+
+        let finalHash = "";
+        if (inputPassword) {
+          finalHash = await hashPassword(inputPassword, chosenPseudo);
+        } else {
+          finalHash = currentPasswordHash;
+        }
 
         if (supabase) {
           btnStart.disabled = true;
           btnStart.textContent = "Vérification...";
-          
+
           // Chercher le dernier mot de passe enregistré pour ce pseudo
           const { data, error } = await supabase
             .from("championnat_pingpong")
@@ -907,17 +1091,36 @@
 
           if (data && data.length > 0) {
             const dbPassword = data[0].mot_de_passe;
-            // Si le pseudo existe mais que le mot de passe est différent
-            if (dbPassword && chosenPassword !== dbPassword) {
-              pseudoError.textContent = "❌ Mot de passe incorrect !";
-              return;
+
+            // Si le mot de passe stocké fait 64 caractères, c'est un hash
+            if (dbPassword && dbPassword.length === 64) {
+              if (finalHash !== dbPassword) {
+                pseudoError.textContent = "❌ Mot de passe incorrect !";
+                return;
+              }
+            } else if (dbPassword) {
+              // Migration : l'ancien mot de passe était en clair
+              if (inputPassword === dbPassword) {
+                console.log(
+                  "Migration du mot de passe vers le format haché...",
+                );
+                // Le hash sera utilisé pour la sauvegarde à la fin de la partie
+              } else {
+                pseudoError.textContent = "❌ Mot de passe incorrect !";
+                return;
+              }
             }
-          } else if (!chosenPassword) {
+          } else if (!finalHash) {
             // Nouveau pseudo mais pas de mot de passe fourni
             pseudoError.textContent = "⚠️ Veuillez choisir un mot de passe.";
             return;
           }
+        } else if (!finalHash) {
+          pseudoError.textContent = "⚠️ Veuillez choisir un mot de passe.";
+          return;
         }
+
+        // ... suite de la logique
 
         // Tenter de passer en plein écran et verrouiller le paysage sur mobile
         if (window.innerWidth < 1000) {
@@ -925,29 +1128,29 @@
             document.documentElement.requestFullscreen().catch(() => {});
           }
           if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {});
+            screen.orientation.lock("landscape").catch(() => {});
           }
         }
-        
+
         currentPseudo = chosenPseudo;
-        currentPassword = chosenPassword;
+        currentPasswordHash = finalHash;
         localStorage.setItem("pingpong_pseudo", currentPseudo);
-        localStorage.setItem("pingpong_password", currentPassword);
+        localStorage.setItem("pingpong_password_hash", currentPasswordHash);
         profileSetup.style.display = "none";
         overlay.classList.add("hidden");
         state.running = true;
-        
+
         // Fermer le menu au démarrage
         if (sidebarContent) {
-            sidebarContent.classList.remove("open");
-            btnMenu.textContent = "☰";
+          sidebarContent.classList.remove("open");
+          btnMenu.textContent = "☰";
         }
 
         // Démarrer la musique
         if (!state.mute) {
-            bgMusic.play().catch(e => console.warn("Auto-play bloqué:", e));
+          bgMusic.play().catch((e) => console.warn("Auto-play bloqué:", e));
         }
-        
+
         if (state.gameOver) restart();
       };
 
@@ -955,15 +1158,15 @@
       btnRestart.onclick = restart;
       btnCam.onclick = cycleCamera;
       btnFullscreen.onclick = () => {
-          if (!document.fullscreenElement) {
-              document.documentElement.requestFullscreen().catch(err => {
-                  alert(`Erreur plein écran: ${err.message}`);
-              });
-          } else {
-              if (document.exitFullscreen) {
-                  document.exitFullscreen();
-              }
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch((err) => {
+            alert(`Erreur plein écran: ${err.message}`);
+          });
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
           }
+        }
       };
 
       btnMute.onclick = () => {
@@ -975,7 +1178,9 @@
       btnShare.onclick = async () => {
         let pts = 0;
         // Tenter de récupérer les points depuis le leaderboard localement
-        const me = (window.lastSortedLeaderboard || []).find(p => p.pseudo === currentPseudo);
+        const me = (window.lastSortedLeaderboard || []).find(
+          (p) => p.pseudo === currentPseudo,
+        );
         if (me) pts = me.pts;
 
         const text = `J'ai fait ${pts} points au Ping Pong Smash ! Arriveras-tu à me battre ? 🏓🔥`;
@@ -984,11 +1189,13 @@
         if (navigator.share) {
           try {
             await navigator.share({
-              title: '3D Ping Pong Smash',
+              title: "3D Ping Pong Smash",
               text: text,
               url: url,
             });
-          } catch (err) { console.error(err); }
+          } catch (err) {
+            console.error(err);
+          }
         } else {
           navigator.clipboard.writeText(`${text} ${url}`).then(() => {
             alert("Score copié ! Prêt à être partagé.");
@@ -1014,7 +1221,7 @@
         updateUIState();
         profileSetup.style.display = "none";
         msgEl.textContent = "C'EST PARTI !";
-        
+
         state.camIndex = 0;
         activeCamera = cameras[state.camIndex];
       }
@@ -1028,9 +1235,9 @@
         const pauseBtn = document.getElementById("btnPause");
         // Le bouton Pause ne s'affiche qu'en cours de jeu (pas au Game Over)
         if (state.gameOver) {
-            pauseBtn.classList.add("hidden-during-game");
+          pauseBtn.classList.add("hidden-during-game");
         } else {
-            pauseBtn.classList.remove("hidden-during-game");
+          pauseBtn.classList.remove("hidden-during-game");
         }
       }
 
@@ -1068,10 +1275,11 @@
         const aiSpeed = diff.aiSpeed;
         const targetZ = state.ball.z;
         const error = (Math.random() - 0.5) * diff.aiReaction * TABLE_DEPTH;
-        
+
         if (targetZ < state.paddleR.z - 0.5 + error) state.paddleR.z -= aiSpeed;
-        else if (targetZ > state.paddleR.z + 0.5 + error) state.paddleR.z += aiSpeed;
-        
+        else if (targetZ > state.paddleR.z + 0.5 + error)
+          state.paddleR.z += aiSpeed;
+
         state.paddleR.z = Math.max(
           -TABLE_DEPTH / 2 + PADDLE_DEPTH / 2,
           Math.min(TABLE_DEPTH / 2 - PADDLE_DEPTH / 2, state.paddleR.z),
@@ -1149,30 +1357,38 @@
         if (state.scoreL >= WIN_SCORE || state.scoreR >= WIN_SCORE) {
           state.gameOver = true;
           state.running = false;
-          
+
           const isWin = state.scoreL >= WIN_SCORE;
           msgEl.textContent = isWin ? "VICTOIRE !" : "DÉFAITE...";
-          
+
           profileSetup.style.display = "flex";
           overlay.classList.remove("hidden");
-          
+
           // Sauvegarde dans Supabase
           if (supabase) {
-            const avatarUrl = customAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(currentPseudo)}`;
-            supabase.from("championnat_pingpong").insert([{
-              pseudo: currentPseudo,
-              mot_de_passe: currentPassword, // Sauvegarde du mot de passe avec le résultat
-              score_joueur: state.scoreL,
-              score_ia: state.scoreR,
-              resultat: isWin ? "victoire" : "defaite",
-              photo_profil: avatarUrl
-            }]).then(({ error }) => {
-              if (error) console.error("Erreur d'enregistrement Supabase :", error);
-              else {
+            const avatarUrl =
+              customAvatar ||
+              `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(currentPseudo)}`;
+            supabase
+              .from("championnat_pingpong")
+              .insert([
+                {
+                  pseudo: currentPseudo,
+                  mot_de_passe: currentPasswordHash, // Sauvegarde du hash
+                  score_joueur: state.scoreL,
+                  score_ia: state.scoreR,
+                  resultat: isWin ? "victoire" : "defaite",
+                  photo_profil: avatarUrl,
+                },
+              ])
+              .then(({ error }) => {
+                if (error)
+                  console.error("Erreur d'enregistrement Supabase :", error);
+                else {
                   console.log("Résultat du championnat enregistré !");
                   loadLeaderboard(); // Rafraîchir le classement après la partie
-              }
-            });
+                }
+              });
           }
         }
       }
@@ -1180,8 +1396,10 @@
       // --- LEADERBOARD LOGIC ---
       async function loadLeaderboard() {
         if (!supabase) return;
-        
-        const { data, error } = await supabase.from("championnat_pingpong").select("*");
+
+        const { data, error } = await supabase
+          .from("championnat_pingpong")
+          .select("*");
         if (error) {
           console.error("Erreur chargement classement:", error);
           return;
@@ -1189,9 +1407,14 @@
 
         // Grouper par pseudo
         const players = {};
-        data.forEach(match => {
+        data.forEach((match) => {
           if (!players[match.pseudo]) {
-            players[match.pseudo] = { pts: 0, avatar: match.photo_profil, wins: 0, losses: 0 };
+            players[match.pseudo] = {
+              pts: 0,
+              avatar: match.photo_profil,
+              wins: 0,
+              losses: 0,
+            };
           }
           if (match.resultat === "victoire") {
             players[match.pseudo].pts += 10;
@@ -1201,29 +1424,36 @@
             players[match.pseudo].losses++;
           }
           // Garder l'avatar le plus récent
-          if (match.photo_profil) players[match.pseudo].avatar = match.photo_profil;
+          if (match.photo_profil)
+            players[match.pseudo].avatar = match.photo_profil;
         });
 
         // Convertir en tableau et trier
-        const sorted = Object.entries(players).map(([pseudo, info]) => ({
-          pseudo, ...info
-        })).sort((a, b) => b.pts - a.pts);
+        const sorted = Object.entries(players)
+          .map(([pseudo, info]) => ({
+            pseudo,
+            ...info,
+          }))
+          .sort((a, b) => b.pts - a.pts);
 
         window.lastSortedLeaderboard = sorted; // Stocker pour le partage
 
         // Mettre à jour la division du joueur actuel dans le menu
-        const me = sorted.find(p => p.pseudo === currentPseudo);
+        const me = sorted.find((p) => p.pseudo === currentPseudo);
         let myDivName = "Cuir";
         if (me) {
-            const div = getDivision(me.pts);
-            myDivName = div.name;
-            msgEl.innerHTML = `${div.icon} ${div.name.toUpperCase()} <br> <span style="font-size: 14px; opacity: 0.8">${me.pts} pts (${me.wins}V / ${me.losses}D)</span>`;
+          const div = getDivision(me.pts);
+          myDivName = div.name;
+          msgEl.innerHTML = `${div.icon} ${div.name.toUpperCase()} <br> <span style="font-size: 14px; opacity: 0.8">${me.pts} pts (${me.wins}V / ${me.losses}D)</span>`;
         }
-        
+
         // Filtrer les joueurs pour ne garder que ceux de la même division
-        const sameDivPlayers = sorted.filter(p => getDivision(p.pts).name === myDivName);
-        
-        document.getElementById("leaderboardTitle").textContent = `🏆 Division ${myDivName}`;
+        const sameDivPlayers = sorted.filter(
+          (p) => getDivision(p.pts).name === myDivName,
+        );
+
+        document.getElementById("leaderboardTitle").textContent =
+          `🏆 Division ${myDivName}`;
         updateLeaderboardUI(sameDivPlayers);
       }
 
@@ -1234,33 +1464,39 @@
           return;
         }
 
-        container.innerHTML = players.map((p, i) => {
-          const div = getDivision(p.pts);
-          return `
-            <div style="display: flex; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); ${p.pseudo === currentPseudo ? 'background: rgba(0,242,255,0.1);' : ''}">
+        container.innerHTML = players
+          .map((p, i) => {
+            const div = getDivision(p.pts);
+            return `
+            <div style="display: flex; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); ${p.pseudo === currentPseudo ? "background: rgba(0,242,255,0.1);" : ""}">
               <span style="width: 18px; font-size: 10px; font-weight: bold; color: var(--accent);">${i + 1}</span>
-              <img src="${p.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + p.pseudo}" style="width: 20px; height: 20px; border-radius: 50%; margin: 0 6px; border: 1px solid ${div.color};" />
+              <img src="${p.avatar || "https://api.dicebear.com/7.x/bottts/svg?seed=" + p.pseudo}" style="width: 20px; height: 20px; border-radius: 50%; margin: 0 6px; border: 1px solid ${div.color};" />
               <div style="flex: 1; overflow: hidden;">
                 <div style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: white;">${p.pseudo}</div>
                 <div style="font-size: 9px; color: ${div.color};">${div.icon} ${p.pts} pts</div>
               </div>
             </div>
           `;
-        }).join("");
+          })
+          .join("");
       }
 
       // Supprimer les anciens boutons de leaderboard si nécessaire
 
-      const btnToggleLeaderboard = document.getElementById("btnToggleLeaderboard");
+      const btnToggleLeaderboard = document.getElementById(
+        "btnToggleLeaderboard",
+      );
       const sideLeaderboard = document.getElementById("side-leaderboard");
-      
+
       btnMenu.onclick = () => {
-          sidebarContent.classList.toggle("open");
-          btnMenu.textContent = sidebarContent.classList.contains("open") ? "✕" : "☰";
+        sidebarContent.classList.toggle("open");
+        btnMenu.textContent = sidebarContent.classList.contains("open")
+          ? "✕"
+          : "☰";
       };
 
       btnToggleLeaderboard.onclick = () => {
-          sideLeaderboard.classList.toggle("hidden-panel");
+        sideLeaderboard.classList.toggle("hidden-panel");
       };
 
       // --- RENDER LOOP ---

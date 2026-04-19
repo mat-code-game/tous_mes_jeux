@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Business Intelligence - Dashboard</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Design System BI Premium */
+        :root {
+            --bg: #020617;
+            --surface: rgba(15, 23, 42, 0.6);
+            --border: rgba(148, 163, 184, 0.1);
+            --accent-blue: #38bdf8;
+            --accent-pink: #f472b6;
+            --accent-green: #4ade80;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(244, 114, 182, 0.05) 0px, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .header-title h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.025em; }
+        .header-title p { color: var(--text-secondary); font-size: 0.9rem; }
+
+        .back-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.05); border-color: var(--accent-blue); }
+
+        /* KPI Row */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .kpi-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 16px;
+            backdrop-filter: blur(8px);
+        }
+        .kpi-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 5px; }
+        .kpi-value { font-size: 1.8rem; font-weight: 700; color: var(--accent-blue); }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 20px;
+        }
+
+        .chart-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 24px;
+            border-radius: 20px;
+            backdrop-filter: blur(12px);
+        }
+        .chart-box h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; color: var(--text-secondary); display: flex; align-items: center; gap: 10px; }
+        .chart-box h2::before { content: ''; width: 8px; height: 8px; background: var(--accent-blue); border-radius: 50%; }
+
+        .major { grid-row: span 2; }
+
+        canvas { width: 100% !important; min-height: 250px; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .major { grid-row: auto; }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div id="loader" class="loading-overlay">📊 Chargement des données...</div>
+
+    <div class="container">
+        <header>
+            <div class="header-title">
+                <h1>BI Intelligence Arcade</h1>
+                <p>Analyse consolidée (Ping Pong)</p>
+            </div>
+            <a href="index.html" class="back-btn">⬅ Menu</a>
+        </header>
+
+        <section class="kpi-row">
+            <div class="kpi-card"><div class="kpi-label">Volume Total</div><div class="kpi-value" id="totalMatches">-</div></div>
+            <div class="kpi-card"><div class="kpi-label">Joueurs</div><div class="kpi-value" id="totalUsers" style="color: var(--accent-pink)">-</div></div>
+            <div class="kpi-card"><div class="kpi-label">Taux d'engagement</div><div class="kpi-value" id="engagementRate" style="color: var(--accent-green)">-</div></div>
+        </section>
+
+        <main class="dashboard-grid">
+            <!-- Graphique 1 : Évolution Temporelle (Majeur) -->
+            <div class="chart-box major">
+                <h2 style="color: var(--accent-blue)">Évolution Journalière</h2>
+                <canvas id="dailyLineChart"></canvas>
+            </div>
+
+            <!-- Graphique 2 : Top Joueurs (Mineur) -->
+            <div class="chart-box">
+                <h2 style="color: var(--accent-pink)">Top Activité (Joueurs)</h2>
+                <canvas id="playersBarChart"></canvas>
+            </div>
+
+            <!-- Graphique 3 : Heures de pointe (Mineur) -->
+            <div class="chart-box">
+                <h2 style="color: var(--accent-green)">Pic d'Heure (0h - 23h)</h2>
+                <canvas id="hoursBarChart"></canvas>
+            </div>
+        </main>
+    </div>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://hedimvodzdzwnluekmtd.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlZGltdm9kemR6d25sdWVrbXRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NjM3NTMsImV4cCI6MjA4NjMzOTc1M30.OJe37omxb53GnD0uohQ6tfxZPM48daH_sO1YR4SPHCw";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function init() {
+            const { data, error } = await supabaseClient.from('championnat_pingpong').select('pseudo, created_at');
+            if (error) return console.error(error);
+            
+            document.getElementById('loader').style.opacity = '0';
+            setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+
+            process(data);
+        }
+
+        function process(data) {
+            const days = {};
+            const hours = Array(24).fill(0);
+            const players = {};
+
+            data.forEach(m => {
+                const dateObj = new Date(m.created_at);
+                
+                // Day processing
+                const day = dateObj.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+                days[day] = (days[day] || 0) + 1;
+
+                // Hour processing
+                const hour = dateObj.getHours();
+                hours[hour]++;
+
+                // Player processing
+                const p = m.pseudo || "Anonyme";
+                players[p] = (players[p] || 0) + 1;
+            });
+
+            // Update KPIs
+            document.getElementById('totalMatches').textContent = data.length;
+            const uniqueP = Object.keys(players).length;
+            document.getElementById('totalUsers').textContent = uniqueP;
+            document.getElementById('engagementRate').textContent = uniqueP > 0 ? (data.length / uniqueP).toFixed(1) + " matches/j" : "0";
+
+            // Data for Charts
+            renderDaily(days);
+            renderPlayers(players);
+            renderHours(hours);
+        }
+
+        function renderDaily(daysData) {
+            const sortedDays = Object.keys(daysData).slice(-15); // Les 15 derniers jours
+            new Chart(document.getElementById('dailyLineChart'), {
+                type: 'line',
+                data: {
+                    labels: sortedDays,
+                    datasets: [{
+                        label: 'Matchs',
+                        data: sortedDays.map(d => daysData[d]),
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#38bdf8',
+                        pointRadius: 4
+                    }]
+                },
+                options: { 
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        function renderPlayers(playersData) {
+            const sorted = Object.entries(playersData).sort((a,b) => b[1]-a[1]).slice(0, 5);
+            new Chart(document.getElementById('playersBarChart'), {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(p => p[0]),
+                    datasets: [{
+                        data: sorted.map(p => p[1]),
+                        backgroundColor: '#f472b6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        x: { display: false },
+                        y: { grid: { display: false }, ticks: { color: '#f8fafc' } }
+                    }
+                }
+            });
+        }
+
+        function renderHours(hoursData) {
+            new Chart(document.getElementById('hoursBarChart'), {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => i + 'h'),
+                    datasets: [{
+                        data: hoursData,
+                        backgroundColor: '#4ade80',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { display: false },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9 } } }
+                    }
+                }
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
