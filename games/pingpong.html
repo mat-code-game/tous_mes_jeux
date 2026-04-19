@@ -435,7 +435,8 @@
           <!-- Les 20 avatars seront générés ici -->
         </div>
         <input type="text" id="pseudoInput" class="pseudo-input" placeholder="Entrez votre pseudo" maxlength="15" />
-        <div id="pseudoError" style="color: #ff4d4d; font-size: 11px; margin-top: -8px; margin-bottom: 10px; height: 14px; font-weight: bold;"></div>
+        <input type="password" id="passwordInput" class="pseudo-input" style="margin-top: 10px;" placeholder="Mot de passe" maxlength="20" />
+        <div id="pseudoError" style="color: #ff4d4d; font-size: 11px; margin-top: 5px; height: 14px; font-weight: bold;"></div>
         
         <div class="difficulty-selector">
           <button class="diff-btn" data-diff="0">Recrue</button>
@@ -825,9 +826,11 @@
       const profileSetup = document.getElementById("profileSetup");
       
       let currentPseudo = localStorage.getItem("pingpong_pseudo") || "Joueur";
+      let currentPassword = localStorage.getItem("pingpong_password") || "";
       let customAvatar = localStorage.getItem("pingpong_custom_avatar") || null;
       
       pseudoInput.value = currentPseudo;
+      document.getElementById("passwordInput").value = currentPassword;
 
       // Générer les 20 avatars
       const AVATAR_COUNT = 20;
@@ -883,26 +886,36 @@
 
       btnStart.onclick = async () => {
         const chosenPseudo = pseudoInput.value.trim() || "Joueur";
+        const chosenPassword = document.getElementById("passwordInput").value.trim();
         const pseudoError = document.getElementById("pseudoError");
         pseudoError.textContent = "";
 
-        // -- VÉRIFICATION DOUBLON SUPABASE --
-        if (supabase && chosenPseudo !== localStorage.getItem("pingpong_pseudo")) {
+        if (supabase) {
           btnStart.disabled = true;
           btnStart.textContent = "Vérification...";
           
+          // Chercher le dernier mot de passe enregistré pour ce pseudo
           const { data, error } = await supabase
             .from("championnat_pingpong")
-            .select("pseudo")
+            .select("mot_de_passe")
             .eq("pseudo", chosenPseudo)
+            .order("created_at", { ascending: false })
             .limit(1);
 
           btnStart.disabled = false;
           btnStart.textContent = "JOUER";
 
           if (data && data.length > 0) {
-            pseudoError.textContent = "❌ Ce pseudo est déjà réservé !";
-            return; // Bloquer le démarrage
+            const dbPassword = data[0].mot_de_passe;
+            // Si le pseudo existe mais que le mot de passe est différent
+            if (dbPassword && chosenPassword !== dbPassword) {
+              pseudoError.textContent = "❌ Mot de passe incorrect !";
+              return;
+            }
+          } else if (!chosenPassword) {
+            // Nouveau pseudo mais pas de mot de passe fourni
+            pseudoError.textContent = "⚠️ Veuillez choisir un mot de passe.";
+            return;
           }
         }
 
@@ -917,7 +930,9 @@
         }
         
         currentPseudo = chosenPseudo;
+        currentPassword = chosenPassword;
         localStorage.setItem("pingpong_pseudo", currentPseudo);
+        localStorage.setItem("pingpong_password", currentPassword);
         profileSetup.style.display = "none";
         overlay.classList.add("hidden");
         state.running = true;
@@ -1146,6 +1161,7 @@
             const avatarUrl = customAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(currentPseudo)}`;
             supabase.from("championnat_pingpong").insert([{
               pseudo: currentPseudo,
+              mot_de_passe: currentPassword, // Sauvegarde du mot de passe avec le résultat
               score_joueur: state.scoreL,
               score_ia: state.scoreR,
               resultat: isWin ? "victoire" : "defaite",
