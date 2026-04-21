@@ -465,7 +465,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: 5;
+        z-index: 15;
         touch-action: none;
       }
 
@@ -783,10 +783,11 @@
       // --- UTILS ---
       async function hashPassword(password, pseudo) {
         if (!password) return "";
+        const p = pseudo || "";
         // Sel pour rendre le hachage unique à ce jeu et ce pseudo
         const salt = "pingpong_smash_secure_v1_";
         const msgUint8 = new TextEncoder().encode(
-          password + salt + pseudo.toLowerCase(),
+          password + salt + p.toLowerCase(),
         );
         const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -809,11 +810,11 @@
         { name: "Cuir", min: -Infinity, max: 49, color: "#8B4513", icon: "🟫" },
         { name: "Cuivre", min: 50, max: 149, color: "#CD7F32", icon: "🟧" },
         { name: "Fer", min: 150, max: 299, color: "#A9A9A9", icon: "⬜" },
-        { name: "Or", min: 300, max: 599, color: "#FFD700", icon: "🟨" },
-        { name: "Diamant", min: 600, max: 999, color: "#00BFFF", icon: "💎" },
+        { name: "Or", min: 300, max: 499, color: "#FFD700", icon: "🟨" },
+        { name: "Diamant", min: 500, max: 799, color: "#00BFFF", icon: "💎" },
         {
           name: "Netherite",
-          min: 1000,
+          min: 800,
           max: Infinity,
           color: "#4B0082",
           icon: "🟣",
@@ -1099,7 +1100,7 @@
       const keys = {};
       window.addEventListener("keydown", (e) => {
         if (document.activeElement.tagName === "INPUT") return;
-        const key = e.key.toLowerCase();
+        const key = e.key ? e.key.toLowerCase() : "";
 
         if (state.camIndex === 1) {
           // Vue Immersive: Inversion et ajout Gauche/Droite
@@ -1118,7 +1119,7 @@
       });
 
       window.addEventListener("keyup", (e) => {
-        const key = e.key.toLowerCase();
+        const key = e.key ? e.key.toLowerCase() : "";
         if (state.camIndex === 1) {
           if (key === "arrowup" || key === "z" || key === "arrowleft")
             keys["arrowup"] = false;
@@ -1136,6 +1137,9 @@
 
       function handleTouch(e) {
         if (!state.running || state.gameOver) return;
+        if (e.cancelable) e.preventDefault();
+        state.touchActive = true;
+
         const rect = touchZone.getBoundingClientRect();
         const touch = e.touches[0];
 
@@ -1148,10 +1152,11 @@
           val = (touch.clientY - rect.top) / rect.height;
         }
 
-        state.paddleL.z = (val - 0.5) * TABLE_DEPTH;
-        state.paddleL.z = Math.max(
+        // On met à jour targetZ pour que la boucle d'update applique le smoothing
+        state.paddleL.targetZ = (val - 0.5) * TABLE_DEPTH;
+        state.paddleL.targetZ = Math.max(
           -TABLE_DEPTH / 2 + PADDLE_DEPTH / 2,
-          Math.min(TABLE_DEPTH / 2 - PADDLE_DEPTH / 2, state.paddleL.z),
+          Math.min(TABLE_DEPTH / 2 - PADDLE_DEPTH / 2, state.paddleL.targetZ),
         );
       }
 
