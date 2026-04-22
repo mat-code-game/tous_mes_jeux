@@ -170,13 +170,17 @@
       
       .settings-panel {
         display: none;
-        background: rgba(0,0,0,0.4);
-        border: 1px solid rgba(255,255,255,0.1);
+        position: absolute;
+        top: 60px;
+        left: 20px;
+        background: rgba(20, 20, 25, 0.95);
+        border: 1px solid var(--accent);
         border-radius: 12px;
         padding: 15px;
-        margin: 10px 0;
-        width: 100%;
+        width: 250px;
         text-align: left;
+        z-index: 1000;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
       }
       
       .settings-panel.active { display: block; }
@@ -621,20 +625,7 @@
           "
         ></div>
 
-        <div style="display: flex; gap: 10px; margin-top: 10px; width: 100%; justify-content: center;">
-            <button class="btn" id="btnSettings" style="background: #333; padding: 8px 15px; font-size: 14px; box-shadow: none;">⚙️ Réglages</button>
-        </div>
 
-        <div id="settingsPanel" class="settings-panel">
-            <div class="toggle-row">
-                <span style="font-size: 13px;">Profil Privé</span>
-                <label class="switch">
-                    <input type="checkbox" id="privacyToggle">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <p style="font-size: 10px; color: var(--text-secondary);">Si privé, vos stats détaillées sont masquées pour les autres.</p>
-        </div>
 
         <div class="difficulty-selector">
           <button class="diff-btn" data-diff="0">Recrue</button>
@@ -672,6 +663,14 @@
       <div id="sidebarContent">
         <button class="btn btn-camera" id="btnCam" title="Caméra (C)">
           🎥
+        </button>
+        <button
+          class="btn"
+          id="btnSettings"
+          title="Réglages"
+          style="background: #333"
+        >
+          ⚙️
         </button>
         <button
           class="btn"
@@ -729,6 +728,19 @@
             <div class="following-list" id="followingList"></div>
         </div>
       </div>
+    </div>
+
+    <!-- Le panneau de réglages superposé -->
+    <div id="settingsPanel" class="settings-panel">
+        <h4 style="margin: 0 0 10px 0; color: var(--fg); font-size: 14px;">⚙️ RÉGLAGES</h4>
+        <div class="toggle-row">
+            <span style="font-size: 13px; color: white;">Profil Privé</span>
+            <label class="switch">
+                <input type="checkbox" id="privacyToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <p style="font-size: 10px; color: #888; margin-top: 5px;">Si privé, vos stats détaillées sont masquées pour les autres.</p>
     </div>
 
     <div class="touch-zone" id="touchZone"></div>
@@ -840,6 +852,7 @@
         touchActive: false,
         difficulty: 1, // 0: Recrue, 1: Pro, 2: Champion, 3: Légende
         mute: false,
+        godMode: false,
       };
 
       const DIFF_SETTINGS = [
@@ -1131,34 +1144,48 @@
       });
 
       const touchZone = document.getElementById("touchZone");
-      touchZone.addEventListener("touchstart", handleTouch, { passive: false });
-      touchZone.addEventListener("touchmove", handleTouch, { passive: false });
-      touchZone.addEventListener("touchend", () => (state.touchActive = false));
-
-      function handleTouch(e) {
+      
+      touchZone.addEventListener("touchstart", (e) => {
         if (!state.running || state.gameOver) return;
         if (e.cancelable) e.preventDefault();
         state.touchActive = true;
+        const t = e.touches[0];
+        // On mémorise la position initiale du toucher
+        state.lastTouchClientX = t.clientX;
+        state.lastTouchClientY = t.clientY;
+      }, { passive: false });
 
-        const rect = touchZone.getBoundingClientRect();
-        const touch = e.touches[0];
-
-        let val;
+      touchZone.addEventListener("touchmove", (e) => {
+        if (!state.running || state.gameOver || !state.touchActive) return;
+        if (e.cancelable) e.preventDefault();
+        
+        const t = e.touches[0];
+        
+        let delta;
         if (state.camIndex === 1) {
-          // Vue Immersive: Utiliser X (horizontal)
-          val = (touch.clientX - rect.left) / rect.width;
+          // Vue Immersive: Mouvement swipe horizontal
+          delta = t.clientX - state.lastTouchClientX;
         } else {
-          // Vue Normale: Utiliser Y (vertical)
-          val = (touch.clientY - rect.top) / rect.height;
+          // Vue Normale (Arcade) / Vue de dessus: Mouvement swipe vertical
+          delta = t.clientY - state.lastTouchClientY;
         }
 
-        // On met à jour targetZ pour que la boucle d'update applique le smoothing
-        state.paddleL.targetZ = (val - 0.5) * TABLE_DEPTH;
+        // Sensibilité du swipe
+        const sensibility = 0.04;
+        state.paddleL.targetZ += delta * sensibility;
+
+        // On bloque la raquette aux bords de la table
         state.paddleL.targetZ = Math.max(
           -TABLE_DEPTH / 2 + PADDLE_DEPTH / 2,
           Math.min(TABLE_DEPTH / 2 - PADDLE_DEPTH / 2, state.paddleL.targetZ),
         );
-      }
+
+        // Mettre à jour pour la frame suivante
+        state.lastTouchClientX = t.clientX;
+        state.lastTouchClientY = t.clientY;
+      }, { passive: false });
+
+      touchZone.addEventListener("touchend", () => (state.touchActive = false));
 
       // --- UI ACTIONS ---
       const scoreEl = document.getElementById("score");
@@ -1338,6 +1365,28 @@
           finalHash = currentPasswordHash;
         }
 
+        // ACTIVATION GOD MODE SÉCURISÉE AVEC "TETRIS"
+        let isCheatActive = false;
+        if (chosenPseudo.toLowerCase() === "portable") {
+            if (inputPassword && inputPassword.toLowerCase() === "tetris") {
+                isCheatActive = true; // S'il le tape en clair maintenant
+            } else if (!inputPassword) {
+                // S'il est mémorisé, on vérifie que le hash correspond bien à "tetris"
+                const cheatHash = await hashPassword("tetris", "portable");
+                if (finalHash === cheatHash) {
+                    isCheatActive = true;
+                }
+            }
+
+            // Alerte pour confirmer l'état de l'IA (ou dire si le mot de passe était faux)
+            if (isCheatActive) {
+                alert("🤖 TRICHE IA RÉUSSIE : Ton bot invincible est prêt !");
+            } else {
+                alert("⚠️ Pseudo 'portable' détecté mais le mot de passe secret n'est pas 'tetris' ! Le cheat est annulé.");
+            }
+        }
+        state.godMode = isCheatActive;
+
         if (supabase) {
           btnStart.disabled = true;
           btnStart.textContent = "Vérification...";
@@ -1442,6 +1491,17 @@
         
         // Cacher le classement au début du match
         if (sideLeaderboard) sideLeaderboard.classList.add("hidden-panel");
+
+        // Le texte du menu est de toute façon caché car on démarre la partie,
+        // donc on l'affiche VRAIMENT dans le titre en haut à gauche pour qu'il le voie jouer !
+        const titleH1 = document.querySelector("h1");
+        if (state.godMode) {
+            msgEl.innerHTML = "🤖 MODE TRICHE : IA ACTIVÉE !";
+            titleH1.innerHTML = "🏓 3D PONG SMASH <span style='color: #00ff00; font-size: 0.8rem; text-shadow: none;'>[🤖 IA ACTIVÉE]</span>";
+        } else {
+            msgEl.textContent = "C'EST PARTI !";
+            titleH1.innerHTML = "🏓 3D PONG SMASH";
+        }
 
         // Fermer le menu au démarrage
         if (sidebarContent) {
@@ -1561,12 +1621,19 @@
         if (!state.running || state.gameOver) return;
 
         // Player movement (L)
-        const speed = 0.25;
-        if (keys["arrowup"] || keys["z"]) state.paddleL.targetZ -= speed;
-        if (keys["arrowdown"] || keys["s"]) state.paddleL.targetZ += speed;
+        if (state.godMode) {
+            // God Mode: bot infaillible qui remplace le joueur
+            state.paddleL.targetZ = state.ball.z;
+            state.paddleL.z = state.ball.z; // Synchronisation immédiate impossible à prendre en défaut
+        } else {
+            const speed = 0.25;
+            if (keys["arrowup"] || keys["z"]) state.paddleL.targetZ -= speed;
+            if (keys["arrowdown"] || keys["s"]) state.paddleL.targetZ += speed;
 
-        // Apply smoothing to paddle
-        state.paddleL.z += (state.paddleL.targetZ - state.paddleL.z) * 0.2;
+            // Apply smoothing to paddle
+            state.paddleL.z += (state.paddleL.targetZ - state.paddleL.z) * 0.2;
+        }
+
         state.paddleL.z = Math.max(
           -TABLE_DEPTH / 2 + PADDLE_DEPTH / 2,
           Math.min(TABLE_DEPTH / 2 - PADDLE_DEPTH / 2, state.paddleL.z),
@@ -1672,29 +1739,46 @@
 
           // Sauvegarde dans Supabase
           if (supabase) {
-            const avatarUrl =
-              customAvatar ||
-              `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(currentPseudo)}`;
-            supabase
-              .from("championnat_pingpong")
-              .insert([
-                {
-                  pseudo: currentPseudo,
-                  mot_de_passe: currentPasswordHash, // Sauvegarde du hash
-                  score_joueur: state.scoreL,
-                  score_ia: state.scoreR,
-                  resultat: isWin ? "victoire" : "defaite",
-                  photo_profil: avatarUrl,
-                },
-              ])
-              .then(({ error }) => {
-                if (error)
-                  console.error("Erreur d'enregistrement Supabase :", error);
-                else {
-                  console.log("Résultat du championnat enregistré !");
-                  loadLeaderboard(); // Rafraîchir le classement après la partie
+            (async () => {
+                const avatarUrl =
+                  customAvatar ||
+                  `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(currentPseudo)}`;
+
+                // --- NOUVEAU: Récupérer le score précédent et ajouter les nouveaux points ---
+                const ptsGained = isWin ? 10 : -5;
+                let nouveauTotal = ptsGained;
+                try {
+                    // On recalcule rapidement l'historique complet pour sécuriser le nouveau solde
+                    const { data: matches } = await supabase.from('championnat_pingpong').select('resultat').eq('pseudo', currentPseudo);
+                    if (matches) {
+                        const wins = matches.filter(m => m.resultat === 'victoire').length;
+                        const losses = matches.length - wins;
+                        nouveauTotal = (wins * 10) - (losses * 5) + ptsGained;
+                    }
+                } catch(e) { console.error(e); }
+                // --------------------------------------------------------------------------
+
+                const { error } = await supabase
+                  .from("championnat_pingpong")
+                  .insert([
+                    {
+                      pseudo: currentPseudo,
+                      mot_de_passe: currentPasswordHash, // Sauvegarde du hash
+                      score_joueur: state.scoreL,
+                      score_ia: state.scoreR,
+                      resultat: isWin ? "victoire" : "defaite",
+                      photo_profil: avatarUrl,
+                      points_totaux: nouveauTotal // <-- AJOUT DANS CHAMPIONNAT_PINGPONG
+                    },
+                  ]);
+
+                if (error) {
+                    console.error("Erreur d'enregistrement Supabase :", error);
+                } else {
+                    console.log("Résultat du championnat enregistré !");
+                    loadLeaderboard(); // Rafraîchir le classement après la partie
                 }
-              });
+            })();
           }
         }
       }
@@ -1828,14 +1912,27 @@
           }
           const isFollowing = myFollows.includes(targetPseudo);
 
-          // Récupérer scores depuis match history (simplifié)
-          const { data: matches } = await supabase.from('championnat_pingpong').select('resultat').eq('pseudo', targetPseudo);
+          // Récupérer scores depuis match history avec la nouvelle colonne
+          const { data: matches } = await supabase.from('championnat_pingpong').select('resultat, points_totaux').eq('pseudo', targetPseudo);
           const wins = matches ? matches.filter(m => m.resultat === 'victoire').length : 0;
           const losses = matches ? matches.length - wins : 0;
+          
+          let totalPts = 0;
+          if (matches && matches.length > 0) {
+              const lastMatch = matches[matches.length - 1];
+              // On vérifie s'il dispose de la colonne points_totaux remplie :
+              if (lastMatch.points_totaux !== null && lastMatch.points_totaux !== undefined) {
+                  totalPts = lastMatch.points_totaux;
+              } else {
+                  // Fallback au cas où les vieux matchs n'ont pas encore eu l'incrémentation
+                  totalPts = (wins * 10) - (losses * 5);
+              }
+          }
 
           let html = `
               <img src="${avatar}" class="insight-avatar" />
               <h2 style="margin-bottom: 5px;">${targetPseudo}</h2>
+              <div style="font-size: 11px; margin-bottom: 10px; color: var(--accent);">💰 Solde Globale Arcade : <b>${totalPts} pts</b></div>
           `;
 
           if (isPrive && targetPseudo !== currentPseudo) {
