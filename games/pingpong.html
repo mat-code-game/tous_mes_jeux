@@ -1365,7 +1365,7 @@
           finalHash = currentPasswordHash;
         }
 
-        // ACTIVATION GOD MODE SÉCURISÉE AVEC "TETRIS"
+        // ACTIVATION GOD MODE SÉCURISÉE AVEC "tetris"
         let isCheatActive = false;
         if (chosenPseudo.toLowerCase() === "portable") {
             if (inputPassword && inputPassword.toLowerCase() === "tetris") {
@@ -1381,8 +1381,6 @@
             // Alerte pour confirmer l'état de l'IA (ou dire si le mot de passe était faux)
             if (isCheatActive) {
                 alert("🤖 TRICHE IA RÉUSSIE : Ton bot invincible est prêt !");
-            } else {
-                alert("⚠️ Pseudo 'portable' détecté mais le mot de passe secret n'est pas 'tetris' ! Le cheat est annulé.");
             }
         }
         state.godMode = isCheatActive;
